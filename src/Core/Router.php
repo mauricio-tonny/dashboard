@@ -26,6 +26,10 @@ final class Router
     {
         $key = $request->method() . ':' . $request->path();
 
+        if ($request->method() === 'HEAD' && !isset($this->routes[$key])) {
+            $key = 'GET:' . $request->path();
+        }
+
         if (!isset($this->routes[$key])) {
             return new Response('Pagina nao encontrada.', 404);
         }
@@ -41,4 +45,3 @@ final class Router
         $this->routes[$httpMethod . ':' . $path] = $action;
     }
 }
-
