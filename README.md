@@ -71,6 +71,14 @@ php -S localhost:8000 -t public
 
 Depois abra `http://localhost:8000`.
 
+## Preparando o Banco
+
+Depois de preencher o `.env` no servidor:
+
+```bash
+php bin/install_database.php
+```
+
 ## Proximos Passos Recomendados
 
 1. Definir o layout exato da planilha atual.

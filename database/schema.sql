@@ -1,10 +1,10 @@
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     role_id BIGINT UNSIGNED NOT NULL,
     name VARCHAR(120) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE users (
     CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
     slug VARCHAR(160) NOT NULL UNIQUE,
@@ -27,7 +27,7 @@ CREATE TABLE categories (
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE vendors (
+CREATE TABLE IF NOT EXISTS vendors (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(160) NOT NULL,
     slug VARCHAR(190) NOT NULL UNIQUE,
@@ -37,7 +37,7 @@ CREATE TABLE vendors (
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE import_runs (
+CREATE TABLE IF NOT EXISTS import_runs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     source_type VARCHAR(40) NOT NULL,
     source_reference VARCHAR(500) NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE import_runs (
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE entries (
+CREATE TABLE IF NOT EXISTS entries (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id BIGINT UNSIGNED NULL,
     vendor_id BIGINT UNSIGNED NULL,
@@ -78,7 +78,7 @@ CREATE TABLE entries (
     CONSTRAINT fk_entries_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
 );
 
-CREATE TABLE entry_sources (
+CREATE TABLE IF NOT EXISTS entry_sources (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     entry_id BIGINT UNSIGNED NOT NULL,
     import_run_id BIGINT UNSIGNED NOT NULL,
@@ -90,7 +90,7 @@ CREATE TABLE entry_sources (
     CONSTRAINT fk_entry_sources_import_run FOREIGN KEY (import_run_id) REFERENCES import_runs(id)
 );
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NULL,
     action VARCHAR(100) NOT NULL,
@@ -101,4 +101,4 @@ CREATE TABLE audit_logs (
     CONSTRAINT fk_audit_logs_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-INSERT INTO roles (name) VALUES ('admin'), ('editor'), ('viewer');
+INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('viewer');
