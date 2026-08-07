@@ -1,0 +1,7 @@
+/vendor/
+/.env
+/storage/*.log
+/storage/*.json
+/storage/cache/*
+/storage/sessions/*
+
