@@ -79,6 +79,12 @@ Depois de preencher o `.env` no servidor:
 php bin/install_database.php
 ```
 
+Para criar ou atualizar um usuario:
+
+```bash
+php bin/create_user.php --name="Nome" --email=email@dominio.com --role=viewer --password="senha-temporaria"
+```
+
 ## Proximos Passos Recomendados
 
 1. Definir o layout exato da planilha atual.

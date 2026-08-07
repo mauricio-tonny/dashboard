@@ -51,6 +51,21 @@ sudo certbot --nginx -d dashboard.oficinadodev.com.br
 
 O arquivo em `deploy/nginx` ja esta preparado no padrao final com SSL.
 
+## Permissoes do Projeto
+
+O PHP-FPM roda como `www-data`, entao os diretorios do projeto precisam permitir leitura e travessia para esse usuario/grupo.
+
+No servidor de desenvolvimento, depois de enviar arquivos por `scp`, normalize com:
+
+```bash
+cd /var/www/dashboard.oficinadodev.com.br/html
+find . -type d -exec chmod 775 {} \;
+find . -type f -exec chmod 664 {} \;
+chmod 775 storage storage/cache storage/sessions
+```
+
+Se `public/` ficar sem permissao de grupo, o NGINX/PHP-FPM pode retornar `File not found.` e registrar `Primary script unknown`.
+
 ## Diferencas em Relacao ao Magento 2
 
 - Nao usamos `MAGE_ROOT`.

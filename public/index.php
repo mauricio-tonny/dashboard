@@ -6,13 +6,14 @@ use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\EntryController;
 use App\Core\App;
+use App\Core\Database;
 use App\Core\Request;
 use App\Core\Router;
 use App\Core\Session;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\UserRepository;
 use App\Domain\Finance\FinanceService;
-use App\Infrastructure\Auth\FileUserRepository;
+use App\Infrastructure\Auth\DatabaseUserRepository;
 use App\Infrastructure\Finance\ExcelFinanceRepository;
 use App\Support\Env;
 
@@ -38,13 +39,15 @@ Env::load(dirname(__DIR__) . '/.env');
 
 $session = new Session($_ENV['SESSION_NAME'] ?? 'dashboard_financeiro');
 $request = Request::capture();
+$database = new Database();
 
-$userRepository = new FileUserRepository(dirname(__DIR__) . '/storage/users.json');
+$userRepository = new DatabaseUserRepository($database);
 $authService = new AuthService($userRepository, $session);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
 
 $app = new App([
+    Database::class => $database,
     Session::class => $session,
     Request::class => $request,
     UserRepository::class => $userRepository,
@@ -64,4 +67,3 @@ $router->post('/entries', [EntryController::class, 'store']);
 
 $response = $router->dispatch($request);
 $response->send();
-
