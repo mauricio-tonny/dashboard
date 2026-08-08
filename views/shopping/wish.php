@@ -212,7 +212,7 @@ ob_start();
     <?php $renderForm('/shopping/wish-items', $type, $optionLabel, $optionField, $options, $vehicleAreas, $hasPriority); ?>
 </section>
 
-<section class="card section-card">
+<section class="card section-card shopping-items-panel">
     <h2 class="section-title"><span class="bi bi-check2-square"></span>Itens cadastrados</h2>
     <?php if ($type === 'vehicle'): ?>
         <div class="shopping-list vehicle-group-list">

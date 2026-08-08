@@ -152,6 +152,29 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function marketReport(string $startDate, string $endDate): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT DATE_FORMAT(COALESCE(purchase_date, reference_month), "%Y-%m") AS month_key,
+                    DATE_FORMAT(COALESCE(purchase_date, reference_month), "%m/%Y") AS month_label,
+                    COUNT(*) AS list_count,
+                    COALESCE(SUM(total_amount), 0) AS total_amount,
+                    COALESCE(AVG(total_amount), 0) AS average_amount
+             FROM shopping_market_lists
+             WHERE total_amount IS NOT NULL
+               AND total_amount > 0
+               AND DATE(COALESCE(purchase_date, reference_month)) BETWEEN :start_date AND :end_date
+             GROUP BY month_key, month_label
+             ORDER BY month_key ASC'
+        );
+        $statement->execute([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function addMarketInvoice(int $listId, string $originalName, string $storedName, string $mimeType, int $fileSize, ?int $userId): int
     {
         $statement = $this->database->connection()->prepare(

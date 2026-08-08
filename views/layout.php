@@ -546,27 +546,30 @@
             margin-bottom: 12px;
         }
         .shopping-panel {
-            min-height: 100%;
+            min-height: auto;
         }
         .wish-create-panel {
-            padding: 16px 18px;
+            margin-bottom: 14px;
+            padding: 14px 16px;
         }
         .wish-create-panel .section-title {
-            margin-bottom: 10px;
+            font-size: 1rem;
+            margin-bottom: 8px;
         }
         .wish-form-grid {
             align-items: end;
-            gap: 10px;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         }
         .wish-form-grid label {
-            font-size: 0.88rem;
+            font-size: 0.84rem;
             margin-bottom: 0;
         }
         .wish-form-grid input,
         .wish-form-grid select,
         .wish-form-grid button {
-            padding: 9px 12px;
+            min-height: 40px;
+            padding: 8px 10px;
         }
         .wish-form-grid .form-actions {
             align-self: end;
@@ -579,7 +582,7 @@
             width: 100%;
         }
         .wish-form-grid .form-actions button {
-            min-height: 43px;
+            min-height: 40px;
         }
         .month-pill {
             border: 1px solid var(--border);
@@ -604,6 +607,13 @@
             display: grid;
             gap: 12px;
             margin-top: 18px;
+        }
+        .shopping-items-panel {
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+        .shopping-items-panel .shopping-list {
+            margin-top: 12px;
         }
         .market-item,
         .shopping-item,
@@ -730,11 +740,18 @@
         }
         .market-items-panel .market-checklist {
             border-top: 1px solid var(--border);
+            max-height: calc(100vh - 260px);
             margin: 0;
+            overflow-y: auto;
             padding: 14px;
         }
         .market-price-form {
             align-items: end;
+        }
+        .market-price-form [data-subtotal-preview] {
+            background: #eef7fb;
+            color: var(--brand-dark);
+            font-weight: 800;
         }
         .market-item-copy small,
         .shopping-item small,
@@ -798,6 +815,71 @@
         .market-total-summary small {
             color: var(--muted);
             margin-top: 6px;
+        }
+        .report-filter {
+            align-items: end;
+        }
+        .report-summary-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin: 18px 0;
+        }
+        .report-summary-card {
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px;
+        }
+        .report-summary-card small,
+        .report-summary-card strong {
+            display: block;
+        }
+        .report-summary-card small {
+            color: var(--muted);
+        }
+        .report-summary-card strong {
+            color: var(--brand-dark);
+            font-size: 1.35rem;
+            margin-top: 6px;
+        }
+        .report-bar-chart {
+            align-items: end;
+            display: flex;
+            gap: 14px;
+            min-height: 240px;
+            overflow-x: auto;
+            padding: 22px 4px 8px;
+        }
+        .report-bar-item {
+            align-items: center;
+            display: grid;
+            gap: 8px;
+            min-width: 76px;
+            text-align: center;
+        }
+        .report-bar-track {
+            align-items: end;
+            background: #edf4f8;
+            border-radius: 999px;
+            display: flex;
+            height: 190px;
+            justify-content: center;
+            justify-self: center;
+            overflow: hidden;
+            width: 44px;
+        }
+        .report-bar-fill {
+            background: linear-gradient(180deg, var(--accent), var(--accent-blue));
+            border-radius: 999px 999px 0 0;
+            display: block;
+            width: 100%;
+        }
+        .report-bar-item strong {
+            font-size: 0.82rem;
+        }
+        .report-bar-item small {
+            color: var(--muted);
         }
         .app-footer {
             color: var(--muted);
@@ -1335,16 +1417,16 @@
                 });
             };
 
-            input.addEventListener('input', () => {
+            const applyCurrency = () => {
                 input.value = formatCurrency(input.value);
-            });
+                input.dispatchEvent(new CustomEvent('money:formatted', { bubbles: true }));
+            };
 
-            input.addEventListener('blur', () => {
-                input.value = formatCurrency(input.value);
-            });
+            input.addEventListener('input', applyCurrency);
+            input.addEventListener('blur', applyCurrency);
 
             if (input.value.trim() !== '') {
-                input.value = formatCurrency(input.value);
+                applyCurrency();
             }
         });
         document.addEventListener('keydown', (event) => {

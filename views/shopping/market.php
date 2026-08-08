@@ -153,7 +153,7 @@ ob_start();
                     </label>
                     <label>
                         Sub total
-                        <input type="text" name="subtotal_preview" placeholder="0,00" data-subtotal-preview readonly>
+                        <input type="text" name="subtotal_preview" placeholder="R$ 0,00" data-subtotal-preview readonly>
                     </label>
                     <div class="form-actions">
                         <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar item</button>
@@ -212,7 +212,7 @@ ob_start();
                                     </select>
                                     <input type="number" name="quantity" min="0.001" step="0.001" value="<?= htmlspecialchars((string) ($item['quantity'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>" required>
                                     <input type="text" name="unit_amount" inputmode="decimal" value="<?= htmlspecialchars($item['unit_amount'] === null ? '' : $formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor unitario" data-unit-amount data-money-input>
-                                    <input type="text" name="subtotal_preview" value="<?= htmlspecialchars($item['subtotal_amount'] === null ? '' : number_format((float) $item['subtotal_amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Sub total" data-subtotal-preview readonly>
+                                    <input type="text" name="subtotal_preview" value="<?= htmlspecialchars($item['subtotal_amount'] === null ? '' : $formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Sub total" data-subtotal-preview readonly>
                                     <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
                                 </form>
                                 <form method="post" action="/shopping/market/items/delete">
@@ -374,8 +374,8 @@ ob_start();
             return normalized === '' ? null : Number(normalized);
         };
         const formatMoney = (value) => value.toLocaleString('pt-BR', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
+            style: 'currency',
+            currency: 'BRL',
         });
         const updateSubtotal = () => {
             const qty = Number(String(quantity?.value ?? '').replace(',', '.'));
@@ -391,8 +391,11 @@ ob_start();
             preview.value = formatMoney(qty * unit);
         };
 
-        quantity?.addEventListener('input', updateSubtotal);
-        unitAmount?.addEventListener('input', updateSubtotal);
+        const updateSubtotalSoon = () => window.requestAnimationFrame(updateSubtotal);
+
+        quantity?.addEventListener('input', updateSubtotalSoon);
+        unitAmount?.addEventListener('input', updateSubtotalSoon);
+        unitAmount?.addEventListener('money:formatted', updateSubtotalSoon);
         updateSubtotal();
     });
 </script>
