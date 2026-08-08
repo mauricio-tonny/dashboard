@@ -68,7 +68,7 @@ ob_start();
         <span class="page-hero-icon bi bi-basket2"></span>
         <div>
             <span class="badge">Compras</span>
-            <h1><?= $isMarketHistory ? 'Mercado - historico' : 'Mercado - proximo mes' ?></h1>
+            <h1><?= $isMarketHistory ? 'Mercado - historico' : 'Mercado - listas ativas' ?></h1>
             <p class="muted">Crie a lista mensal, marque os itens no mercado e anexe NFC-e/NF-e para facilitar relatórios futuros.</p>
         </div>
     </div>
@@ -85,9 +85,9 @@ ob_start();
 <section class="card section-card shopping-hero">
     <div>
         <h2 class="section-title"><span class="bi bi-calendar-plus"></span>Mercado mensal</h2>
-        <p class="muted">A tela principal sempre prepara a lista do proximo mes. Use o historico para consultar meses anteriores.</p>
+        <p class="muted">A tela principal mostra o mes atual enquanto estiver aberto e tambem prepara a lista do proximo mes. Use o historico para consultar meses ja fechados.</p>
         <div class="actions">
-            <a href="/shopping/market"><button class="inline-button <?= !$isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-calendar-heart"></span>Proximo mes</button></a>
+            <a href="/shopping/market"><button class="inline-button <?= !$isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-calendar-heart"></span>Listas ativas</button></a>
             <a href="/shopping/market/history"><button class="inline-button <?= $isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-clock-history"></span>Meses anteriores</button></a>
         </div>
     </div>

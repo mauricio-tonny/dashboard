@@ -52,6 +52,7 @@ final class ShoppingController extends Controller
 
         $repository = $this->app->make(ShoppingRepository::class);
         $selectedListId = (int) $request->input('market_list_id', 0);
+        $currentMonth = (new \DateTimeImmutable('first day of this month'))->format('Y-m-01');
         $nextMonth = $repository->nextMonth();
 
         if (!$history) {
@@ -62,9 +63,18 @@ final class ShoppingController extends Controller
             }
         }
 
-        $lists = $history ? $repository->marketLists($nextMonth) : array_values(array_filter(
+        $lists = array_values(array_filter(
             $repository->marketLists(),
-            static fn (array $list): bool => (string) $list['reference_month'] >= $nextMonth
+            static function (array $list) use ($currentMonth, $nextMonth, $history): bool {
+                $referenceMonth = (string) $list['reference_month'];
+                $isFinished = ($list['finished_at'] ?? null) !== null;
+
+                if ($history) {
+                    return $referenceMonth < $nextMonth && ($referenceMonth !== $currentMonth || $isFinished);
+                }
+
+                return $referenceMonth >= $nextMonth || ($referenceMonth === $currentMonth && !$isFinished);
+            }
         ));
         $allowedListIds = array_map(static fn (array $list): int => (int) $list['id'], $lists);
 
