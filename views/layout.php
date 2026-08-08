@@ -549,19 +549,37 @@
             min-height: 100%;
         }
         .wish-create-panel {
-            padding-bottom: 18px;
+            padding: 16px 18px;
+        }
+        .wish-create-panel .section-title {
+            margin-bottom: 10px;
         }
         .wish-form-grid {
-            gap: 12px;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            align-items: end;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+        .wish-form-grid label {
+            font-size: 0.88rem;
+            margin-bottom: 0;
+        }
+        .wish-form-grid input,
+        .wish-form-grid select,
+        .wish-form-grid button {
+            padding: 9px 12px;
         }
         .wish-form-grid .form-actions {
             align-self: end;
+            display: flex;
+            margin-bottom: 0;
         }
         .wish-form-grid .form-actions button,
         .finish-form .inline-button {
             justify-content: center;
             width: 100%;
+        }
+        .wish-form-grid .form-actions button {
+            min-height: 43px;
         }
         .month-pill {
             border: 1px solid var(--border);
@@ -1324,6 +1342,10 @@
             input.addEventListener('blur', () => {
                 input.value = formatCurrency(input.value);
             });
+
+            if (input.value.trim() !== '') {
+                input.value = formatCurrency(input.value);
+            }
         });
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {

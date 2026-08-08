@@ -28,7 +28,6 @@ Campos do item:
 - Sessao cadastrada em configuracao de compras.
 - Quantidade.
 - Valor unitario.
-- Valor.
 - Sub total calculado pelo sistema quando houver valor unitario.
 
 Durante a compra, o usuario pode confirmar cada item. Ao finalizar, informa o valor total da compra em reais. A lista finalizada fica travada para evitar novas alteracoes, anexos ou uma segunda finalizacao. Somente administradores podem remover a finalizacao para ajustes.

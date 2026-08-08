@@ -152,10 +152,6 @@ ob_start();
                         <input type="text" name="unit_amount" inputmode="decimal" placeholder="R$ 0,00" data-unit-amount data-money-input>
                     </label>
                     <label>
-                        Valor
-                        <input type="text" name="amount" inputmode="decimal" placeholder="R$ 0,00" data-money-input>
-                    </label>
-                    <label>
                         Sub total
                         <input type="text" name="subtotal_preview" placeholder="0,00" data-subtotal-preview readonly>
                     </label>
@@ -216,7 +212,6 @@ ob_start();
                                     </select>
                                     <input type="number" name="quantity" min="0.001" step="0.001" value="<?= htmlspecialchars((string) ($item['quantity'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>" required>
                                     <input type="text" name="unit_amount" inputmode="decimal" value="<?= htmlspecialchars($item['unit_amount'] === null ? '' : $formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor unitario" data-unit-amount data-money-input>
-                                    <input type="text" name="amount" inputmode="decimal" value="<?= htmlspecialchars($item['amount'] === null ? '' : $formatMoney($item['amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor" data-money-input>
                                     <input type="text" name="subtotal_preview" value="<?= htmlspecialchars($item['subtotal_amount'] === null ? '' : number_format((float) $item['subtotal_amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Sub total" data-subtotal-preview readonly>
                                     <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
                                 </form>
