@@ -14,14 +14,23 @@ final class ReportController extends Controller
 {
     public function index(Request $request): Response
     {
-        $auth = $this->app->make(AuthService::class);
+        $auth = $this->authorize();
 
-        if (!$auth->check()) {
-            return Response::redirect('/login');
+        if ($auth instanceof Response) {
+            return $auth;
         }
 
-        if (!$auth->user()?->can(Permission::VIEW_CATEGORY_REPORT)) {
-            return new Response('Acesso negado.', 403);
+        return Response::view('reports/home', [
+            'user' => $auth->user(),
+        ]);
+    }
+
+    public function market(Request $request): Response
+    {
+        $auth = $this->authorize();
+
+        if ($auth instanceof Response) {
+            return $auth;
         }
 
         $today = new \DateTimeImmutable('now');
@@ -51,6 +60,21 @@ final class ReportController extends Controller
                 'min' => $min,
             ],
         ]);
+    }
+
+    private function authorize(): AuthService|Response
+    {
+        $auth = $this->app->make(AuthService::class);
+
+        if (!$auth->check()) {
+            return Response::redirect('/login');
+        }
+
+        if (!$auth->user()?->can(Permission::VIEW_CATEGORY_REPORT)) {
+            return new Response('Acesso negado.', 403);
+        }
+
+        return $auth;
     }
 
     private function dateInput(string $value, string $fallback): string

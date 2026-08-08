@@ -58,7 +58,9 @@ $invoicePurchaseDates = array_values(array_filter(array_map(
     $marketInvoices
 )));
 $listPurchaseDate = $selectedMarketList['purchase_date'] ?? ($invoicePurchaseDates[0] ?? null);
-$itemsOpen = count($marketItems) <= 8;
+$pendingMarketItems = array_values(array_filter($marketItems, static fn (array $item): bool => ((int) $item['is_checked']) === 0));
+$checkedMarketItems = array_values(array_filter($marketItems, static fn (array $item): bool => ((int) $item['is_checked']) === 1));
+$itemsOpen = count($pendingMarketItems) <= 8;
 ob_start();
 ?>
 <section class="page-hero">
@@ -66,7 +68,7 @@ ob_start();
         <span class="page-hero-icon bi bi-basket2"></span>
         <div>
             <span class="badge">Compras</span>
-            <h1>Mercado</h1>
+            <h1><?= $isMarketHistory ? 'Mercado - historico' : 'Mercado - proximo mes' ?></h1>
             <p class="muted">Crie a lista mensal, marque os itens no mercado e anexe NFC-e/NF-e para facilitar relatórios futuros.</p>
         </div>
     </div>
@@ -83,7 +85,11 @@ ob_start();
 <section class="card section-card shopping-hero">
     <div>
         <h2 class="section-title"><span class="bi bi-calendar-plus"></span>Mercado mensal</h2>
-        <p class="muted">A sugestao padrao e sempre o proximo mes.</p>
+        <p class="muted">A tela principal sempre prepara a lista do proximo mes. Use o historico para consultar meses anteriores.</p>
+        <div class="actions">
+            <a href="/shopping/market"><button class="inline-button <?= !$isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-calendar-heart"></span>Proximo mes</button></a>
+            <a href="/shopping/market/history"><button class="inline-button <?= $isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-clock-history"></span>Meses anteriores</button></a>
+        </div>
     </div>
     <form method="post" action="/shopping/market/lists" class="inline-form align-end-form">
         <label>
@@ -98,7 +104,7 @@ ob_start();
     <article class="card section-card">
         <h2 class="section-title"><span class="bi bi-calendar3"></span>Listas de mercado</h2>
         <?php foreach ($marketLists as $list): ?>
-            <a class="month-pill <?= (int) $list['id'] === $selectedListId ? 'is-active' : '' ?>" href="/shopping/market?market_list_id=<?= (int) $list['id'] ?>">
+            <a class="month-pill <?= (int) $list['id'] === $selectedListId ? 'is-active' : '' ?>" href="<?= $isMarketHistory ? '/shopping/market/history' : '/shopping/market' ?>?market_list_id=<?= (int) $list['id'] ?>">
                 <?= htmlspecialchars($monthLabel($list['reference_month']), ENT_QUOTES, 'UTF-8') ?>
                 <small>
                     <?= (int) $list['checked_count'] ?>/<?= (int) $list['item_count'] ?> itens
@@ -163,11 +169,11 @@ ob_start();
 
             <details class="market-items-panel" <?= $itemsOpen ? 'open' : '' ?>>
                 <summary>
-                    <span><span class="bi bi-list-check"></span> Itens da lista</span>
-                    <small><?= count($marketItems) ?> itens cadastrados</small>
+                    <span><span class="bi bi-hourglass-split"></span> Itens pendentes</span>
+                    <small><?= count($pendingMarketItems) ?> itens</small>
                 </summary>
                 <div class="market-checklist">
-                    <?php foreach ($marketItems as $item): ?>
+                    <?php foreach ($pendingMarketItems as $item): ?>
                         <div class="market-item <?= ((int) $item['is_checked']) === 1 ? 'is-done' : '' ?>">
                             <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
                             <?php if ($isFinished): ?>
@@ -224,6 +230,51 @@ ob_start();
                             <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
+                    <?php if ($pendingMarketItems === []): ?>
+                        <p class="muted">Nenhum item pendente nesta lista.</p>
+                    <?php endif; ?>
+                </div>
+            </details>
+
+            <details class="market-items-panel purchased-items-panel">
+                <summary>
+                    <span><span class="bi bi-bag-check"></span> Itens comprados</span>
+                    <small><?= count($checkedMarketItems) ?> itens</small>
+                </summary>
+                <div class="market-checklist">
+                    <?php foreach ($checkedMarketItems as $item): ?>
+                        <div class="market-item is-done">
+                            <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php if ($isFinished): ?>
+                                <span class="check-button is-static-check">
+                                    <span class="bi bi-check2"></span>
+                                    Confirmado
+                                </span>
+                            <?php else: ?>
+                                <form method="post" action="/shopping/market/items/toggle" class="check-form">
+                                    <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                                    <input type="hidden" name="checked" value="0">
+                                    <button class="check-button" type="submit">
+                                        <span class="bi bi-arrow-counterclockwise"></span>
+                                        Reabrir
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                            <div class="market-item-copy">
+                                <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                <small>
+                                    <?= htmlspecialchars($item['section_name'] ?? $item['section'], ENT_QUOTES, 'UTF-8') ?>
+                                    | Qtd: <?= htmlspecialchars($formatDecimal($item['quantity'] ?? 1), ENT_QUOTES, 'UTF-8') ?>
+                                    | Unit.: <?= htmlspecialchars($formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>
+                                    | Subtotal: <?= htmlspecialchars($formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>
+                                </small>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php if ($checkedMarketItems === []): ?>
+                        <p class="muted">Nenhum item comprado ainda.</p>
+                    <?php endif; ?>
                 </div>
             </details>
 

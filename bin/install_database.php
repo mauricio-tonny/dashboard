@@ -84,6 +84,15 @@ try {
     ensureColumn($pdo, 'shopping_market_items', 'amount', 'ALTER TABLE shopping_market_items ADD COLUMN amount DECIMAL(14,2) NULL AFTER unit_amount');
     ensureColumn($pdo, 'shopping_market_items', 'subtotal_amount', 'ALTER TABLE shopping_market_items ADD COLUMN subtotal_amount DECIMAL(14,2) NULL AFTER amount');
     ensureIndex($pdo, 'shopping_market_items', 'idx_market_items_section', 'CREATE INDEX idx_market_items_section ON shopping_market_items (section_id)');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS discord_notification_settings (
+        id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+        is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        webhook_url VARCHAR(500) NULL,
+        notify_market_list_created TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )');
+    $pdo->exec('INSERT IGNORE INTO discord_notification_settings (id) VALUES (1)');
     $pdo->exec("UPDATE contacts SET is_vendor = 1 WHERE type = 'vendor' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("UPDATE contacts SET is_client = 1 WHERE type = 'client' AND is_vendor = 0 AND is_client = 0");
 

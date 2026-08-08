@@ -25,17 +25,20 @@ final class ShoppingRepository
         return (new \DateTimeImmutable('first day of next month'))->format('Y-m-01');
     }
 
-    public function marketLists(): array
+    public function marketLists(?string $beforeMonth = null): array
     {
-        $statement = $this->database->connection()->query(
+        $where = $beforeMonth === null ? '' : 'WHERE lists.reference_month < :before_month';
+        $statement = $this->database->connection()->prepare(
             'SELECT lists.*,
                     COUNT(items.id) AS item_count,
                     COALESCE(SUM(items.is_checked), 0) AS checked_count
              FROM shopping_market_lists lists
              LEFT JOIN shopping_market_items items ON items.list_id = lists.id
+             ' . $where . '
              GROUP BY lists.id
              ORDER BY lists.reference_month DESC'
         );
+        $beforeMonth === null ? $statement->execute() : $statement->execute(['before_month' => $this->normalizeMonth($beforeMonth)]);
 
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -83,6 +86,11 @@ final class ShoppingRepository
 
     public function findOrCreateMarketList(string $referenceMonth, ?int $userId): int
     {
+        return $this->findOrCreateMarketListWithStatus($referenceMonth, $userId)['id'];
+    }
+
+    public function findOrCreateMarketListWithStatus(string $referenceMonth, ?int $userId): array
+    {
         $month = $this->normalizeMonth($referenceMonth);
         $statement = $this->database->connection()->prepare(
             'INSERT IGNORE INTO shopping_market_lists (reference_month, created_by_user_id)
@@ -92,13 +100,18 @@ final class ShoppingRepository
             'reference_month' => $month,
             'created_by_user_id' => $userId,
         ]);
+        $created = $statement->rowCount() > 0;
 
         $find = $this->database->connection()->prepare(
             'SELECT id FROM shopping_market_lists WHERE reference_month = :reference_month LIMIT 1'
         );
         $find->execute(['reference_month' => $month]);
 
-        return (int) $find->fetchColumn();
+        return [
+            'id' => (int) $find->fetchColumn(),
+            'created' => $created,
+            'reference_month' => $month,
+        ];
     }
 
     public function marketList(int $id): ?array

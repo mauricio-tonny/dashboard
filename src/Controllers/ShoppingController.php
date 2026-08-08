@@ -15,6 +15,7 @@ use App\Domain\Shopping\AccessKeyParser;
 use App\Domain\Shopping\MarketInvoicePdfParser;
 use App\Domain\Shopping\MarketInvoiceXmlParser;
 use App\Domain\Shopping\ShoppingRepository;
+use App\Domain\System\DiscordNotifier;
 
 final class ShoppingController extends Controller
 {
@@ -33,6 +34,16 @@ final class ShoppingController extends Controller
 
     public function market(Request $request): Response
     {
+        return $this->marketPage($request, false);
+    }
+
+    public function marketHistory(Request $request): Response
+    {
+        return $this->marketPage($request, true);
+    }
+
+    private function marketPage(Request $request, bool $history): Response
+    {
         $auth = $this->authorizeView();
 
         if ($auth instanceof Response) {
@@ -41,7 +52,25 @@ final class ShoppingController extends Controller
 
         $repository = $this->app->make(ShoppingRepository::class);
         $selectedListId = (int) $request->input('market_list_id', 0);
-        $lists = $repository->marketLists();
+        $nextMonth = $repository->nextMonth();
+
+        if (!$history) {
+            $nextList = $repository->findOrCreateMarketListWithStatus($nextMonth, null);
+
+            if ($nextList['created']) {
+                $this->notifyMarketListCreated($nextList['reference_month'], true);
+            }
+        }
+
+        $lists = $history ? $repository->marketLists($nextMonth) : array_values(array_filter(
+            $repository->marketLists(),
+            static fn (array $list): bool => (string) $list['reference_month'] >= $nextMonth
+        ));
+        $allowedListIds = array_map(static fn (array $list): int => (int) $list['id'], $lists);
+
+        if ($selectedListId > 0 && !in_array($selectedListId, $allowedListIds, true)) {
+            $selectedListId = 0;
+        }
 
         if ($selectedListId === 0 && $lists !== []) {
             $selectedListId = (int) $lists[0]['id'];
@@ -53,7 +82,8 @@ final class ShoppingController extends Controller
             'user' => $auth->user(),
             'success' => $this->app->make(Session::class)->pullFlash('success'),
             'error' => $this->app->make(Session::class)->pullFlash('error'),
-            'nextMonth' => $repository->nextMonth(),
+            'nextMonth' => $nextMonth,
+            'isMarketHistory' => $history,
             'marketLists' => $lists,
             'selectedMarketList' => $selectedList,
             'marketItems' => $selectedList === null ? [] : $repository->marketItems((int) $selectedList['id']),
@@ -106,8 +136,12 @@ final class ShoppingController extends Controller
         }
 
         $repository = $this->app->make(ShoppingRepository::class);
-        $id = $repository->findOrCreateMarketList((string) $request->input('reference_month'), $auth->user()?->id);
+        $result = $repository->findOrCreateMarketListWithStatus((string) $request->input('reference_month'), $auth->user()?->id);
+        $id = $result['id'];
         $this->audit('shopping_market_list_saved', 'shopping_market_list', $id);
+        if ($result['created']) {
+            $this->notifyMarketListCreated($result['reference_month'], false);
+        }
         $this->flash('success', 'Lista de mercado preparada.');
 
         return Response::redirect('/shopping/market?market_list_id=' . $id);
@@ -893,6 +927,12 @@ final class ShoppingController extends Controller
     private function flash(string $key, string $message): void
     {
         $this->app->make(Session::class)->flash($key, $message);
+    }
+
+    private function notifyMarketListCreated(string $referenceMonth, bool $automatic): void
+    {
+        $monthLabel = (new \DateTimeImmutable($referenceMonth))->format('m/Y');
+        $this->app->make(DiscordNotifier::class)->marketListCreated($monthLabel, $automatic);
     }
 
     private function audit(string $action, string $entityType, ?int $entityId = null, array $metadata = []): void

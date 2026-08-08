@@ -19,7 +19,7 @@ ob_start();
 
 <section class="card section-card">
     <h2 class="section-title"><span class="bi bi-calendar-range"></span>Periodo de analise</h2>
-    <form method="get" action="/reports" class="inline-form report-filter">
+    <form method="get" action="/reports/market" class="inline-form report-filter">
         <label>
             Data inicial
             <input type="date" name="start_date" value="<?= htmlspecialchars($startDate, ENT_QUOTES, 'UTF-8') ?>" required>

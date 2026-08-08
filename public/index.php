@@ -12,6 +12,7 @@ use App\Controllers\EntryController;
 use App\Controllers\NavigationPageController;
 use App\Controllers\ReportController;
 use App\Controllers\ShoppingController;
+use App\Controllers\System\DiscordController;
 use App\Core\App;
 use App\Core\Database;
 use App\Core\Request;
@@ -24,6 +25,8 @@ use App\Domain\Auth\AdminUserRepository;
 use App\Domain\Contacts\ContactRepository;
 use App\Domain\Finance\FinanceService;
 use App\Domain\Shopping\ShoppingRepository;
+use App\Domain\System\DiscordNotificationRepository;
+use App\Domain\System\DiscordNotifier;
 use App\Infrastructure\Auth\DatabaseUserRepository;
 use App\Infrastructure\Finance\ExcelFinanceRepository;
 use App\Support\Env;
@@ -57,6 +60,8 @@ $adminUserRepository = new AdminUserRepository($database);
 $authService = new AuthService($userRepository, $session);
 $auditLogger = new AuditLogger($database);
 $shoppingRepository = new ShoppingRepository($database);
+$discordNotificationRepository = new DiscordNotificationRepository($database);
+$discordNotifier = new DiscordNotifier($discordNotificationRepository);
 $contactRepository = new ContactRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
@@ -72,6 +77,8 @@ $app = new App([
     AuthService::class => $authService,
     AuditLogger::class => $auditLogger,
     ShoppingRepository::class => $shoppingRepository,
+    DiscordNotificationRepository::class => $discordNotificationRepository,
+    DiscordNotifier::class => $discordNotifier,
     ContactRepository::class => $contactRepository,
     FinanceService::class => $financeService,
 ]);
@@ -96,6 +103,7 @@ $router->post('/admin/shopping-settings/vehicles/toggle', [ShoppingSettingsContr
 
 $router->get('/shopping', [ShoppingController::class, 'index']);
 $router->get('/shopping/market', [ShoppingController::class, 'market']);
+$router->get('/shopping/market/history', [ShoppingController::class, 'marketHistory']);
 $router->get('/shopping/home', [ShoppingController::class, 'home']);
 $router->get('/shopping/family', [ShoppingController::class, 'family']);
 $router->get('/shopping/vehicle', [ShoppingController::class, 'vehicle']);
@@ -122,10 +130,12 @@ $router->post('/contacts/toggle', [ContactController::class, 'toggle']);
 $router->get('/finance/payable', [NavigationPageController::class, 'financePayable']);
 $router->get('/finance/receivable', [NavigationPageController::class, 'financeReceivable']);
 $router->get('/reports', [ReportController::class, 'index']);
+$router->get('/reports/market', [ReportController::class, 'market']);
 $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']);
 $router->get('/system/sync', [NavigationPageController::class, 'systemSync']);
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
-$router->get('/system/discord', [NavigationPageController::class, 'systemDiscord']);
+$router->get('/system/discord', [DiscordController::class, 'index']);
+$router->post('/system/discord', [DiscordController::class, 'save']);
 $router->get('/system/spreadsheet', [NavigationPageController::class, 'systemSpreadsheet']);
 
 $router->get('/entries/create', [EntryController::class, 'create']);

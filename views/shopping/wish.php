@@ -9,12 +9,21 @@ $formatDate = static function (?string $value): string {
     return (new DateTimeImmutable($value))->format('d/m/Y');
 };
 $todayInput = (new DateTimeImmutable('now'))->format('Y-m-d');
+$pendingItems = array_values(array_filter($items, static fn (array $item): bool => ((int) $item['is_purchased']) === 0));
+$purchasedItems = array_values(array_filter($items, static fn (array $item): bool => ((int) $item['is_purchased']) === 1));
 $itemsByVehicle = [];
+$pendingItemsByVehicle = [];
+$purchasedItemsByVehicle = [];
 
 if ($type === 'vehicle') {
-    foreach ($items as $item) {
+    foreach ($pendingItems as $item) {
         $vehicleName = (string) ($item['vehicle_name'] ?? 'Sem veiculo');
-        $itemsByVehicle[$vehicleName][] = $item;
+        $pendingItemsByVehicle[$vehicleName][] = $item;
+    }
+
+    foreach ($purchasedItems as $item) {
+        $vehicleName = (string) ($item['vehicle_name'] ?? 'Sem veiculo');
+        $purchasedItemsByVehicle[$vehicleName][] = $item;
     }
 }
 
@@ -213,10 +222,10 @@ ob_start();
 </section>
 
 <section class="card section-card shopping-items-panel">
-    <h2 class="section-title"><span class="bi bi-check2-square"></span>Itens cadastrados</h2>
+    <h2 class="section-title"><span class="bi bi-hourglass-split"></span>Itens pendentes</h2>
     <?php if ($type === 'vehicle'): ?>
         <div class="shopping-list vehicle-group-list">
-            <?php foreach ($itemsByVehicle as $vehicleName => $vehicleItems): ?>
+            <?php foreach ($pendingItemsByVehicle as $vehicleName => $vehicleItems): ?>
                 <section class="vehicle-group">
                     <h3><span class="bi bi-car-front"></span><?= htmlspecialchars($vehicleName, ENT_QUOTES, 'UTF-8') ?></h3>
                     <div class="shopping-list">
@@ -229,15 +238,45 @@ ob_start();
         </div>
     <?php else: ?>
         <div class="shopping-list">
-            <?php foreach ($items as $item): ?>
+            <?php foreach ($pendingItems as $item): ?>
                 <?php $renderItem($item); ?>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
-    <?php if ($items === []): ?>
-        <p class="muted">Nenhum item cadastrado ainda.</p>
+    <?php if ($pendingItems === []): ?>
+        <p class="muted">Nenhum item pendente.</p>
     <?php endif; ?>
 </section>
+
+<details class="card section-card shopping-items-panel purchased-items-panel">
+    <summary>
+        <span><span class="bi bi-bag-check"></span> Itens comprados</span>
+        <small><?= count($purchasedItems) ?> itens</small>
+    </summary>
+    <?php if ($type === 'vehicle'): ?>
+        <div class="shopping-list vehicle-group-list">
+            <?php foreach ($purchasedItemsByVehicle as $vehicleName => $vehicleItems): ?>
+                <section class="vehicle-group">
+                    <h3><span class="bi bi-car-front"></span><?= htmlspecialchars($vehicleName, ENT_QUOTES, 'UTF-8') ?></h3>
+                    <div class="shopping-list">
+                        <?php foreach ($vehicleItems as $item): ?>
+                            <?php $renderItem($item); ?>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            <?php endforeach; ?>
+        </div>
+    <?php else: ?>
+        <div class="shopping-list">
+            <?php foreach ($purchasedItems as $item): ?>
+                <?php $renderItem($item); ?>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+    <?php if ($purchasedItems === []): ?>
+        <p class="muted">Nenhum item comprado ainda.</p>
+    <?php endif; ?>
+</details>
 <?php
 $content = (string) ob_get_clean();
 require base_path('views/layout.php');

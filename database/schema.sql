@@ -289,4 +289,13 @@ CREATE TABLE IF NOT EXISTS contacts (
     CONSTRAINT fk_contacts_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS discord_notification_settings (
+    id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+    is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    webhook_url VARCHAR(500) NULL,
+    notify_market_list_created TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('viewer');

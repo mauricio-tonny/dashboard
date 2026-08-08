@@ -753,6 +753,49 @@
             color: var(--brand-dark);
             font-weight: 800;
         }
+        .purchased-items-panel {
+            box-shadow: none;
+        }
+        .purchased-items-panel > summary {
+            align-items: center;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            list-style: none;
+        }
+        .purchased-items-panel > summary::-webkit-details-marker {
+            display: none;
+        }
+        .purchased-items-panel > summary span {
+            align-items: center;
+            display: inline-flex;
+            font-weight: 800;
+            gap: 8px;
+        }
+        .purchased-items-panel > summary small {
+            color: var(--muted);
+        }
+        .checkbox-card {
+            align-items: center;
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 12px;
+        }
+        .checkbox-card input {
+            width: auto;
+        }
+        pre {
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--brand-dark);
+            overflow-x: auto;
+            padding: 14px;
+        }
         .market-item-copy small,
         .shopping-item small,
         .settings-item small {
@@ -1271,6 +1314,7 @@
         <?php
         $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
         $isActive = static fn (string $path): string => $currentPath === $path ? 'is-active' : '';
+        $isActivePrefix = static fn (string $path): string => str_starts_with($currentPath, $path) ? 'is-active' : '';
         ?>
         <div class="app-shell">
             <div class="mobile-menu-overlay" data-menu-overlay></div>
@@ -1308,7 +1352,7 @@
                         <div class="nav-group">
                             <div class="nav-group-title">Compras</div>
                             <a class="nav-subitem <?= $isActive('/shopping') ?>" href="/shopping"><span class="bi bi-grid"></span>Visao geral</a>
-                            <a class="nav-subitem <?= $isActive('/shopping/market') ?>" href="/shopping/market"><span class="bi bi-basket2"></span>Mercado</a>
+                            <a class="nav-subitem <?= $isActivePrefix('/shopping/market') ?>" href="/shopping/market"><span class="bi bi-basket2"></span>Mercado</a>
                             <a class="nav-subitem <?= $isActive('/shopping/home') ?>" href="/shopping/home"><span class="bi bi-house-heart"></span>Para casa</a>
                             <a class="nav-subitem <?= $isActive('/shopping/family') ?>" href="/shopping/family"><span class="bi bi-people"></span>Para a familia</a>
                             <a class="nav-subitem <?= $isActive('/shopping/vehicle') ?>" href="/shopping/vehicle"><span class="bi bi-car-front"></span>Para o veiculo</a>
@@ -1321,7 +1365,9 @@
                     <?php endif; ?>
                     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_REPORT)): ?>
                         <div class="nav-group">
-                            <a class="<?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-bar-chart-line"></span>Relatorios</a>
+                            <div class="nav-group-title">Relatorios</div>
+                            <a class="nav-subitem <?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-grid"></span>Visao geral</a>
+                            <a class="nav-subitem <?= $isActive('/reports/market') ?>" href="/reports/market"><span class="bi bi-basket2"></span>Mercado</a>
                         </div>
                     <?php endif; ?>
                     <?php if ($user->hasRole(\App\Domain\Auth\Role::ADMIN)): ?>
