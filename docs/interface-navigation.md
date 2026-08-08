@@ -42,7 +42,7 @@ O menu Compras foi dividido em:
 - Para a familia.
 - Para o veiculo.
 
-A tela Mercado permite cadastrar itens com sessao, quantidade, valor unitario e subtotal, alem de vincular NFC-e/NF-e por XML, PDF/imagem ou chave de acesso. Arquivos XML sao importados automaticamente para atualizar itens semelhantes ou incluir produtos novos.
+A tela Mercado permite cadastrar itens com sessao, quantidade, valor unitario e subtotal, alem de vincular NFC-e/NF-e por XML, PDF/imagem ou chave de acesso. Arquivos XML e PDFs textuais da consulta publica sao importados automaticamente para atualizar itens semelhantes ou incluir produtos novos.
 
 ## Contatos
 

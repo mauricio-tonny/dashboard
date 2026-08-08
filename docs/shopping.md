@@ -36,7 +36,8 @@ Durante a compra, o usuario pode marcar cada item como pego. Ao finalizar, infor
 Tambem e possivel vincular NFC-e/NF-e a lista de mercado por tres caminhos:
 
 - Upload de XML, com importacao automatica dos itens.
-- Upload de PDF ou imagem, apenas como anexo para apoio futuro em relatorios.
+- Upload de PDF da consulta publica, com importacao automatica quando o texto do DANFE for extraivel.
+- Upload de imagem, apenas como anexo para apoio futuro em relatorios.
 - Cadastro da chave de acesso de 44 digitos, quando o XML nao estiver disponivel.
 
 Formatos aceitos:
@@ -54,13 +55,21 @@ Na leitura de XML, o sistema trata a lista como uma lista generica de intencao d
 
 O sistema tambem usa um DE/PARA inicial de sessao para classificar itens obvios. Exemplos: arroz entra em `DESPENSA`, sabao em po entra em `LIMPEZA`, leite entra em `LEITES E DERIVADOS`.
 
-O parser inicial considera a estrutura mais comum de NF-e/NFC-e:
+O parser inicial de XML considera a estrutura mais comum de NF-e/NFC-e:
 
 - `det/prod/xProd`: nome do produto.
 - `det/prod/qCom`: quantidade.
 - `det/prod/vUnCom`: valor unitario.
 - `det/prod/vProd`: valor total do item.
 - `ICMSTot/vNF`: valor total da nota.
+
+O parser inicial de PDF considera o layout textual da consulta publica da NFC-e do Parana, usando:
+
+- Nome do produto e codigo.
+- `Qtde.` como quantidade.
+- `Vl. Unit.` como valor unitario.
+- `Vl. Total` como subtotal do item.
+- `Valor a pagar R$` como total final da lista.
 
 Para evitar enviar dados domesticos para servicos externos, a primeira versao usa um marcador visual com a inicial do item no lugar de foto automatica. Futuramente podemos evoluir para upload local ou catalogo proprio de imagens.
 

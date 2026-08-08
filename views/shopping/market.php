@@ -194,13 +194,13 @@ ob_start();
         <h2 class="section-title"><span class="bi bi-receipt"></span>NFC-e / NF-e anexadas</h2>
         <p class="muted">
             Escolha uma das formas abaixo para vincular notas a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
-            XML importa itens automaticamente; PDF/imagem ficam como anexo; chave de acesso salva os metadados para consulta publica.
+            XML e PDF da consulta publica importam itens automaticamente; imagem fica como anexo; chave de acesso salva os metadados.
         </p>
         <div class="grid">
             <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="soft-panel compact-form">
                 <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                 <h3><span class="bi bi-file-earmark-arrow-up"></span> Upload de arquivo</h3>
-                <p class="muted">Use XML para importar itens. PDF, JPG e PNG ficam anexados para conferencia.</p>
+                <p class="muted">Use XML ou PDF da consulta publica para importar itens. JPG e PNG ficam anexados para conferencia.</p>
                 <label>
                     Mes da lista
                     <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>

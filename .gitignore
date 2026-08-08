@@ -5,3 +5,4 @@
 /storage/cache/*
 /storage/sessions/*
 /public/assets/brand/logo.png
+/tmp/

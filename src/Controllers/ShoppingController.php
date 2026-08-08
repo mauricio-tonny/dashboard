@@ -11,6 +11,7 @@ use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\Permission;
 use App\Domain\Shopping\AccessKeyParser;
+use App\Domain\Shopping\MarketInvoicePdfParser;
 use App\Domain\Shopping\MarketInvoiceXmlParser;
 use App\Domain\Shopping\ShoppingRepository;
 
@@ -235,7 +236,12 @@ final class ShoppingController extends Controller
             mkdir($directory, 0775, true);
         }
 
-        chmod($directory, 0775);
+        @chmod($directory, 0775);
+
+        if (!is_writable($directory)) {
+            $this->flash('error', 'A pasta de notas nao esta gravavel pelo servidor.');
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
 
         $storedName = $listId . '-' . bin2hex(random_bytes(12)) . '.' . $extension;
         $target = $directory . '/' . $storedName;
@@ -261,21 +267,25 @@ final class ShoppingController extends Controller
             'original_name' => $originalName,
         ]);
 
-        if ($extension === 'xml') {
+        if (in_array($extension, ['xml', 'pdf'], true)) {
             try {
-                $summary = $this->importMarketInvoiceXml($target, $listId, $auth->user()?->id);
-                $this->audit('shopping_market_invoice_imported', 'shopping_market_invoice', $id, $summary);
+                $summary = $extension === 'xml'
+                    ? $this->importMarketInvoiceXml($target, $listId, $auth->user()?->id)
+                    : $this->importMarketInvoicePdf($target, $listId, $auth->user()?->id);
+                $this->audit('shopping_market_invoice_imported', 'shopping_market_invoice', $id, ['source' => $extension, ...$summary]);
                 $this->flash('success', sprintf(
-                    'Nota anexada e XML importado: %d itens atualizados, %d itens incluidos e %d itens lidos.',
+                    'Nota anexada e %s importado: %d itens atualizados, %d itens incluidos e %d itens lidos.',
+                    mb_strtoupper($extension),
                     $summary['updated'],
                     $summary['created'],
                     $summary['read']
                 ));
             } catch (\Throwable $exception) {
                 $this->audit('shopping_market_invoice_import_failed', 'shopping_market_invoice', $id, [
+                    'source' => $extension,
                     'error' => $exception->getMessage(),
                 ]);
-                $this->flash('error', 'Nota anexada, mas nao foi possivel importar o XML: ' . $exception->getMessage());
+                $this->flash('error', 'Nota anexada, mas nao foi possivel importar o ' . mb_strtoupper($extension) . ': ' . $exception->getMessage());
             }
 
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
@@ -495,8 +505,17 @@ final class ShoppingController extends Controller
 
     private function importMarketInvoiceXml(string $file, int $listId, ?int $userId): array
     {
+        return $this->importParsedMarketInvoice((new MarketInvoiceXmlParser())->parse($file), $listId, $userId);
+    }
+
+    private function importMarketInvoicePdf(string $file, int $listId, ?int $userId): array
+    {
+        return $this->importParsedMarketInvoice((new MarketInvoicePdfParser())->parse($file), $listId, $userId);
+    }
+
+    private function importParsedMarketInvoice(array $invoice, int $listId, ?int $userId): array
+    {
         $repository = $this->app->make(ShoppingRepository::class);
-        $invoice = (new MarketInvoiceXmlParser())->parse($file);
         $sections = $repository->simpleOptions('market_sections', true);
         $items = $repository->marketItems($listId);
         $created = 0;
@@ -506,7 +525,9 @@ final class ShoppingController extends Controller
             throw new \RuntimeException('nenhum produto encontrado no XML.');
         }
 
-        foreach ($invoice['items'] as $invoiceItem) {
+        $invoiceItems = $this->aggregateInvoiceItems($invoice['items']);
+
+        foreach ($invoiceItems as $invoiceItem) {
             $section = $this->sectionForProduct((string) $invoiceItem['name'], $sections);
             $match = $this->findSimilarMarketItem((string) $invoiceItem['name'], $items);
             $sectionId = isset($section['id']) && (int) $section['id'] > 0 ? (int) $section['id'] : null;
@@ -554,6 +575,36 @@ final class ShoppingController extends Controller
         ];
     }
 
+    private function aggregateInvoiceItems(array $items): array
+    {
+        $aggregated = [];
+
+        foreach ($items as $item) {
+            $key = $this->normalizeText((string) $item['name']);
+            $quantity = (float) ($item['quantity'] ?? 1);
+            $amount = $item['amount'] ?? $item['subtotal_amount'] ?? null;
+
+            if (!isset($aggregated[$key])) {
+                $aggregated[$key] = $item;
+                $aggregated[$key]['quantity'] = $quantity;
+                $aggregated[$key]['amount'] = $amount;
+                $aggregated[$key]['subtotal_amount'] = $amount;
+                continue;
+            }
+
+            $aggregated[$key]['quantity'] = (float) $aggregated[$key]['quantity'] + $quantity;
+            $currentAmount = $aggregated[$key]['amount'] ?? $aggregated[$key]['subtotal_amount'] ?? null;
+            $aggregated[$key]['amount'] = $currentAmount === null || $amount === null ? null : round((float) $currentAmount + (float) $amount, 2);
+            $aggregated[$key]['subtotal_amount'] = $aggregated[$key]['amount'];
+
+            if ($aggregated[$key]['subtotal_amount'] !== null && (float) $aggregated[$key]['quantity'] > 0) {
+                $aggregated[$key]['unit_amount'] = round((float) $aggregated[$key]['subtotal_amount'] / (float) $aggregated[$key]['quantity'], 2);
+            }
+        }
+
+        return array_values($aggregated);
+    }
+
     private function sectionForProduct(string $name, array $sections): array
     {
         $byName = [];
@@ -569,7 +620,7 @@ final class ShoppingController extends Controller
             'ENLATADOS' => ['ENLATADO', 'MILHO', 'ERVILHA', 'SARDINHA', 'ATUM', 'EXTRATO', 'MOLHO TOMATE'],
             'BEBIDAS' => ['REFRIGERANTE', 'SUCO', 'AGUA', 'CERVEJA', 'VINHO', 'ENERGETICO', 'CHA'],
             'LEITES E DERIVADOS' => ['LEITE', 'IOGURTE', 'QUEIJO', 'REQUEIJAO', 'MANTEIGA', 'CREME DE LEITE', 'LEITE CONDENSADO'],
-            'HIGIENE E BELEZA' => ['SHAMPOO', 'CONDICIONADOR', 'SABONETE', 'CREME DENTAL', 'PASTA DENTE', 'ESCOVA', 'DESODORANTE', 'ABSORVENTE', 'PAPEL HIGIENICO'],
+            'HIGIENE E BELEZA' => ['SHAMPOO', 'CONDICIONADOR', 'SABONETE', 'CREME DENTAL', 'PASTA DENTE', 'ESCOVA', 'DESODORANTE', 'ABSORVENTE', 'PAPEL HIGIENICO', 'PAPEL HIG'],
             'BEBE E INFANTIL' => ['FRALDA', 'LENCOS UMEDECIDOS', 'MAMADEIRA', 'CHUPETA', 'BEBE', 'INFANTIL'],
             'PADARIA' => ['PAO', 'BISNAGUINHA', 'BOLO', 'TORRADA', 'SONHO', 'BROA'],
             'DOCES' => ['CHOCOLATE', 'BALA', 'DOCE', 'BISCOITO', 'BOLACHA', 'SORVETE', 'GELATINA'],
