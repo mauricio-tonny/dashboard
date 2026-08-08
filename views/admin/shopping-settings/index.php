@@ -44,7 +44,7 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
 };
 ?>
 <section class="card">
-    <span class="badge">admin</span>
+    <span class="badge">Administrador</span>
     <h1>Configuracao compras</h1>
     <p class="muted">Gerencie os cadastros usados nas listas de casa, familia e veiculos.</p>
 

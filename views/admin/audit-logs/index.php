@@ -32,7 +32,7 @@ $labels = [
 ];
 ?>
 <section class="card">
-    <span class="badge">admin</span>
+    <span class="badge">Administrador</span>
     <h1>Logs de auditoria</h1>
     <p class="muted">Acompanhe acessos e acoes importantes realizadas no sistema.</p>
 

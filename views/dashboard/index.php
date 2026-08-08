@@ -3,7 +3,7 @@ $title = 'Dashboard';
 ob_start();
 ?>
 <section class="card">
-    <span class="badge"><?= htmlspecialchars($user->role->value, ENT_QUOTES, 'UTF-8') ?></span>
+    <span class="badge"><?= htmlspecialchars($user->role->label(), ENT_QUOTES, 'UTF-8') ?></span>
     <h1>Ola, <?= htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8') ?></h1>
     <p class="muted">Este painel inicial ja separa autenticacao, autorizacao e a camada que depois vai conversar com sua planilha.</p>
 

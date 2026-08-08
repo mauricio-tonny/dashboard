@@ -3,7 +3,7 @@ $title = 'Usuarios';
 ob_start();
 ?>
 <section class="card">
-    <span class="badge">admin</span>
+    <span class="badge">Administrador</span>
     <h1>Usuarios do sistema</h1>
     <p class="muted">Crie, edite e bloqueie acessos. Alteracoes exigem sua senha para reduzir o risco de uma mudanca acidental ou indevida.</p>
 
@@ -38,7 +38,7 @@ ob_start();
             Perfil
             <select name="role" required>
                 <?php foreach ($roles as $role): ?>
-                    <option value="<?= htmlspecialchars($role->value, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($role->value, ENT_QUOTES, 'UTF-8') ?></option>
+                    <option value="<?= htmlspecialchars($role->value, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($role->label(), ENT_QUOTES, 'UTF-8') ?></option>
                 <?php endforeach; ?>
             </select>
         </label>
@@ -76,7 +76,11 @@ ob_start();
                             <strong><?= htmlspecialchars($managedUser['name'], ENT_QUOTES, 'UTF-8') ?></strong><br>
                             <span class="muted"><?= htmlspecialchars($managedUser['email'], ENT_QUOTES, 'UTF-8') ?></span>
                         </td>
-                        <td><span class="badge"><?= htmlspecialchars($managedUser['role'], ENT_QUOTES, 'UTF-8') ?></span></td>
+                        <td>
+                            <span class="badge">
+                                <?= htmlspecialchars(\App\Domain\Auth\Role::from($managedUser['role'])->label(), ENT_QUOTES, 'UTF-8') ?>
+                            </span>
+                        </td>
                         <td><?= ((int) $managedUser['is_active']) === 1 ? 'Ativo' : 'Bloqueado' ?></td>
                         <td><?= htmlspecialchars($managedUser['last_login_at'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
@@ -97,7 +101,7 @@ ob_start();
                                         <select name="role" required>
                                             <?php foreach ($roles as $role): ?>
                                                 <option value="<?= htmlspecialchars($role->value, ENT_QUOTES, 'UTF-8') ?>" <?= $managedUser['role'] === $role->value ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($role->value, ENT_QUOTES, 'UTF-8') ?>
+                                                    <?= htmlspecialchars($role->label(), ENT_QUOTES, 'UTF-8') ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>
