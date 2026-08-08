@@ -245,6 +245,20 @@ final class ShoppingRepository
         ]);
     }
 
+    public function updateMarketListTotal(int $id, ?float $totalAmount): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE shopping_market_lists
+             SET total_amount = :total_amount,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $statement->execute([
+            'id' => $id,
+            'total_amount' => $totalAmount,
+        ]);
+    }
+
     public function wishItems(string $type): array
     {
         $statement = $this->database->connection()->prepare(

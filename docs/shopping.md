@@ -33,7 +33,7 @@ Campos do item:
 
 Durante a compra, o usuario pode marcar cada item como pego. Ao finalizar, informa o valor total da compra.
 
-Tambem e possivel anexar arquivos de NFC-e/NF-e a lista de mercado. Nesta fase, o sistema armazena o arquivo para apoio futuro em relatorios, mas ainda nao interpreta automaticamente XML, PDF ou imagem.
+Tambem e possivel anexar arquivos de NFC-e/NF-e a lista de mercado. Arquivos XML sao interpretados automaticamente na importacao. PDF e imagem ainda ficam armazenados apenas para apoio futuro em relatorios.
 
 Formatos aceitos:
 
@@ -44,9 +44,17 @@ Formatos aceitos:
 
 Limite inicial: 5 MB por arquivo.
 
-Na futura leitura de XML, o sistema deve tratar a lista como uma lista generica de intencao de compra. Exemplo: o usuario pode cadastrar `Arroz` ou `Pacote 5Kg Arroz`, sem informar marca. Ao importar o XML, o sistema devera procurar itens similares na lista do mes selecionado e atualizar quantidade, valor unitario e subtotal quando encontrar correspondencia. Itens da nota que nao existirem na lista deverao ser incluidos automaticamente.
+Na leitura de XML, o sistema trata a lista como uma lista generica de intencao de compra. Exemplo: o usuario pode cadastrar `Arroz` ou `Pacote 5Kg Arroz`, sem informar marca. Ao importar o XML, o sistema procura itens similares na lista do mes selecionado e atualiza quantidade, valor unitario e subtotal quando encontra correspondencia. Itens da nota que nao existirem na lista sao incluidos automaticamente.
 
-Tambem sera necessario manter um DE/PARA de sessao para classificar itens obvios. Exemplos: arroz entra em `DESPENSA`, sabao em po entra em `LIMPEZA`, leite entra em `LEITES E DERIVADOS`.
+O sistema tambem usa um DE/PARA inicial de sessao para classificar itens obvios. Exemplos: arroz entra em `DESPENSA`, sabao em po entra em `LIMPEZA`, leite entra em `LEITES E DERIVADOS`.
+
+O parser inicial considera a estrutura mais comum de NF-e/NFC-e:
+
+- `det/prod/xProd`: nome do produto.
+- `det/prod/qCom`: quantidade.
+- `det/prod/vUnCom`: valor unitario.
+- `det/prod/vProd`: valor total do item.
+- `ICMSTot/vNF`: valor total da nota.
 
 Para evitar enviar dados domesticos para servicos externos, a primeira versao usa um marcador visual com a inicial do item no lugar de foto automatica. Futuramente podemos evoluir para upload local ou catalogo proprio de imagens.
 

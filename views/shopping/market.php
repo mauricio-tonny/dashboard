@@ -180,7 +180,7 @@ ob_start();
         <h2 class="section-title"><span class="bi bi-receipt"></span>NFC-e / NF-e anexadas</h2>
         <p class="muted">
             O upload abaixo sera vinculado claramente a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
-            Na proxima etapa, o XML podera preencher valores e cruzar itens por similaridade.
+            Arquivos XML serao importados automaticamente, atualizando itens semelhantes e incluindo itens novos da nota.
         </p>
         <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="inline-form align-end-form">
             <input type="hidden" name="list_id" value="<?= $selectedListId ?>">

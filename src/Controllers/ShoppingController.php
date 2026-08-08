@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\Permission;
+use App\Domain\Shopping\MarketInvoiceXmlParser;
 use App\Domain\Shopping\ShoppingRepository;
 
 final class ShoppingController extends Controller
@@ -233,6 +234,8 @@ final class ShoppingController extends Controller
             mkdir($directory, 0775, true);
         }
 
+        chmod($directory, 0775);
+
         $storedName = $listId . '-' . bin2hex(random_bytes(12)) . '.' . $extension;
         $target = $directory . '/' . $storedName;
 
@@ -241,7 +244,10 @@ final class ShoppingController extends Controller
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
-        $id = $this->app->make(ShoppingRepository::class)->addMarketInvoice(
+        chmod($target, 0664);
+
+        $repository = $this->app->make(ShoppingRepository::class);
+        $id = $repository->addMarketInvoice(
             $listId,
             $originalName,
             $storedName,
@@ -253,6 +259,27 @@ final class ShoppingController extends Controller
             'list_id' => $listId,
             'original_name' => $originalName,
         ]);
+
+        if ($extension === 'xml') {
+            try {
+                $summary = $this->importMarketInvoiceXml($target, $listId, $auth->user()?->id);
+                $this->audit('shopping_market_invoice_imported', 'shopping_market_invoice', $id, $summary);
+                $this->flash('success', sprintf(
+                    'Nota anexada e XML importado: %d itens atualizados, %d itens incluidos e %d itens lidos.',
+                    $summary['updated'],
+                    $summary['created'],
+                    $summary['read']
+                ));
+            } catch (\Throwable $exception) {
+                $this->audit('shopping_market_invoice_import_failed', 'shopping_market_invoice', $id, [
+                    'error' => $exception->getMessage(),
+                ]);
+                $this->flash('error', 'Nota anexada, mas nao foi possivel importar o XML: ' . $exception->getMessage());
+            }
+
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
+
         $this->flash('success', 'Nota anexada a lista de mercado.');
 
         return Response::redirect('/shopping/market?market_list_id=' . $listId);
@@ -436,6 +463,168 @@ final class ShoppingController extends Controller
             'amount' => $amount,
             'subtotal_amount' => $subtotal,
         ];
+    }
+
+    private function importMarketInvoiceXml(string $file, int $listId, ?int $userId): array
+    {
+        $repository = $this->app->make(ShoppingRepository::class);
+        $invoice = (new MarketInvoiceXmlParser())->parse($file);
+        $sections = $repository->simpleOptions('market_sections', true);
+        $items = $repository->marketItems($listId);
+        $created = 0;
+        $updated = 0;
+
+        if ($invoice['items'] === []) {
+            throw new \RuntimeException('nenhum produto encontrado no XML.');
+        }
+
+        foreach ($invoice['items'] as $invoiceItem) {
+            $section = $this->sectionForProduct((string) $invoiceItem['name'], $sections);
+            $match = $this->findSimilarMarketItem((string) $invoiceItem['name'], $items);
+            $sectionId = isset($section['id']) && (int) $section['id'] > 0 ? (int) $section['id'] : null;
+            $data = [
+                'name' => $match === null ? (string) $invoiceItem['name'] : (string) $match['name'],
+                'section_id' => $match === null || (int) ($match['section_id'] ?? 0) === 0 ? $sectionId : (int) $match['section_id'],
+                'section' => $match === null || (string) ($match['section'] ?? '') === '' ? (string) $section['name'] : (string) $match['section'],
+                'quantity' => (float) $invoiceItem['quantity'],
+                'unit_amount' => $invoiceItem['unit_amount'],
+                'amount' => $invoiceItem['amount'],
+                'subtotal_amount' => $invoiceItem['subtotal_amount'],
+            ];
+
+            if ($match === null) {
+                $newId = $repository->addMarketItem(['list_id' => $listId, ...$data], $userId);
+                $repository->toggleMarketItem($newId, true);
+                $items[] = ['id' => $newId, 'list_id' => $listId, 'is_checked' => 1, ...$data];
+                $created++;
+                continue;
+            }
+
+            $repository->updateMarketItem((int) $match['id'], $data);
+            $repository->toggleMarketItem((int) $match['id'], true);
+            $items = array_map(
+                static fn (array $item): array => (int) $item['id'] === (int) $match['id']
+                    ? [...$item, ...$data, 'is_checked' => 1]
+                    : $item,
+                $items
+            );
+            $updated++;
+        }
+
+        if ($invoice['total_amount'] !== null) {
+            $repository->updateMarketListTotal($listId, (float) $invoice['total_amount']);
+        }
+
+        return [
+            'read' => count($invoice['items']),
+            'created' => $created,
+            'updated' => $updated,
+            'total_amount' => $invoice['total_amount'],
+            'issuer' => $invoice['issuer'],
+            'issued_at' => $invoice['issued_at'],
+            'access_key' => $invoice['access_key'],
+        ];
+    }
+
+    private function sectionForProduct(string $name, array $sections): array
+    {
+        $byName = [];
+
+        foreach ($sections as $section) {
+            $byName[$this->normalizeText((string) $section['name'])] = $section;
+        }
+
+        $normalized = $this->normalizeText($name);
+        $map = [
+            'LIMPEZA' => ['SABAO', 'DETERGENTE', 'AMACIANTE', 'DESINFETANTE', 'AGUA SANITARIA', 'LIMPADOR', 'ESPONJA', 'MULTIUSO', 'ALVEJANTE'],
+            'CARNES' => ['CARNE', 'FRANGO', 'BOVINO', 'SUINO', 'LINGUICA', 'PEIXE', 'SALSICHA', 'HAMBURGUER', 'PICANHA', 'PATINHO', 'ACEM'],
+            'ENLATADOS' => ['ENLATADO', 'MILHO', 'ERVILHA', 'SARDINHA', 'ATUM', 'EXTRATO', 'MOLHO TOMATE'],
+            'BEBIDAS' => ['REFRIGERANTE', 'SUCO', 'AGUA', 'CERVEJA', 'VINHO', 'ENERGETICO', 'CHA'],
+            'LEITES E DERIVADOS' => ['LEITE', 'IOGURTE', 'QUEIJO', 'REQUEIJAO', 'MANTEIGA', 'CREME DE LEITE', 'LEITE CONDENSADO'],
+            'HIGIENE E BELEZA' => ['SHAMPOO', 'CONDICIONADOR', 'SABONETE', 'CREME DENTAL', 'PASTA DENTE', 'ESCOVA', 'DESODORANTE', 'ABSORVENTE', 'PAPEL HIGIENICO'],
+            'BEBE E INFANTIL' => ['FRALDA', 'LENCOS UMEDECIDOS', 'MAMADEIRA', 'CHUPETA', 'BEBE', 'INFANTIL'],
+            'PADARIA' => ['PAO', 'BISNAGUINHA', 'BOLO', 'TORRADA', 'SONHO', 'BROA'],
+            'DOCES' => ['CHOCOLATE', 'BALA', 'DOCE', 'BISCOITO', 'BOLACHA', 'SORVETE', 'GELATINA'],
+            'CASA' => ['PILHA', 'LAMPADA', 'FILTRO', 'SACO LIXO', 'PANO', 'UTENSILIO'],
+            'PET' => ['RACAO', 'PET', 'CACHORRO', 'GATO', 'AREIA HIGIENICA', 'BIFINHO'],
+            'COMIDAS PRONTAS' => ['LASANHA', 'PIZZA', 'CONGELADO', 'PRONTO', 'MARMITA', 'SALGADO'],
+            'DESPENSA' => ['ARROZ', 'FEIJAO', 'MACARRAO', 'ACUCAR', 'CAFE', 'FARINHA', 'OLEO', 'AZEITE', 'SAL', 'TEMPERO', 'AVEIA', 'CEREAL'],
+        ];
+
+        foreach ($map as $sectionName => $keywords) {
+            $section = $byName[$this->normalizeText($sectionName)] ?? null;
+
+            if ($section === null) {
+                continue;
+            }
+
+            foreach ($keywords as $keyword) {
+                if (str_contains($normalized, $this->normalizeText($keyword))) {
+                    return $section;
+                }
+            }
+        }
+
+        return $byName['DESPENSA'] ?? ($sections[0] ?? ['id' => null, 'name' => 'DESPENSA']);
+    }
+
+    private function findSimilarMarketItem(string $invoiceName, array $items): ?array
+    {
+        $invoiceNormalized = $this->normalizeText($invoiceName);
+        $invoiceTokens = $this->tokens($invoiceNormalized);
+        $best = null;
+        $bestScore = 0.0;
+
+        foreach ($items as $item) {
+            $itemNormalized = $this->normalizeText((string) $item['name']);
+            $itemTokens = $this->tokens($itemNormalized);
+
+            if ($itemTokens === []) {
+                continue;
+            }
+
+            $intersection = array_intersect($itemTokens, $invoiceTokens);
+            $tokenScore = count($intersection) / max(1, count($itemTokens));
+            similar_text($itemNormalized, $invoiceNormalized, $similarity);
+            $containsBonus = str_contains($invoiceNormalized, $itemNormalized) || str_contains($itemNormalized, $invoiceNormalized) ? 0.35 : 0.0;
+            $score = ($tokenScore * 0.65) + (($similarity / 100) * 0.25) + $containsBonus;
+
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $best = $item;
+            }
+        }
+
+        return $bestScore >= 0.72 ? $best : null;
+    }
+
+    private function tokens(string $normalized): array
+    {
+        $ignored = ['KG', 'G', 'GR', 'ML', 'L', 'LT', 'UN', 'UND', 'PCT', 'PC', 'PACOTE', 'CAIXA', 'CX', 'FD', 'FARDO', 'TIPO'];
+        $tokens = preg_split('/\s+/', $normalized) ?: [];
+
+        return array_values(array_filter($tokens, static function (string $token) use ($ignored): bool {
+            return mb_strlen($token) >= 3
+                && !is_numeric($token)
+                && !in_array($token, $ignored, true)
+                && !preg_match('/^\d+(KG|G|ML|L|UN)$/', $token);
+        }));
+    }
+
+    private function normalizeText(string $value): string
+    {
+        $value = mb_strtoupper($value, 'UTF-8');
+        $value = strtr($value, [
+            'Á' => 'A', 'À' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A',
+            'É' => 'E', 'È' => 'E', 'Ê' => 'E', 'Ë' => 'E',
+            'Í' => 'I', 'Ì' => 'I', 'Î' => 'I', 'Ï' => 'I',
+            'Ó' => 'O', 'Ò' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O',
+            'Ú' => 'U', 'Ù' => 'U', 'Û' => 'U', 'Ü' => 'U',
+            'Ç' => 'C',
+        ]);
+        $value = preg_replace('/[^\pL\pN]+/u', ' ', $value) ?? $value;
+
+        return trim((string) preg_replace('/\s+/', ' ', $value));
     }
 
     private function nullableInt(mixed $value): ?int
