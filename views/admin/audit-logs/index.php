@@ -35,18 +35,20 @@ $labels = [
     'contact_disabled' => 'Contato desativado',
 ];
 ?>
-<section class="card">
-    <span class="badge">Administrador</span>
-    <h1>Logs de auditoria</h1>
-    <p class="muted">Acompanhe acessos e acoes importantes realizadas no sistema.</p>
-
-    <div class="actions">
-        <a href="/"><button class="inline-button" type="button">Voltar ao dashboard</button></a>
+<section class="page-hero">
+    <div class="page-hero-content">
+        <span class="page-hero-icon bi bi-journal-text"></span>
+        <div>
+            <span class="badge">Administrador</span>
+            <h1>Logs de auditoria</h1>
+            <p class="muted">Acompanhe acessos e acoes importantes realizadas no sistema.</p>
+        </div>
     </div>
 </section>
 
-<section class="card">
-    <div style="overflow-x: auto;">
+<section class="card section-card">
+    <h2 class="section-title"><span class="bi bi-clock-history"></span>Eventos recentes</h2>
+    <div class="responsive-table">
         <table class="table align-middle">
             <thead>
                 <tr>

@@ -4,8 +4,8 @@ ob_start();
 
 $renderSimple = static function (string $title, string $kind, array $items): void {
 ?>
-    <article class="card">
-        <h2><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></h2>
+    <article class="card section-card">
+        <h2 class="section-title"><span class="bi bi-sliders"></span><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></h2>
         <form method="post" action="/admin/shopping-settings/simple" class="inline-form">
             <input type="hidden" name="kind" value="<?= htmlspecialchars($kind, ENT_QUOTES, 'UTF-8') ?>">
             <label>
@@ -43,14 +43,18 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
 <?php
 };
 ?>
-<section class="card">
-    <span class="badge">Administrador</span>
-    <h1>Configuracao compras</h1>
-    <p class="muted">Gerencie os cadastros usados nas listas de casa, familia e veiculos.</p>
+<section class="page-hero">
+    <div class="page-hero-content">
+        <span class="page-hero-icon bi bi-sliders"></span>
+        <div>
+            <span class="badge">Administrador</span>
+            <h1>Configuracao compras</h1>
+            <p class="muted">Gerencie os cadastros usados nas listas de casa, familia e veiculos.</p>
+        </div>
+    </div>
 
-    <div class="actions">
+    <div class="page-hero-actions">
         <a href="/shopping"><button class="inline-button" type="button">Voltar para compras</button></a>
-        <a href="/"><button class="inline-button" type="button">Dashboard</button></a>
     </div>
 </section>
 
@@ -68,8 +72,8 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
     <?php $renderSimple('Areas do veiculo', 'vehicle_areas', $vehicleAreas); ?>
 </section>
 
-<section class="card">
-    <h2>Veiculos</h2>
+<section class="card section-card">
+    <h2 class="section-title"><span class="bi bi-car-front"></span>Veiculos</h2>
     <form method="post" action="/admin/shopping-settings/vehicles" class="form-grid">
         <label>
             Nome

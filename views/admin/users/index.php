@@ -2,13 +2,17 @@
 $title = 'Usuarios';
 ob_start();
 ?>
-<section class="card">
-    <span class="badge">Administrador</span>
-    <h1>Usuarios do sistema</h1>
-    <p class="muted">Crie, edite e bloqueie acessos. Alteracoes exigem sua senha para reduzir o risco de uma mudanca acidental ou indevida.</p>
+<section class="page-hero">
+    <div class="page-hero-content">
+        <span class="page-hero-icon bi bi-people"></span>
+        <div>
+            <span class="badge">Administrador</span>
+            <h1>Usuarios do sistema</h1>
+            <p class="muted">Crie, edite e bloqueie acessos. Alteracoes exigem sua senha para reduzir riscos.</p>
+        </div>
+    </div>
 
-    <div class="actions">
-        <a href="/"><button class="inline-button" type="button">Voltar ao dashboard</button></a>
+    <div class="page-hero-actions">
         <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
             <a href="/admin/audit-logs"><button class="inline-button" type="button">Logs de auditoria</button></a>
         <?php endif; ?>
@@ -23,8 +27,8 @@ ob_start();
     <div class="notice notice-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<section class="card">
-    <h2>Novo usuario</h2>
+<section class="card section-card">
+    <h2 class="section-title"><span class="bi bi-person-plus"></span>Novo usuario</h2>
     <form method="post" action="/admin/users" class="form-grid">
         <label>
             Nome
@@ -56,8 +60,8 @@ ob_start();
     </form>
 </section>
 
-<section class="card">
-    <h2>Usuarios cadastrados</h2>
+<section class="card section-card">
+    <h2 class="section-title"><span class="bi bi-person-badge"></span>Usuarios cadastrados</h2>
     <div class="responsive-table">
         <table>
             <thead>

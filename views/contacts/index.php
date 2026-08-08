@@ -3,12 +3,17 @@ $title = 'Contatos';
 $typeLabel = static fn (string $type): string => $type === 'vendor' ? 'Fornecedor' : 'Cliente';
 ob_start();
 ?>
-<section class="card">
-    <span class="badge">Contatos</span>
-    <h1>Fornecedores e clientes</h1>
-    <p class="muted">Cadastre contatos que depois poderao ser vinculados aos lancamentos financeiros.</p>
+<section class="page-hero">
+    <div class="page-hero-content">
+        <span class="page-hero-icon bi bi-person-lines-fill"></span>
+        <div>
+            <span class="badge">Contatos</span>
+            <h1>Fornecedores e clientes</h1>
+            <p class="muted">Cadastre contatos que depois poderao ser vinculados aos lancamentos financeiros.</p>
+        </div>
+    </div>
 
-    <div class="actions">
+    <div class="page-hero-actions">
         <a href="/contacts"><button class="inline-button" type="button">Todos</button></a>
         <a href="/contacts?type=vendor"><button class="inline-button" type="button">Fornecedores</button></a>
         <a href="/contacts?type=client"><button class="inline-button" type="button">Clientes</button></a>
@@ -24,8 +29,8 @@ ob_start();
 <?php endif; ?>
 
 <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CONTACTS)): ?>
-    <section class="card">
-        <h2>Novo contato</h2>
+    <section class="card section-card">
+        <h2 class="section-title"><span class="bi bi-person-plus"></span>Novo contato</h2>
         <form method="post" action="/contacts" class="form-grid">
             <label>
                 Tipo
@@ -77,8 +82,8 @@ ob_start();
     </section>
 <?php endif; ?>
 
-<section class="card">
-    <h2>Contatos cadastrados</h2>
+<section class="card section-card">
+    <h2 class="section-title"><span class="bi bi-card-list"></span>Contatos cadastrados</h2>
     <div class="responsive-table">
         <table>
             <thead>

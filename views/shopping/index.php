@@ -24,8 +24,8 @@ $renderWishSection = static function (
     array $vehicleAreas = []
 ) use ($formatMoney): void {
 ?>
-    <article class="card shopping-panel">
-        <h2><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></h2>
+    <article class="card section-card shopping-panel">
+        <h2 class="section-title"><span class="bi bi-check2-square"></span><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></h2>
         <form method="post" action="/shopping/wish-items" class="form-grid">
             <input type="hidden" name="type" value="<?= htmlspecialchars($type, ENT_QUOTES, 'UTF-8') ?>">
             <label>
@@ -149,13 +149,17 @@ $renderWishSection = static function (
 <?php
 };
 ?>
-<section class="card">
-    <span class="badge">compras</span>
-    <h1>Listas de compras</h1>
-    <p class="muted">Controle mercado por mes e mantenha listas unicas para casa, familia e veiculos.</p>
+<section class="page-hero">
+    <div class="page-hero-content">
+        <span class="page-hero-icon bi bi-basket2"></span>
+        <div>
+            <span class="badge">Compras</span>
+            <h1>Listas de compras</h1>
+            <p class="muted">Controle mercado por mes e mantenha listas unicas para casa, familia e veiculos.</p>
+        </div>
+    </div>
 
-    <div class="actions">
-        <a href="/"><button class="inline-button" type="button">Voltar ao dashboard</button></a>
+    <div class="page-hero-actions">
         <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING_SETTINGS)): ?>
             <a href="/admin/shopping-settings"><button class="inline-button" type="button">Configuracao compras</button></a>
         <?php endif; ?>
@@ -170,7 +174,7 @@ $renderWishSection = static function (
     <div class="notice notice-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<section class="card shopping-hero">
+<section class="card section-card shopping-hero">
     <div>
         <h2>Mercado mensal</h2>
         <p class="muted">A sugestao padrao e sempre o proximo mes.</p>
@@ -185,8 +189,8 @@ $renderWishSection = static function (
 </section>
 
 <section class="grid">
-    <article class="card">
-        <h2>Listas de mercado</h2>
+    <article class="card section-card">
+        <h2 class="section-title"><span class="bi bi-calendar3"></span>Listas de mercado</h2>
         <?php foreach ($marketLists as $list): ?>
             <a class="month-pill <?= (int) $list['id'] === $selectedListId ? 'is-active' : '' ?>" href="/shopping?market_list_id=<?= (int) $list['id'] ?>">
                 <?= htmlspecialchars($monthLabel($list['reference_month']), ENT_QUOTES, 'UTF-8') ?>
@@ -198,8 +202,8 @@ $renderWishSection = static function (
         <?php endif; ?>
     </article>
 
-    <article class="card">
-        <h2>Itens do mercado</h2>
+    <article class="card section-card">
+        <h2 class="section-title"><span class="bi bi-cart-check"></span>Itens do mercado</h2>
         <?php if ($selectedMarketList): ?>
             <p class="muted">
                 Lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.

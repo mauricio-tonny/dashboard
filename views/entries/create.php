@@ -2,9 +2,19 @@
 $title = 'Novo lancamento';
 ob_start();
 ?>
-<section class="card" style="max-width: 720px; margin: 0 auto;">
-    <h1>Novo lancamento</h1>
-    <p class="muted">Formulario inicial para cadastro. Nesta fase, os dados ficam auditados em log enquanto a integracao real com o Excel ainda nao foi implementada.</p>
+<section class="page-hero">
+    <div class="page-hero-content">
+        <span class="page-hero-icon bi bi-plus-circle"></span>
+        <div>
+            <span class="badge">Financeiro</span>
+            <h1>Novo lancamento</h1>
+            <p class="muted">Formulario inicial para cadastro enquanto a integracao real com o Excel ainda nao foi implementada.</p>
+        </div>
+    </div>
+</section>
+
+<section class="card section-card" style="max-width: 820px;">
+    <h2 class="section-title"><span class="bi bi-pencil-square"></span>Dados do lancamento</h2>
 
     <?php if (!empty($error)): ?>
         <p class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
@@ -46,11 +56,10 @@ ob_start();
 
         <div class="actions">
             <button type="submit">Salvar</button>
-            <a href="/"><button class="inline-button" type="button">Cancelar</button></a>
+            <a href="/finance/payable"><button class="inline-button" type="button">Cancelar</button></a>
         </div>
     </form>
 </section>
 <?php
 $content = (string) ob_get_clean();
 require base_path('views/layout.php');
-
