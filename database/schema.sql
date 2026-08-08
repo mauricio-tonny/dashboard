@@ -209,6 +209,7 @@ CREATE TABLE IF NOT EXISTS shopping_market_invoices (
     issue_type CHAR(1) NULL,
     numeric_code CHAR(8) NULL,
     check_digit CHAR(1) NULL,
+    purchase_date DATETIME NULL,
     public_url VARCHAR(500) NULL,
     status VARCHAR(40) NOT NULL DEFAULT 'stored',
     uploaded_by_user_id BIGINT UNSIGNED NULL,

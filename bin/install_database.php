@@ -72,6 +72,7 @@ try {
     ensureColumn($pdo, 'shopping_market_invoices', 'issue_type', 'ALTER TABLE shopping_market_invoices ADD COLUMN issue_type CHAR(1) NULL AFTER document_number');
     ensureColumn($pdo, 'shopping_market_invoices', 'numeric_code', 'ALTER TABLE shopping_market_invoices ADD COLUMN numeric_code CHAR(8) NULL AFTER issue_type');
     ensureColumn($pdo, 'shopping_market_invoices', 'check_digit', 'ALTER TABLE shopping_market_invoices ADD COLUMN check_digit CHAR(1) NULL AFTER numeric_code');
+    ensureColumn($pdo, 'shopping_market_invoices', 'purchase_date', 'ALTER TABLE shopping_market_invoices ADD COLUMN purchase_date DATETIME NULL AFTER check_digit');
     ensureColumn($pdo, 'shopping_market_invoices', 'public_url', 'ALTER TABLE shopping_market_invoices ADD COLUMN public_url VARCHAR(500) NULL AFTER check_digit');
     ensureColumn($pdo, 'shopping_market_invoices', 'status', "ALTER TABLE shopping_market_invoices ADD COLUMN status VARCHAR(40) NOT NULL DEFAULT 'stored' AFTER public_url");
     ensureIndex($pdo, 'shopping_market_invoices', 'idx_market_invoices_access_key', 'CREATE INDEX idx_market_invoices_access_key ON shopping_market_invoices (access_key)');

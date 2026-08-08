@@ -362,6 +362,13 @@ final class ShoppingController extends Controller
                 $summary = $extension === 'xml'
                     ? $this->importMarketInvoiceXml($target, $listId, $auth->user()?->id)
                     : $this->importMarketInvoicePdf($target, $listId, $auth->user()?->id);
+                $repository->updateMarketInvoiceMetadata($id, [
+                    'access_key' => $summary['access_key'] ?? null,
+                    'issued_at' => $summary['issued_at'] ?? null,
+                ]);
+                if (@unlink($target)) {
+                    $repository->clearMarketInvoiceFile($id);
+                }
                 $this->audit('shopping_market_invoice_imported', 'shopping_market_invoice', $id, ['source' => $extension, ...$summary]);
                 $this->flash('success', sprintf(
                     'Nota anexada e %s importado: %d itens atualizados, %d itens incluidos e %d itens lidos.',

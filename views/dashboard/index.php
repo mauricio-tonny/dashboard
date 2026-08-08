@@ -58,13 +58,7 @@ ob_start();
         <small>Para casa</small>
         <strong><?= count($pendingHomeItems) ?> pendentes</strong>
         <p class="muted">Ultimos 10 itens ainda nao confirmados.</p>
-    </article>
-</section>
-
-<section class="dashboard-grid">
-    <article class="card">
-        <h2>Lista para casa</h2>
-        <div class="mini-list">
+        <div class="mini-list metric-mini-list">
             <?php foreach ($pendingHomeItems as $item): ?>
                 <div class="mini-list-item">
                     <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
@@ -75,6 +69,18 @@ ob_start();
                 <p class="muted">Nenhum item pendente para casa.</p>
             <?php endif; ?>
         </div>
+    </article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="card">
+        <h2>Prioridades para casa</h2>
+        <span class="metric-icon bi bi-exclamation-diamond"></span>
+        <strong class="dashboard-indicator"><?= (int) ($homePrioritySummary['high_priority_count'] ?? 0) ?> itens criticos</strong>
+        <p class="muted">
+            Itens pendentes com prioridade 8 ou maior.
+            Estimativa mapeada: <?= htmlspecialchars($formatMoney($homePrioritySummary['estimated_total'] ?? 0), ENT_QUOTES, 'UTF-8') ?>.
+        </p>
     </article>
 
     <article class="card">

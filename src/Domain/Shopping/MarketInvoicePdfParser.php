@@ -18,8 +18,8 @@ final class MarketInvoicePdfParser
         }
 
         return [
-            'access_key' => $this->match('/Chave de acesso:\s*([\d\s]{44,70})/u', $text),
-            'issued_at' => $this->match('/Emiss[aã]o:\s*([0-9\/:\s-]+)/u', $text),
+            'access_key' => $this->accessKey($text),
+            'issued_at' => $this->match('/Emiss\S*:\s*([0-9\/:\s-]+)/u', $text),
             'issuer' => $this->issuer($text),
             'total_amount' => $this->money($this->match('/Valor a pagar R\$:\s*([0-9.,]+)/u', $text))
                 ?? $this->money($this->match('/Valor total R\$:\s*([0-9.,]+)/u', $text)),
@@ -103,6 +103,19 @@ final class MarketInvoicePdfParser
         }
 
         return trim((string) ($match[1] ?? '')) ?: null;
+    }
+
+    private function accessKey(string $text): ?string
+    {
+        $key = $this->match('/Chave de acesso:\s*([\d\s]{44,70})/u', $text);
+
+        if ($key === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $key) ?? '';
+
+        return strlen($digits) === 44 ? $digits : null;
     }
 
     private function money(?string $value): ?float

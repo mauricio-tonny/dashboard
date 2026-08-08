@@ -81,6 +81,21 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function homePrioritySummary(): array
+    {
+        $statement = $this->database->connection()->query(
+            'SELECT COUNT(*) AS high_priority_count,
+                    COALESCE(SUM(estimated_amount), 0) AS estimated_total
+             FROM shopping_wish_items
+             WHERE type = "home"
+               AND is_purchased = 0
+               AND priority >= 8'
+        );
+        $summary = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $summary === false ? ['high_priority_count' => 0, 'estimated_total' => 0.0] : $summary;
+    }
+
     public function findOrCreateMarketList(string $referenceMonth, ?int $userId): int
     {
         $month = $this->normalizeMonth($referenceMonth);
@@ -202,6 +217,40 @@ final class ShoppingRepository
         ]);
 
         return (int) $this->database->connection()->lastInsertId();
+    }
+
+    public function updateMarketInvoiceMetadata(int $id, array $data): void
+    {
+        $accessKey = isset($data['access_key'])
+            ? preg_replace('/\D+/', '', (string) $data['access_key'])
+            : null;
+        $purchaseDate = $this->normalizeDateTime($data['issued_at'] ?? null);
+
+        $statement = $this->database->connection()->prepare(
+            'UPDATE shopping_market_invoices
+             SET access_key = COALESCE(NULLIF(:access_key, ""), access_key),
+                 purchase_date = COALESCE(:purchase_date, purchase_date),
+                 status = :status
+             WHERE id = :id'
+        );
+        $statement->execute([
+            'id' => $id,
+            'access_key' => $accessKey,
+            'purchase_date' => $purchaseDate,
+            'status' => ($accessKey !== null && $accessKey !== '') || $purchaseDate !== null ? 'imported_with_metadata' : 'imported',
+        ]);
+    }
+
+    public function clearMarketInvoiceFile(int $id): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE shopping_market_invoices
+             SET stored_name = "",
+                 file_size = 0,
+                 status = "imported_metadata_only"
+             WHERE id = :id'
+        );
+        $statement->execute(['id' => $id]);
     }
 
     public function addMarketItem(array $data, ?int $userId): int
@@ -600,5 +649,30 @@ final class ShoppingRepository
         }
 
         return max(0.0, round($this->marketItemsSubtotal($listId) - $totalAmount, 2));
+    }
+
+    private function normalizeDateTime(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        $formats = ['Y-m-d\TH:i:sP', 'Y-m-d\TH:i:s', 'Y-m-d H:i:s', 'd/m/Y H:i:s', 'd/m/Y H:i'];
+
+        foreach ($formats as $format) {
+            $date = \DateTimeImmutable::createFromFormat($format, $value);
+
+            if ($date instanceof \DateTimeImmutable) {
+                return $date->format('Y-m-d H:i:s');
+            }
+        }
+
+        try {
+            return (new \DateTimeImmutable($value))->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

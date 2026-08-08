@@ -745,11 +745,19 @@
             display: grid;
             gap: 10px;
         }
+        .metric-mini-list {
+            margin-top: 14px;
+        }
         .mini-list-item {
             background: #f8fbfd;
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
+        }
+        .dashboard-indicator {
+            display: block;
+            font-size: 1.55rem;
+            margin: 10px 0;
         }
         .mini-list-item span {
             color: var(--muted);

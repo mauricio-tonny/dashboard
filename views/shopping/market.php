@@ -25,6 +25,13 @@ $formatDocument = static function (?string $document): string {
 
     return substr($digits, 0, 2) . '.' . substr($digits, 2, 3) . '.' . substr($digits, 5, 3) . '/' . substr($digits, 8, 4) . '-' . substr($digits, 12, 2);
 };
+$formatDateTime = static function (?string $value): string {
+    if ($value === null || trim($value) === '') {
+        return '-';
+    }
+
+    return (new DateTimeImmutable($value))->format('d/m/Y H:i');
+};
 $itemsSubtotal = array_reduce(
     $marketItems,
     static fn (float $carry, array $item): float => $carry + (float) ($item['subtotal_amount'] ?? 0),
@@ -304,6 +311,7 @@ ob_start();
                             NFC-e <?= htmlspecialchars((string) ($invoice['document_number'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
                             | Serie <?= htmlspecialchars((string) ($invoice['document_series'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
                             | CNPJ <?= htmlspecialchars($formatDocument($invoice['issuer_document'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                            | Compra <?= htmlspecialchars($formatDateTime($invoice['purchase_date'] ?? null), ENT_QUOTES, 'UTF-8') ?>
                             | <?= htmlspecialchars((string) $invoice['created_at'], ENT_QUOTES, 'UTF-8') ?>
                         </small>
                         <?php if (!empty($invoice['public_url'])): ?>
@@ -313,7 +321,14 @@ ob_start();
                         <?php endif; ?>
                     <?php else: ?>
                         <strong><?= htmlspecialchars($invoice['original_name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                        <small><?= number_format(((int) $invoice['file_size']) / 1024, 1, ',', '.') ?> KB | <?= htmlspecialchars((string) $invoice['created_at'], ENT_QUOTES, 'UTF-8') ?></small>
+                        <small>
+                            <?= ((int) $invoice['file_size']) > 0 ? number_format(((int) $invoice['file_size']) / 1024, 1, ',', '.') . ' KB' : 'Arquivo processado' ?>
+                            | Compra <?= htmlspecialchars($formatDateTime($invoice['purchase_date'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                            <?php if (!empty($invoice['access_key'])): ?>
+                                | Chave <?= htmlspecialchars($formatAccessKey($invoice['access_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+                            <?php endif; ?>
+                            | Anexado em <?= htmlspecialchars($formatDateTime($invoice['created_at'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                        </small>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
