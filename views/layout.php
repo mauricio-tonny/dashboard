@@ -10,18 +10,22 @@
     <style>
         :root {
             color-scheme: light;
-            --bg: #f3f6f8;
+            --bg: #f4f7fa;
             --surface: #ffffff;
-            --surface-soft: #eef3f5;
-            --brand-dark: #111820;
-            --brand-panel: #1b2630;
-            --accent: #00a86b;
-            --accent-strong: #008f5a;
-            --accent-soft: #dff6ec;
-            --text: #17212b;
-            --muted: #65717d;
+            --surface-soft: #edf4f8;
+            --brand-dark: #082a5a;
+            --brand-deep: #041a38;
+            --brand-panel: #0b3268;
+            --accent: #14b8a6;
+            --accent-strong: #0f9488;
+            --accent-soft: #d9fbf5;
+            --accent-blue: #0ea5e9;
+            --accent-green: #22c55e;
+            --text: #102033;
+            --muted: #64748b;
             --danger: #b42318;
-            --border: #dce4e8;
+            --border: #d9e4ec;
+            --shadow: 0 18px 45px rgba(8, 42, 90, 0.12);
         }
 
         * { box-sizing: border-box; }
@@ -32,7 +36,7 @@
             margin: 0;
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             background:
-                linear-gradient(180deg, rgba(17, 24, 32, 0.04), transparent 260px),
+                linear-gradient(180deg, rgba(8, 42, 90, 0.06), transparent 280px),
                 var(--bg);
             color: var(--text);
             display: flex;
@@ -42,7 +46,7 @@
             content: "";
             display: block;
             height: 8px;
-            background: linear-gradient(90deg, var(--brand-dark), var(--accent));
+            background: linear-gradient(90deg, var(--brand-dark), var(--accent), var(--accent-blue));
         }
         .container {
             max-width: 1080px;
@@ -56,7 +60,7 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 24px;
-            box-shadow: 0 10px 24px rgba(17, 24, 32, 0.06);
+            box-shadow: var(--shadow);
             margin-bottom: 20px;
         }
         .grid {
@@ -92,17 +96,24 @@
             font-size: 1rem;
         }
         button {
-            background: var(--accent);
+            background: var(--brand-dark);
             color: #fff;
             border: none;
             cursor: pointer;
+            font-weight: 700;
+            transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+        }
+        button:hover {
+            background: var(--brand-panel);
+            box-shadow: 0 12px 24px rgba(8, 42, 90, 0.2);
+            transform: translateY(-1px);
         }
         .btn-brand {
-            background: var(--accent);
+            background: var(--brand-dark);
             color: #fff;
         }
         .btn-brand:hover {
-            background: var(--accent-strong);
+            background: var(--brand-panel);
             color: #fff;
         }
         .actions {
@@ -121,9 +132,154 @@
             padding: 16px 20px 28px;
             text-align: center;
         }
+        .auth-page {
+            background:
+                linear-gradient(135deg, rgba(8, 42, 90, 0.08) 0 25%, transparent 25% 100%),
+                linear-gradient(180deg, #f7fafc 0%, #eef5f8 100%);
+        }
+        .auth-page .container {
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            padding: 28px 18px 44px;
+        }
+        .auth-shell {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(340px, 420px);
+            max-width: 980px;
+            min-height: 560px;
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid rgba(8, 42, 90, 0.1);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .auth-brand-panel {
+            background:
+                linear-gradient(135deg, rgba(20, 184, 166, 0.28), transparent 34%),
+                linear-gradient(160deg, var(--brand-deep) 0%, var(--brand-dark) 60%, #0f477e 100%);
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100%;
+            padding: 42px;
+        }
+        .auth-brand-title {
+            font-size: clamp(1.75rem, 3vw, 2.7rem);
+            font-weight: 800;
+            line-height: 1.08;
+            margin: 0;
+        }
+        .auth-brand-copy {
+            color: rgba(255, 255, 255, 0.78);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 18px 0 0;
+            max-width: 360px;
+        }
+        .auth-brand-grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(3, 1fr);
+            margin-top: 36px;
+            max-width: 300px;
+        }
+        .auth-brand-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            min-height: 92px;
+            position: relative;
+        }
+        .auth-brand-bar::after {
+            background: linear-gradient(180deg, var(--accent-green), var(--accent));
+            border-radius: 6px;
+            bottom: 14px;
+            content: "";
+            left: 50%;
+            position: absolute;
+            transform: translateX(-50%);
+            width: 28px;
+        }
+        .auth-brand-bar:nth-child(1)::after { height: 34px; }
+        .auth-brand-bar:nth-child(2)::after { height: 54px; background: linear-gradient(180deg, var(--accent), #2dd4bf); }
+        .auth-brand-bar:nth-child(3)::after { height: 74px; background: linear-gradient(180deg, #38bdf8, var(--accent-blue)); }
+        .auth-brand-footnote {
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 0.86rem;
+            margin: 34px 0 0;
+        }
+        .auth-form-panel {
+            align-items: center;
+            display: flex;
+            padding: 38px;
+        }
+        .auth-card {
+            width: 100%;
+        }
+        .auth-logo {
+            display: block;
+            height: auto;
+            margin: 0 auto 26px;
+            max-width: 340px;
+            width: 100%;
+        }
+        .auth-lead {
+            color: var(--muted);
+            margin: 0 0 24px;
+            text-align: center;
+        }
+        .auth-form-panel input {
+            background: #f8fbfd;
+            border-color: #cddbe4;
+        }
+        .auth-form-panel input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.16);
+            outline: none;
+        }
+        .auth-submit {
+            background: linear-gradient(135deg, var(--brand-dark), var(--brand-panel));
+            margin-top: 8px;
+        }
+        .auth-submit:hover {
+            background: linear-gradient(135deg, var(--brand-panel), #0f477e);
+        }
+        @media (max-width: 760px) {
+            body::before {
+                height: 6px;
+            }
+            .container {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            .auth-page .container {
+                align-items: stretch;
+                padding: 18px 14px 28px;
+            }
+            .auth-shell {
+                grid-template-columns: 1fr;
+                min-height: auto;
+            }
+            .auth-brand-panel {
+                padding: 28px 24px;
+            }
+            .auth-brand-grid,
+            .auth-brand-footnote {
+                display: none;
+            }
+            .auth-form-panel {
+                padding: 28px 22px 30px;
+            }
+            .auth-logo {
+                max-width: 290px;
+            }
+        }
     </style>
 </head>
-<body>
+<body class="<?= htmlspecialchars($bodyClass ?? '', ENT_QUOTES, 'UTF-8') ?>">
     <main class="container">
         <?= $content ?>
     </main>
