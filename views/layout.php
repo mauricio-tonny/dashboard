@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow,noarchive">
     <title><?= htmlspecialchars($title ?? 'Dashboard Financeiro', ENT_QUOTES, 'UTF-8') ?></title>
+    <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
     <style>
         :root {
@@ -24,6 +25,9 @@
         }
 
         * { box-sizing: border-box; }
+        html, body {
+            min-height: 100%;
+        }
         body {
             margin: 0;
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -31,6 +35,8 @@
                 linear-gradient(180deg, rgba(17, 24, 32, 0.04), transparent 260px),
                 var(--bg);
             color: var(--text);
+            display: flex;
+            flex-direction: column;
         }
         body::before {
             content: "";
@@ -42,6 +48,8 @@
             max-width: 1080px;
             margin: 0 auto;
             padding: 32px 20px 60px;
+            width: 100%;
+            flex: 1;
         }
         .card {
             background: var(--surface);
@@ -107,12 +115,22 @@
             width: auto;
             padding: 10px 16px;
         }
+        .app-footer {
+            color: var(--muted);
+            font-size: 0.85rem;
+            padding: 16px 20px 28px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <main class="container">
         <?= $content ?>
     </main>
+    <footer class="app-footer">
+        <?= htmlspecialchars($_ENV['APP_NAME'] ?? 'Dashboard Financeiro', ENT_QUOTES, 'UTF-8') ?>
+        v<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>
+    </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 </body>
 </html>
