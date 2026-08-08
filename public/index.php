@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\AuthController;
 use App\Controllers\Admin\AuditLogController;
+use App\Controllers\Admin\UserController;
 use App\Controllers\DashboardController;
 use App\Controllers\EntryController;
 use App\Core\App;
@@ -14,6 +15,7 @@ use App\Core\Session;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\UserRepository;
 use App\Domain\Audit\AuditLogger;
+use App\Domain\Auth\AdminUserRepository;
 use App\Domain\Finance\FinanceService;
 use App\Infrastructure\Auth\DatabaseUserRepository;
 use App\Infrastructure\Finance\ExcelFinanceRepository;
@@ -44,6 +46,7 @@ $request = Request::capture();
 $database = new Database();
 
 $userRepository = new DatabaseUserRepository($database);
+$adminUserRepository = new AdminUserRepository($database);
 $authService = new AuthService($userRepository, $session);
 $auditLogger = new AuditLogger($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
@@ -56,6 +59,7 @@ $app = new App([
     Session::class => $session,
     Request::class => $request,
     UserRepository::class => $userRepository,
+    AdminUserRepository::class => $adminUserRepository,
     AuthService::class => $authService,
     AuditLogger::class => $auditLogger,
     FinanceService::class => $financeService,
@@ -69,6 +73,10 @@ $router->post('/login', [AuthController::class, 'login']);
 $router->post('/logout', [AuthController::class, 'logout']);
 
 $router->get('/admin/audit-logs', [AuditLogController::class, 'index']);
+$router->get('/admin/users', [UserController::class, 'index']);
+$router->post('/admin/users', [UserController::class, 'store']);
+$router->post('/admin/users/update', [UserController::class, 'update']);
+$router->post('/admin/users/toggle-status', [UserController::class, 'toggleStatus']);
 
 $router->get('/entries/create', [EntryController::class, 'create']);
 $router->post('/entries', [EntryController::class, 'store']);

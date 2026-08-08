@@ -34,6 +34,19 @@ final class Session
         unset($_SESSION[$key]);
     }
 
+    public function flash(string $key, mixed $value): void
+    {
+        $_SESSION['_flash'][$key] = $value;
+    }
+
+    public function pullFlash(string $key, mixed $default = null): mixed
+    {
+        $value = $_SESSION['_flash'][$key] ?? $default;
+        unset($_SESSION['_flash'][$key]);
+
+        return $value;
+    }
+
     public function touchActivity(): void
     {
         $_SESSION['last_activity_at'] = time();

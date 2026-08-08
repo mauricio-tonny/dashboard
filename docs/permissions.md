@@ -46,7 +46,7 @@ Pode fazer tudo que Editor e Visualizador fazem e tambem:
 - Criar usuarios.
 - Editar usuarios.
 - Bloquear usuarios.
-- Excluir usuarios.
+- Excluir usuarios. Nesta fase, por seguranca e auditoria, a exclusao foi implementada como bloqueio/desativacao.
 - Vincular usuario a perfil ou permissao especifica.
 - Acionar rotina de backup manualmente.
 - Habilitar ou desabilitar notificacao do Discord.

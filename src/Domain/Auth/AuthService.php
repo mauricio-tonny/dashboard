@@ -53,6 +53,11 @@ final class AuthService
         $this->session->regenerate();
     }
 
+    public function verifyPassword(User $user, string $password): bool
+    {
+        return password_verify($password, $user->passwordHash);
+    }
+
     public function enforceIdleTimeout(int $seconds, AuditLogger $auditLogger): void
     {
         $user = $this->user();

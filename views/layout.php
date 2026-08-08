@@ -126,6 +126,62 @@
             width: auto;
             padding: 10px 16px;
         }
+        .button-danger {
+            background: var(--danger);
+        }
+        .button-danger:hover {
+            background: #8f1d14;
+        }
+        .notice {
+            border-radius: 8px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding: 14px 16px;
+        }
+        .notice-success {
+            background: var(--accent-soft);
+            color: var(--accent-strong);
+        }
+        .notice-error {
+            background: #fee4e2;
+            color: var(--danger);
+        }
+        .form-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .form-actions {
+            align-self: end;
+        }
+        .stacked-form {
+            border-top: 1px solid var(--border);
+            margin-top: 14px;
+            padding-top: 14px;
+        }
+        .responsive-table {
+            overflow-x: auto;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border-bottom: 1px solid var(--border);
+            padding: 14px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            color: var(--muted);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+        }
+        .user-details summary {
+            color: var(--brand-dark);
+            cursor: pointer;
+            font-weight: 800;
+        }
         .app-footer {
             color: var(--muted);
             font-size: 0.85rem;

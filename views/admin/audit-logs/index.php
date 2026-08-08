@@ -7,6 +7,10 @@ $labels = [
     'login_failed' => 'Falha de login',
     'logout' => 'Logout',
     'session_timeout' => 'Logout por inatividade',
+    'user_created' => 'Usuario criado',
+    'user_updated' => 'Usuario atualizado',
+    'user_blocked' => 'Usuario bloqueado',
+    'user_unblocked' => 'Usuario desbloqueado',
 ];
 ?>
 <section class="card">
