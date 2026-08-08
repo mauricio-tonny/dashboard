@@ -584,7 +584,8 @@
             align-items: center;
             display: grid;
             gap: 12px;
-            grid-template-columns: 48px auto minmax(220px, 1fr) minmax(190px, auto);
+            grid-template-columns: 48px auto minmax(0, 1fr) minmax(160px, auto);
+            min-width: 0;
         }
         .item-photo {
             align-items: center;
@@ -607,6 +608,16 @@
         }
         .market-item-copy {
             display: grid;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        .market-item-copy strong,
+        .market-item-copy small {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+        .market-item details {
+            min-width: 0;
         }
         .market-price-form {
             align-items: end;

@@ -31,7 +31,9 @@ Campos do item:
 - Valor.
 - Sub total calculado pelo sistema quando houver valor unitario.
 
-Durante a compra, o usuario pode marcar cada item como pego. Ao finalizar, informa o valor total da compra.
+Durante a compra, o usuario pode confirmar cada item. Ao finalizar, informa o valor total da compra.
+
+Administradores podem excluir uma lista mensal de mercado inteira. A exclusao remove os itens e registros de notas vinculadas a lista.
 
 Tambem e possivel vincular NFC-e/NF-e a lista de mercado por tres caminhos:
 
@@ -71,7 +73,7 @@ O parser inicial de PDF considera o layout textual da consulta publica da NFC-e 
 - `Vl. Total` como subtotal do item.
 - `Valor a pagar R$` como total final da lista.
 
-Para evitar enviar dados domesticos para servicos externos, a primeira versao usa um marcador visual com a inicial do item no lugar de foto automatica. Futuramente podemos evoluir para upload local ou catalogo proprio de imagens.
+Para evitar enviar dados domesticos para servicos externos, a primeira versao usa um marcador visual com a inicial do item no lugar de foto automatica. Futuramente devemos evoluir para upload local, catalogo proprio de imagens ou associacao manual de foto por item.
 
 ## Para casa
 

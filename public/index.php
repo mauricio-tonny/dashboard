@@ -104,6 +104,7 @@ $router->post('/shopping/market/items/update', [ShoppingController::class, 'upda
 $router->post('/shopping/market/items/toggle', [ShoppingController::class, 'toggleMarketItem']);
 $router->post('/shopping/market/items/delete', [ShoppingController::class, 'deleteMarketItem']);
 $router->post('/shopping/market/lists/finish', [ShoppingController::class, 'finishMarketList']);
+$router->post('/shopping/market/lists/delete', [ShoppingController::class, 'deleteMarketList']);
 $router->post('/shopping/market/invoices', [ShoppingController::class, 'uploadMarketInvoice']);
 $router->post('/shopping/market/access-key', [ShoppingController::class, 'storeMarketAccessKey']);
 $router->post('/shopping/wish-items', [ShoppingController::class, 'addWishItem']);

@@ -291,6 +291,54 @@ final class ShoppingRepository
         ]);
     }
 
+    public function deleteMarketList(int $id): array
+    {
+        $connection = $this->database->connection();
+        $list = $this->marketList($id);
+
+        if ($list === null) {
+            return ['items' => 0, 'invoices' => 0, 'files' => []];
+        }
+
+        $filesStatement = $connection->prepare(
+            'SELECT stored_name
+             FROM shopping_market_invoices
+             WHERE list_id = :list_id
+               AND source_type = "file"
+               AND stored_name <> ""'
+        );
+        $filesStatement->execute(['list_id' => $id]);
+        $files = $filesStatement->fetchAll(PDO::FETCH_COLUMN);
+
+        $itemCountStatement = $connection->prepare('SELECT COUNT(*) FROM shopping_market_items WHERE list_id = :list_id');
+        $itemCountStatement->execute(['list_id' => $id]);
+        $itemCount = (int) $itemCountStatement->fetchColumn();
+
+        $invoiceCountStatement = $connection->prepare('SELECT COUNT(*) FROM shopping_market_invoices WHERE list_id = :list_id');
+        $invoiceCountStatement->execute(['list_id' => $id]);
+        $invoiceCount = (int) $invoiceCountStatement->fetchColumn();
+
+        $connection->beginTransaction();
+
+        try {
+            $deleteInvoices = $connection->prepare('DELETE FROM shopping_market_invoices WHERE list_id = :list_id');
+            $deleteInvoices->execute(['list_id' => $id]);
+
+            $deleteItems = $connection->prepare('DELETE FROM shopping_market_items WHERE list_id = :list_id');
+            $deleteItems->execute(['list_id' => $id]);
+
+            $deleteList = $connection->prepare('DELETE FROM shopping_market_lists WHERE id = :id');
+            $deleteList->execute(['id' => $id]);
+
+            $connection->commit();
+        } catch (\Throwable $exception) {
+            $connection->rollBack();
+            throw $exception;
+        }
+
+        return ['items' => $itemCount, 'invoices' => $invoiceCount, 'files' => $files];
+    }
+
     public function wishItems(string $type): array
     {
         $statement = $this->database->connection()->prepare(

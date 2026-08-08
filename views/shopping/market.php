@@ -82,6 +82,7 @@ ob_start();
     <article class="card section-card">
         <h2 class="section-title"><span class="bi bi-cart-check"></span>Itens do mercado</h2>
         <?php if ($selectedMarketList): ?>
+            <?php $isAdmin = $user->hasRole(\App\Domain\Auth\Role::ADMIN); ?>
             <p class="muted">
                 Lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
                 Total final: <?= htmlspecialchars($formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>.
@@ -133,7 +134,7 @@ ob_start();
                             <input type="hidden" name="checked" value="<?= ((int) $item['is_checked']) === 1 ? '0' : '1' ?>">
                             <button class="check-button" type="submit">
                                 <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-cart-plus' ?>"></span>
-                                <?= ((int) $item['is_checked']) === 1 ? 'OK' : 'Pegar' ?>
+                                <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Confirmar' ?>
                             </button>
                         </form>
                         <div class="market-item-copy">
@@ -183,6 +184,17 @@ ob_start();
                 </label>
                 <button class="inline-button" type="submit"><span class="bi bi-flag"></span>Finalizar lista</button>
             </form>
+
+            <?php if ($isAdmin): ?>
+                <form method="post" action="/shopping/market/lists/delete" class="inline-form total-form" onsubmit="return confirm('Excluir a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?> com todos os itens e notas vinculadas?');">
+                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                    <div>
+                        <strong>Zona administrativa</strong>
+                        <p class="muted">Remove a lista selecionada, seus itens e registros de notas vinculadas.</p>
+                    </div>
+                    <button class="inline-button button-danger" type="submit"><span class="bi bi-trash3"></span>Excluir lista</button>
+                </form>
+            <?php endif; ?>
         <?php else: ?>
             <p class="muted">Selecione ou crie uma lista mensal.</p>
         <?php endif; ?>

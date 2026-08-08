@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\Permission;
+use App\Domain\Auth\Role;
 use App\Domain\Shopping\AccessKeyParser;
 use App\Domain\Shopping\MarketInvoicePdfParser;
 use App\Domain\Shopping\MarketInvoiceXmlParser;
@@ -203,6 +204,36 @@ final class ShoppingController extends Controller
         $this->flash('success', 'Lista finalizada com valor total.');
 
         return Response::redirect('/shopping/market?market_list_id=' . $id);
+    }
+
+    public function deleteMarketList(Request $request): Response
+    {
+        $auth = $this->authorizeManage();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        if (!$auth->user()?->hasRole(Role::ADMIN)) {
+            return new Response('Acesso negado.', 403);
+        }
+
+        $id = (int) $request->input('list_id');
+
+        if ($id <= 0) {
+            $this->flash('error', 'Selecione uma lista valida para excluir.');
+            return Response::redirect('/shopping/market');
+        }
+
+        $summary = $this->app->make(ShoppingRepository::class)->deleteMarketList($id);
+        $this->audit('shopping_market_list_deleted', 'shopping_market_list', $id, [
+            'items' => $summary['items'],
+            'invoices' => $summary['invoices'],
+            'files' => count($summary['files']),
+        ]);
+        $this->flash('success', 'Lista de mercado excluida com itens e notas vinculadas.');
+
+        return Response::redirect('/shopping/market');
     }
 
     public function uploadMarketInvoice(Request $request): Response
