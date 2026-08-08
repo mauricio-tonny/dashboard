@@ -444,11 +444,16 @@
         .hero-version strong {
             display: block;
         }
-        .metric-grid,
+        .metric-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
         .dashboard-grid {
             display: grid;
             gap: 20px;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            margin-top: 24px;
         }
         .metric-card {
             background: var(--surface);
