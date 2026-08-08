@@ -19,6 +19,7 @@ Pode:
 - Ver totais estimados dos proximos meses.
 - Ver relatorio por DR/categoria.
 - Acessar e usar listas de compras.
+- Visualizar fornecedores e clientes.
 
 Nao pode:
 
@@ -40,6 +41,7 @@ Pode fazer tudo que o Visualizador faz e tambem:
 - Visualizar relatorio anual.
 - Visualizar relatorio por periodo.
 - Acessar e usar listas de compras.
+- Criar, editar, desativar e reativar fornecedores e clientes.
 
 ## Administrador
 
@@ -76,6 +78,8 @@ Alteracoes de perfil ou permissao de usuario devem exigir confirmacao de senha d
 - `view_shopping`
 - `manage_shopping`
 - `manage_shopping_settings`
+- `view_contacts`
+- `manage_contacts`
 - `view_audit_logs`
 - `manage_users`
 - `change_user_roles`

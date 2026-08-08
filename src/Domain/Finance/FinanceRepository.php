@@ -13,5 +13,6 @@ interface FinanceRepository
     public function monthlySummary(DateTimeImmutable $reference): array;
 
     public function upcomingForecast(): array;
-}
 
+    public function annualExpenseSeries(int $year): array;
+}

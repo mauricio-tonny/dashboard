@@ -7,6 +7,7 @@
     <title><?= htmlspecialchars($title ?? 'Dashboard Financeiro', ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <style>
         :root {
             color-scheme: light;
@@ -48,12 +49,132 @@
             height: 8px;
             background: linear-gradient(90deg, var(--brand-dark), var(--accent), var(--accent-blue));
         }
+        .app-shell {
+            display: grid;
+            flex: 1;
+            grid-template-columns: 280px minmax(0, 1fr);
+            min-height: calc(100vh - 8px);
+        }
+        .app-sidebar {
+            background:
+                radial-gradient(circle at top left, rgba(20, 184, 166, 0.28), transparent 32%),
+                linear-gradient(180deg, var(--brand-deep), var(--brand-dark));
+            color: #fff;
+            padding: 24px 18px;
+            position: sticky;
+            top: 0;
+            height: calc(100vh - 8px);
+            overflow-y: auto;
+        }
+        .sidebar-brand {
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            display: flex;
+            gap: 12px;
+            padding-bottom: 18px;
+            text-decoration: none;
+        }
+        .sidebar-brand img {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 12px;
+            max-width: 168px;
+            padding: 8px;
+            width: 100%;
+        }
+        .sidebar-user {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            margin: 18px 0;
+            padding: 14px;
+        }
+        .sidebar-user strong,
+        .sidebar-user small {
+            display: block;
+        }
+        .sidebar-user small {
+            color: rgba(255, 255, 255, 0.72);
+            margin-top: 4px;
+        }
+        .nav-group {
+            margin-bottom: 10px;
+        }
+        .nav-group-title {
+            color: rgba(255, 255, 255, 0.48);
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            margin: 18px 10px 8px;
+            text-transform: uppercase;
+        }
+        .app-nav a,
+        .app-nav button {
+            align-items: center;
+            background: transparent;
+            border: 0;
+            border-radius: 12px;
+            color: rgba(255, 255, 255, 0.82);
+            display: flex;
+            gap: 10px;
+            margin: 2px 0;
+            padding: 11px 12px;
+            text-align: left;
+            text-decoration: none;
+            width: 100%;
+        }
+        .app-nav a:hover,
+        .app-nav button:hover,
+        .app-nav a.is-active {
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: none;
+            color: #fff;
+            transform: none;
+        }
+        .app-nav .bi {
+            color: var(--accent);
+            font-size: 1.05rem;
+            width: 22px;
+        }
+        .nav-subitem {
+            font-size: 0.93rem;
+            margin-left: 16px !important;
+            padding-left: 16px !important;
+        }
+        .logout-nav {
+            margin-top: 20px;
+        }
+        .app-main {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        .mobile-topbar {
+            align-items: center;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: none;
+            gap: 12px;
+            justify-content: space-between;
+            padding: 12px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+        .mobile-topbar img {
+            max-width: 160px;
+        }
+        .mobile-menu-toggle {
+            width: auto;
+        }
         .container {
             max-width: 1080px;
             margin: 0 auto;
             padding: 32px 20px 60px;
             width: 100%;
             flex: 1;
+        }
+        .app-main .container {
+            max-width: 1240px;
         }
         .card {
             background: var(--surface);
@@ -298,6 +419,128 @@
             padding: 16px 20px 28px;
             text-align: center;
         }
+        .dashboard-hero {
+            align-items: center;
+            background:
+                linear-gradient(135deg, rgba(20, 184, 166, 0.16), transparent 34%),
+                linear-gradient(135deg, var(--surface), #eef7fb);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 22px;
+            padding: 28px;
+        }
+        .hero-version {
+            background: var(--brand-dark);
+            border-radius: 16px;
+            color: #fff;
+            min-width: 120px;
+            padding: 14px 18px;
+            text-align: center;
+        }
+        .hero-version small,
+        .hero-version strong {
+            display: block;
+        }
+        .metric-grid,
+        .dashboard-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        }
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 22px;
+        }
+        .metric-card small,
+        .metric-card strong {
+            display: block;
+        }
+        .metric-card strong {
+            font-size: 1.8rem;
+            margin: 10px 0;
+        }
+        .metric-icon {
+            align-items: center;
+            background: var(--accent-soft);
+            border-radius: 14px;
+            color: var(--accent-strong);
+            display: inline-flex;
+            font-size: 1.3rem;
+            height: 44px;
+            justify-content: center;
+            margin-bottom: 14px;
+            width: 44px;
+        }
+        .mini-list {
+            display: grid;
+            gap: 10px;
+        }
+        .mini-list-item {
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+        }
+        .mini-list-item span {
+            color: var(--muted);
+            display: block;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+        .bar-chart {
+            align-items: end;
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(12, 1fr);
+            min-height: 190px;
+        }
+        .bar-chart-item {
+            align-items: center;
+            display: grid;
+            gap: 8px;
+            justify-items: center;
+        }
+        .bar-track {
+            align-items: end;
+            background: var(--surface-soft);
+            border-radius: 999px;
+            display: flex;
+            height: 150px;
+            overflow: hidden;
+            width: 100%;
+        }
+        .bar-fill {
+            background: linear-gradient(180deg, var(--accent-blue), var(--accent));
+            border-radius: 999px;
+            display: block;
+            width: 100%;
+        }
+        .placeholder-card {
+            overflow: hidden;
+            position: relative;
+        }
+        .placeholder-illustration {
+            align-items: center;
+            background: linear-gradient(135deg, var(--brand-dark), var(--brand-panel));
+            border-radius: 18px;
+            color: #fff;
+            display: grid;
+            gap: 8px;
+            justify-items: center;
+            margin-top: 22px;
+            padding: 34px 22px;
+            text-align: center;
+        }
+        .placeholder-illustration .bi {
+            color: var(--accent);
+            font-size: 2.5rem;
+        }
         .auth-page {
             background:
                 linear-gradient(135deg, rgba(8, 42, 90, 0.08) 0 25%, transparent 25% 100%),
@@ -421,6 +664,28 @@
                 padding-left: 16px;
                 padding-right: 16px;
             }
+            .app-shell {
+                display: block;
+            }
+            .app-sidebar {
+                display: none;
+                height: auto;
+                position: static;
+            }
+            .app-sidebar.is-open {
+                display: block;
+            }
+            .mobile-topbar {
+                display: flex;
+            }
+            .dashboard-hero {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .bar-chart {
+                gap: 6px;
+                overflow-x: auto;
+            }
             .auth-page .container {
                 align-items: stretch;
                 padding: 18px 14px 28px;
@@ -457,13 +722,109 @@
     </style>
 </head>
 <body class="<?= htmlspecialchars($bodyClass ?? '', ENT_QUOTES, 'UTF-8') ?>">
-    <main class="container">
-        <?= $content ?>
-    </main>
-    <footer class="app-footer">
-        <?= htmlspecialchars($_ENV['APP_NAME'] ?? 'Dashboard Financeiro', ENT_QUOTES, 'UTF-8') ?>
-        v<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>
-    </footer>
+    <?php if (isset($user)): ?>
+        <?php
+        $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+        $isActive = static fn (string $path): string => $currentPath === $path ? 'is-active' : '';
+        ?>
+        <div class="app-shell">
+            <aside class="app-sidebar" id="appSidebar">
+                <a class="sidebar-brand" href="/">
+                    <img src="/assets/brand/logo.svg?v=<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>" alt="Oficina do DEV">
+                </a>
+                <div class="sidebar-user">
+                    <strong><?= htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8') ?></strong>
+                    <small><?= htmlspecialchars($user->role->label(), ENT_QUOTES, 'UTF-8') ?></small>
+                </div>
+                <nav class="app-nav" aria-label="Menu principal">
+                    <div class="nav-group">
+                        <a class="<?= $isActive('/') ?>" href="/"><span class="bi bi-speedometer2"></span>Dashboard</a>
+                    </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Financeiro</div>
+                        <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_EXPENSE_TOTALS)): ?>
+                            <a class="nav-subitem <?= $isActive('/finance/payable') ?>" href="/finance/payable"><span class="bi bi-arrow-up-right-circle"></span>A pagar</a>
+                        <?php endif; ?>
+                        <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_INCOME_TOTALS)): ?>
+                            <a class="nav-subitem <?= $isActive('/finance/receivable') ?>" href="/finance/receivable"><span class="bi bi-arrow-down-left-circle"></span>A receber</a>
+                        <?php endif; ?>
+                        <?php if ($user->canEdit()): ?>
+                            <a class="nav-subitem <?= $isActive('/entries/create') ?>" href="/entries/create"><span class="bi bi-plus-circle"></span>Novo lancamento</a>
+                        <?php endif; ?>
+                    </div>
+                    <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_SHOPPING)): ?>
+                        <div class="nav-group">
+                            <a class="<?= $isActive('/shopping') ?>" href="/shopping"><span class="bi bi-basket2"></span>Compras</a>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CONTACTS)): ?>
+                        <div class="nav-group">
+                            <a class="<?= $isActive('/contacts') ?>" href="/contacts"><span class="bi bi-person-lines-fill"></span>Contatos</a>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_REPORT)): ?>
+                        <div class="nav-group">
+                            <a class="<?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-bar-chart-line"></span>Relatorios</a>
+                        </div>
+                    <?php endif; ?>
+                    <?php if ($user->hasRole(\App\Domain\Auth\Role::ADMIN)): ?>
+                        <div class="nav-group">
+                            <div class="nav-group-title">Sistema</div>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_USERS)): ?>
+                                <a class="nav-subitem <?= $isActive('/admin/users') ?>" href="/admin/users"><span class="bi bi-people"></span>Usuarios</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
+                                <a class="nav-subitem <?= $isActive('/admin/audit-logs') ?>" href="/admin/audit-logs"><span class="bi bi-journal-text"></span>Logs</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_BACKUPS)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/backup') ?>" href="/system/backup"><span class="bi bi-cloud-arrow-down"></span>Backup</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SPREADSHEET_URL)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/sync') ?>" href="/system/sync"><span class="bi bi-clock-history"></span>Tempo de sincronizacao</a>
+                                <a class="nav-subitem <?= $isActive('/system/categories') ?>" href="/system/categories"><span class="bi bi-tags"></span>Categoria (DR)</a>
+                                <a class="nav-subitem <?= $isActive('/system/spreadsheet') ?>" href="/system/spreadsheet"><span class="bi bi-file-earmark-spreadsheet"></span>Gerenciar planilha</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_DISCORD_NOTIFICATIONS)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/discord') ?>" href="/system/discord"><span class="bi bi-discord"></span>Discord</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING_SETTINGS)): ?>
+                                <a class="nav-subitem <?= $isActive('/admin/shopping-settings') ?>" href="/admin/shopping-settings"><span class="bi bi-sliders"></span>Configuracao compras</a>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+                    <form class="logout-nav" method="post" action="/logout">
+                        <button type="submit"><span class="bi bi-box-arrow-right"></span>Sair</button>
+                    </form>
+                </nav>
+            </aside>
+            <div class="app-main">
+                <header class="mobile-topbar">
+                    <img src="/assets/brand/logo.svg?v=<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>" alt="Oficina do DEV">
+                    <button class="mobile-menu-toggle" type="button" data-menu-toggle>Menu</button>
+                </header>
+                <main class="container">
+                    <?= $content ?>
+                </main>
+                <footer class="app-footer">
+                    <?= htmlspecialchars($_ENV['APP_NAME'] ?? 'Dashboard Financeiro', ENT_QUOTES, 'UTF-8') ?>
+                    v<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>
+                </footer>
+            </div>
+        </div>
+    <?php else: ?>
+        <main class="container">
+            <?= $content ?>
+        </main>
+        <footer class="app-footer">
+            <?= htmlspecialchars($_ENV['APP_NAME'] ?? 'Dashboard Financeiro', ENT_QUOTES, 'UTF-8') ?>
+            v<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>
+        </footer>
+    <?php endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+    <script>
+        document.querySelector('[data-menu-toggle]')?.addEventListener('click', () => {
+            document.querySelector('#appSidebar')?.classList.toggle('is-open');
+        });
+    </script>
 </body>
 </html>

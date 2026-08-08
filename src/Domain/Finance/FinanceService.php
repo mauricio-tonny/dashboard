@@ -38,5 +38,9 @@ final class FinanceService
     {
         return $this->repository->upcomingForecast();
     }
-}
 
+    public function annualExpenseSeries(int $year): array
+    {
+        return $this->repository->annualExpenseSeries($year);
+    }
+}

@@ -25,6 +25,7 @@ final class EntryController extends Controller
         }
 
         return Response::view('entries/create', [
+            'user' => $auth->user(),
             'error' => null,
         ]);
     }

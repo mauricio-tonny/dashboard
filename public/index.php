@@ -6,8 +6,10 @@ use App\Controllers\AuthController;
 use App\Controllers\Admin\AuditLogController;
 use App\Controllers\Admin\ShoppingSettingsController;
 use App\Controllers\Admin\UserController;
+use App\Controllers\ContactController;
 use App\Controllers\DashboardController;
 use App\Controllers\EntryController;
+use App\Controllers\NavigationPageController;
 use App\Controllers\ShoppingController;
 use App\Core\App;
 use App\Core\Database;
@@ -18,6 +20,7 @@ use App\Domain\Auth\AuthService;
 use App\Domain\Auth\UserRepository;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AdminUserRepository;
+use App\Domain\Contacts\ContactRepository;
 use App\Domain\Finance\FinanceService;
 use App\Domain\Shopping\ShoppingRepository;
 use App\Infrastructure\Auth\DatabaseUserRepository;
@@ -53,6 +56,7 @@ $adminUserRepository = new AdminUserRepository($database);
 $authService = new AuthService($userRepository, $session);
 $auditLogger = new AuditLogger($database);
 $shoppingRepository = new ShoppingRepository($database);
+$contactRepository = new ContactRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
 
@@ -67,6 +71,7 @@ $app = new App([
     AuthService::class => $authService,
     AuditLogger::class => $auditLogger,
     ShoppingRepository::class => $shoppingRepository,
+    ContactRepository::class => $contactRepository,
     FinanceService::class => $financeService,
 ]);
 
@@ -99,6 +104,20 @@ $router->post('/shopping/wish-items', [ShoppingController::class, 'addWishItem']
 $router->post('/shopping/wish-items/update', [ShoppingController::class, 'updateWishItem']);
 $router->post('/shopping/wish-items/toggle', [ShoppingController::class, 'toggleWishItem']);
 $router->post('/shopping/wish-items/delete', [ShoppingController::class, 'deleteWishItem']);
+
+$router->get('/contacts', [ContactController::class, 'index']);
+$router->post('/contacts', [ContactController::class, 'store']);
+$router->post('/contacts/update', [ContactController::class, 'update']);
+$router->post('/contacts/toggle', [ContactController::class, 'toggle']);
+
+$router->get('/finance/payable', [NavigationPageController::class, 'financePayable']);
+$router->get('/finance/receivable', [NavigationPageController::class, 'financeReceivable']);
+$router->get('/reports', [NavigationPageController::class, 'reports']);
+$router->get('/system/backup', [NavigationPageController::class, 'systemBackup']);
+$router->get('/system/sync', [NavigationPageController::class, 'systemSync']);
+$router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
+$router->get('/system/discord', [NavigationPageController::class, 'systemDiscord']);
+$router->get('/system/spreadsheet', [NavigationPageController::class, 'systemSpreadsheet']);
 
 $router->get('/entries/create', [EntryController::class, 'create']);
 $router->post('/entries', [EntryController::class, 'store']);

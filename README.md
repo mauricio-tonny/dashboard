@@ -105,4 +105,5 @@ php bin/create_user.php --name="Nome" --email=email@dominio.com --role=viewer --
 - Logs de auditoria: [docs/audit-logs.md](D:/GITHUB/mauricio-tonny/dashboard/docs/audit-logs.md)
 - Gestao de usuarios: [docs/admin-users.md](D:/GITHUB/mauricio-tonny/dashboard/docs/admin-users.md)
 - Modulo de compras: [docs/shopping.md](D:/GITHUB/mauricio-tonny/dashboard/docs/shopping.md)
+- Interface e navegacao: [docs/interface-navigation.md](D:/GITHUB/mauricio-tonny/dashboard/docs/interface-navigation.md)
 - Schema inicial do banco: [database/schema.sql](D:/GITHUB/mauricio-tonny/dashboard/database/schema.sql)

@@ -221,4 +221,24 @@ CREATE TABLE IF NOT EXISTS shopping_wish_items (
     CONSTRAINT fk_wish_items_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS contacts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('vendor', 'client') NOT NULL,
+    first_name VARCHAR(120) NOT NULL,
+    last_name VARCHAR(120) NULL,
+    document VARCHAR(30) NULL,
+    phone VARCHAR(40) NULL,
+    email VARCHAR(190) NULL,
+    address VARCHAR(255) NULL,
+    city VARCHAR(120) NOT NULL,
+    state CHAR(2) NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_contacts_type (type),
+    INDEX idx_contacts_name (first_name, last_name),
+    CONSTRAINT fk_contacts_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
 INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('viewer');

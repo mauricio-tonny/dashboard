@@ -46,5 +46,12 @@ final class ExcelFinanceRepository implements FinanceRepository
             'status' => 'aguardando_integracao_com_excel',
         ];
     }
-}
 
+    public function annualExpenseSeries(int $year): array
+    {
+        return array_map(static fn (int $month): array => [
+            'month' => str_pad((string) $month, 2, '0', STR_PAD_LEFT),
+            'amount' => 0.0,
+        ], range(1, 12));
+    }
+}

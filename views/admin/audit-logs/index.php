@@ -29,6 +29,10 @@ $labels = [
     'shopping_vehicle_saved' => 'Veiculo salvo',
     'shopping_vehicle_enabled' => 'Veiculo reativado',
     'shopping_vehicle_disabled' => 'Veiculo desativado',
+    'contact_created' => 'Contato criado',
+    'contact_updated' => 'Contato atualizado',
+    'contact_enabled' => 'Contato reativado',
+    'contact_disabled' => 'Contato desativado',
 ];
 ?>
 <section class="card">

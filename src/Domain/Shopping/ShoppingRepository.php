@@ -39,6 +39,47 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function marketSummaryForMonth(string $referenceMonth): array
+    {
+        $month = $this->normalizeMonth($referenceMonth);
+        $statement = $this->database->connection()->prepare(
+            'SELECT lists.*,
+                    COUNT(items.id) AS item_count,
+                    COALESCE(SUM(items.is_checked), 0) AS checked_count
+             FROM shopping_market_lists lists
+             LEFT JOIN shopping_market_items items ON items.list_id = lists.id
+             WHERE lists.reference_month = :reference_month
+             GROUP BY lists.id
+             LIMIT 1'
+        );
+        $statement->execute(['reference_month' => $month]);
+        $summary = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $summary === false ? [
+            'reference_month' => $month,
+            'item_count' => 0,
+            'checked_count' => 0,
+            'total_amount' => null,
+        ] : $summary;
+    }
+
+    public function pendingHomeItems(int $limit = 10): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT items.*, rooms.name AS room_name
+             FROM shopping_wish_items items
+             LEFT JOIN shopping_rooms rooms ON rooms.id = items.room_id
+             WHERE items.type = "home"
+               AND items.is_purchased = 0
+             ORDER BY items.priority DESC, items.created_at DESC
+             LIMIT :limit'
+        );
+        $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function findOrCreateMarketList(string $referenceMonth, ?int $userId): int
     {
         $month = $this->normalizeMonth($referenceMonth);

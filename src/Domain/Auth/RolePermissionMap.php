@@ -24,6 +24,7 @@ final class RolePermissionMap
                 Permission::VIEW_CATEGORY_REPORT,
                 Permission::VIEW_SHOPPING,
                 Permission::MANAGE_SHOPPING,
+                Permission::VIEW_CONTACTS,
             ],
             Role::EDITOR => [
                 ...self::permissionsFor(Role::VIEWER),
@@ -35,6 +36,7 @@ final class RolePermissionMap
                 Permission::VIEW_MONTHLY_REPORT,
                 Permission::VIEW_ANNUAL_REPORT,
                 Permission::VIEW_PERIOD_REPORT,
+                Permission::MANAGE_CONTACTS,
             ],
             Role::ADMIN => [
                 ...self::permissionsFor(Role::EDITOR),
@@ -67,6 +69,8 @@ final class RolePermissionMap
             Permission::VIEW_SHOPPING->value => ['Ver compras', 'Permite acessar listas de compras.'],
             Permission::MANAGE_SHOPPING->value => ['Gerenciar compras', 'Permite criar listas, inserir itens, marcar itens e informar valor total.'],
             Permission::MANAGE_SHOPPING_SETTINGS->value => ['Configurar compras', 'Permite gerenciar comodos, pessoas, veiculos e areas do modulo de compras.'],
+            Permission::VIEW_CONTACTS->value => ['Ver contatos', 'Permite acessar fornecedores e clientes.'],
+            Permission::MANAGE_CONTACTS->value => ['Gerenciar contatos', 'Permite criar, editar, desativar e reativar fornecedores e clientes.'],
             Permission::VIEW_AUDIT_LOGS->value => ['Ver logs de auditoria', 'Permite visualizar logs de acesso e acoes de usuarios pelo painel.'],
             Permission::MANAGE_USERS->value => ['Gerenciar usuarios', 'Permite criar, editar, bloquear e excluir usuarios.'],
             Permission::CHANGE_USER_ROLES->value => ['Alterar perfil de usuario', 'Permite vincular usuarios a perfis ou permissoes, exigindo confirmacao de senha.'],

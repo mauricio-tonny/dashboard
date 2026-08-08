@@ -24,6 +24,9 @@ enum Permission: string
     case MANAGE_SHOPPING = 'manage_shopping';
     case MANAGE_SHOPPING_SETTINGS = 'manage_shopping_settings';
 
+    case VIEW_CONTACTS = 'view_contacts';
+    case MANAGE_CONTACTS = 'manage_contacts';
+
     case VIEW_AUDIT_LOGS = 'view_audit_logs';
     case MANAGE_USERS = 'manage_users';
     case CHANGE_USER_ROLES = 'change_user_roles';
