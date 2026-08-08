@@ -127,6 +127,18 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function marketItemsSubtotal(int $listId): float
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT COALESCE(SUM(subtotal_amount), 0)
+             FROM shopping_market_items
+             WHERE list_id = :list_id'
+        );
+        $statement->execute(['list_id' => $listId]);
+
+        return (float) $statement->fetchColumn();
+    }
+
     public function marketInvoices(int $listId): array
     {
         $statement = $this->database->connection()->prepare(
@@ -264,9 +276,11 @@ final class ShoppingRepository
 
     public function finishMarketList(int $id, ?float $totalAmount): void
     {
+        $discountAmount = $this->discountAmount($id, $totalAmount);
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_market_lists
              SET total_amount = :total_amount,
+                 discount_amount = :discount_amount,
                  finished_at = NOW(),
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
@@ -274,21 +288,36 @@ final class ShoppingRepository
         $statement->execute([
             'id' => $id,
             'total_amount' => $totalAmount,
+            'discount_amount' => $discountAmount,
         ]);
     }
 
     public function updateMarketListTotal(int $id, ?float $totalAmount): void
     {
+        $discountAmount = $this->discountAmount($id, $totalAmount);
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_market_lists
              SET total_amount = :total_amount,
+                 discount_amount = :discount_amount,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
         $statement->execute([
             'id' => $id,
             'total_amount' => $totalAmount,
+            'discount_amount' => $discountAmount,
         ]);
+    }
+
+    public function reopenMarketList(int $id): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE shopping_market_lists
+             SET finished_at = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $statement->execute(['id' => $id]);
     }
 
     public function deleteMarketList(int $id): array
@@ -562,5 +591,14 @@ final class ShoppingRepository
         }
 
         return $date->modify('first day of this month')->format('Y-m-01');
+    }
+
+    private function discountAmount(int $listId, ?float $totalAmount): ?float
+    {
+        if ($totalAmount === null) {
+            return null;
+        }
+
+        return max(0.0, round($this->marketItemsSubtotal($listId) - $totalAmount, 2));
     }
 }

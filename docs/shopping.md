@@ -31,7 +31,9 @@ Campos do item:
 - Valor.
 - Sub total calculado pelo sistema quando houver valor unitario.
 
-Durante a compra, o usuario pode confirmar cada item. Ao finalizar, informa o valor total da compra.
+Durante a compra, o usuario pode confirmar cada item. Ao finalizar, informa o valor total da compra em reais. A lista finalizada fica travada para evitar novas alteracoes, anexos ou uma segunda finalizacao. Somente administradores podem remover a finalizacao para ajustes.
+
+Quando o subtotal dos itens for maior que o valor final da compra, o sistema registra a diferenca como desconto da lista: `subtotal dos itens - total final`.
 
 Administradores podem excluir uma lista mensal de mercado inteira. A exclusao remove os itens e registros de notas vinculadas a lista.
 

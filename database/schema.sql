@@ -183,6 +183,7 @@ CREATE TABLE IF NOT EXISTS shopping_market_lists (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     reference_month DATE NOT NULL UNIQUE,
     total_amount DECIMAL(14,2) NULL,
+    discount_amount DECIMAL(14,2) NULL,
     finished_at DATETIME NULL,
     created_by_user_id BIGINT UNSIGNED NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

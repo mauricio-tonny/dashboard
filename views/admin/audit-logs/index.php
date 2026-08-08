@@ -13,6 +13,7 @@ $labels = [
     'user_unblocked' => 'Usuario desbloqueado',
     'shopping_market_list_saved' => 'Lista de mercado preparada',
     'shopping_market_list_finished' => 'Lista de mercado finalizada',
+    'shopping_market_list_reopened' => 'Lista de mercado reaberta',
     'shopping_market_list_deleted' => 'Lista de mercado excluida',
     'shopping_market_item_created' => 'Item de mercado criado',
     'shopping_market_item_updated' => 'Item de mercado atualizado',

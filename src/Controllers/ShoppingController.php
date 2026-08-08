@@ -124,6 +124,11 @@ final class ShoppingController extends Controller
         $listId = (int) $request->input('list_id');
         $data = $this->marketItemPayload($request);
 
+        if ($this->marketListIsFinished($listId)) {
+            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
+
         if ($listId <= 0 || $data === null) {
             $this->flash('error', 'Informe nome, sessao e quantidade.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
@@ -148,6 +153,11 @@ final class ShoppingController extends Controller
         $listId = (int) $request->input('list_id');
         $data = $this->marketItemPayload($request);
 
+        if ($this->marketListIsFinished($listId)) {
+            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
+
         if ($id > 0 && $data !== null) {
             $this->app->make(ShoppingRepository::class)->updateMarketItem($id, $data);
             $this->audit('shopping_market_item_updated', 'shopping_market_item', $id);
@@ -166,6 +176,12 @@ final class ShoppingController extends Controller
 
         $id = (int) $request->input('id');
         $listId = (int) $request->input('list_id');
+
+        if ($this->marketListIsFinished($listId)) {
+            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
+
         $checked = (string) $request->input('checked') === '1';
         $this->app->make(ShoppingRepository::class)->toggleMarketItem($id, $checked);
         $this->audit($checked ? 'shopping_market_item_checked' : 'shopping_market_item_unchecked', 'shopping_market_item', $id);
@@ -183,6 +199,12 @@ final class ShoppingController extends Controller
 
         $id = (int) $request->input('id');
         $listId = (int) $request->input('list_id');
+
+        if ($this->marketListIsFinished($listId)) {
+            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
+
         $this->app->make(ShoppingRepository::class)->deleteMarketItem($id);
         $this->audit('shopping_market_item_deleted', 'shopping_market_item', $id);
 
@@ -198,10 +220,42 @@ final class ShoppingController extends Controller
         }
 
         $id = (int) $request->input('list_id');
+
+        if ($this->marketListIsFinished($id)) {
+            $this->flash('error', 'Esta lista ja esta finalizada.');
+            return Response::redirect('/shopping/market?market_list_id=' . $id);
+        }
+
         $amount = $this->money((string) $request->input('total_amount'));
         $this->app->make(ShoppingRepository::class)->finishMarketList($id, $amount);
         $this->audit('shopping_market_list_finished', 'shopping_market_list', $id, ['total_amount' => $amount]);
         $this->flash('success', 'Lista finalizada com valor total.');
+
+        return Response::redirect('/shopping/market?market_list_id=' . $id);
+    }
+
+    public function reopenMarketList(Request $request): Response
+    {
+        $auth = $this->authorizeManage();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        if (!$auth->user()?->hasRole(Role::ADMIN)) {
+            return new Response('Acesso negado.', 403);
+        }
+
+        $id = (int) $request->input('list_id');
+
+        if ($id <= 0) {
+            $this->flash('error', 'Selecione uma lista valida para reabrir.');
+            return Response::redirect('/shopping/market');
+        }
+
+        $this->app->make(ShoppingRepository::class)->reopenMarketList($id);
+        $this->audit('shopping_market_list_reopened', 'shopping_market_list', $id);
+        $this->flash('success', 'Finalizacao removida. A lista pode ser ajustada novamente.');
 
         return Response::redirect('/shopping/market?market_list_id=' . $id);
     }
@@ -246,6 +300,11 @@ final class ShoppingController extends Controller
 
         $listId = (int) $request->input('list_id');
         $file = $_FILES['invoice'] ?? null;
+
+        if ($this->marketListIsFinished($listId)) {
+            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de anexar notas.');
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
 
         if ($listId <= 0 || !is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             $this->flash('error', 'Selecione um arquivo valido de NFC-e/NF-e.');
@@ -336,6 +395,11 @@ final class ShoppingController extends Controller
         }
 
         $listId = (int) $request->input('list_id');
+
+        if ($this->marketListIsFinished($listId)) {
+            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de anexar notas.');
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
 
         if ($listId <= 0) {
             $this->flash('error', 'Selecione uma lista de mercado antes de informar a chave.');
@@ -746,7 +810,15 @@ final class ShoppingController extends Controller
 
     private function money(string $value): ?float
     {
-        $normalized = str_replace(['.', ','], ['', '.'], trim($value));
+        $value = trim(str_replace('R$', '', $value));
+
+        if ($value === '') {
+            return null;
+        }
+
+        $normalized = str_contains($value, ',')
+            ? str_replace(['.', ','], ['', '.'], $value)
+            : str_replace(',', '', $value);
 
         return $normalized === '' ? null : (float) $normalized;
     }
@@ -756,6 +828,17 @@ final class ShoppingController extends Controller
         $normalized = str_replace(',', '.', trim($value));
 
         return $normalized === '' ? null : (float) $normalized;
+    }
+
+    private function marketListIsFinished(int $listId): bool
+    {
+        if ($listId <= 0) {
+            return false;
+        }
+
+        $list = $this->app->make(ShoppingRepository::class)->marketList($listId);
+
+        return $list !== null && ($list['finished_at'] ?? null) !== null;
     }
 
     private function wishRedirect(string $type): string

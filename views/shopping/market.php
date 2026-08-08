@@ -30,6 +30,8 @@ $itemsSubtotal = array_reduce(
     static fn (float $carry, array $item): float => $carry + (float) ($item['subtotal_amount'] ?? 0),
     0.0
 );
+$isFinished = $selectedMarketList !== null && ($selectedMarketList['finished_at'] ?? null) !== null;
+$discountAmount = $selectedMarketList === null ? null : ($selectedMarketList['discount_amount'] ?? null);
 ob_start();
 ?>
 <section class="page-hero">
@@ -71,7 +73,10 @@ ob_start();
         <?php foreach ($marketLists as $list): ?>
             <a class="month-pill <?= (int) $list['id'] === $selectedListId ? 'is-active' : '' ?>" href="/shopping/market?market_list_id=<?= (int) $list['id'] ?>">
                 <?= htmlspecialchars($monthLabel($list['reference_month']), ENT_QUOTES, 'UTF-8') ?>
-                <small><?= (int) $list['checked_count'] ?>/<?= (int) $list['item_count'] ?> itens</small>
+                <small>
+                    <?= (int) $list['checked_count'] ?>/<?= (int) $list['item_count'] ?> itens
+                    <?= ($list['finished_at'] ?? null) !== null ? ' | Finalizada' : '' ?>
+                </small>
             </a>
         <?php endforeach; ?>
         <?php if ($marketLists === []): ?>
@@ -87,56 +92,72 @@ ob_start();
                 Lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
                 Total final: <?= htmlspecialchars($formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>.
                 Subtotal dos itens: <?= htmlspecialchars($formatMoney($itemsSubtotal), ENT_QUOTES, 'UTF-8') ?>
+                <?php if ($discountAmount !== null && (float) $discountAmount > 0): ?>
+                    . Desconto: <?= htmlspecialchars($formatMoney($discountAmount), ENT_QUOTES, 'UTF-8') ?>
+                <?php endif; ?>
             </p>
-            <form method="post" action="/shopping/market/items" class="form-grid market-price-form" data-market-item-form>
-                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                <label>
-                    Nome do item
-                    <input type="text" name="name" placeholder="Ex.: Arroz, Sabao em po, Leite" required>
-                </label>
-                <label>
-                    Sessao
-                    <select name="section_id" required>
-                        <option value="">Selecione</option>
-                        <?php foreach ($marketSections as $section): ?>
-                            <option value="<?= (int) $section['id'] ?>"><?= htmlspecialchars($section['name'], ENT_QUOTES, 'UTF-8') ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </label>
-                <label>
-                    Quantidade
-                    <input type="number" name="quantity" min="0.001" step="0.001" value="1" required>
-                </label>
-                <label>
-                    Valor unitario
-                    <input type="text" name="unit_amount" inputmode="decimal" placeholder="0,00" data-unit-amount>
-                </label>
-                <label>
-                    Valor
-                    <input type="text" name="amount" inputmode="decimal" placeholder="0,00">
-                </label>
-                <label>
-                    Sub total
-                    <input type="text" name="subtotal_preview" placeholder="0,00" data-subtotal-preview readonly>
-                </label>
-                <div class="form-actions">
-                    <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar item</button>
+            <?php if ($isFinished): ?>
+                <div class="notice notice-success market-lock-notice">
+                    <strong>Lista finalizada.</strong> Esta lista esta travada para evitar alteracoes acidentais. Somente um administrador pode remover a finalizacao.
                 </div>
-            </form>
+            <?php else: ?>
+                <form method="post" action="/shopping/market/items" class="form-grid market-price-form" data-market-item-form>
+                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                    <label>
+                        Nome do item
+                        <input type="text" name="name" placeholder="Ex.: Arroz, Sabao em po, Leite" required>
+                    </label>
+                    <label>
+                        Sessao
+                        <select name="section_id" required>
+                            <option value="">Selecione</option>
+                            <?php foreach ($marketSections as $section): ?>
+                                <option value="<?= (int) $section['id'] ?>"><?= htmlspecialchars($section['name'], ENT_QUOTES, 'UTF-8') ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </label>
+                    <label>
+                        Quantidade
+                        <input type="number" name="quantity" min="0.001" step="0.001" value="1" required>
+                    </label>
+                    <label>
+                        Valor unitario
+                        <input type="text" name="unit_amount" inputmode="decimal" placeholder="0,00" data-unit-amount>
+                    </label>
+                    <label>
+                        Valor
+                        <input type="text" name="amount" inputmode="decimal" placeholder="0,00">
+                    </label>
+                    <label>
+                        Sub total
+                        <input type="text" name="subtotal_preview" placeholder="0,00" data-subtotal-preview readonly>
+                    </label>
+                    <div class="form-actions">
+                        <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar item</button>
+                    </div>
+                </form>
+            <?php endif; ?>
 
             <div class="market-checklist">
                 <?php foreach ($marketItems as $item): ?>
                     <div class="market-item <?= ((int) $item['is_checked']) === 1 ? 'is-done' : '' ?>">
                         <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
-                        <form method="post" action="/shopping/market/items/toggle" class="check-form">
-                            <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                            <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                            <input type="hidden" name="checked" value="<?= ((int) $item['is_checked']) === 1 ? '0' : '1' ?>">
-                            <button class="check-button" type="submit">
-                                <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-cart-plus' ?>"></span>
-                                <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Confirmar' ?>
-                            </button>
-                        </form>
+                        <?php if ($isFinished): ?>
+                            <span class="check-button is-static-check">
+                                <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-lock' ?>"></span>
+                                <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Pendente' ?>
+                            </span>
+                        <?php else: ?>
+                            <form method="post" action="/shopping/market/items/toggle" class="check-form">
+                                <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                                <input type="hidden" name="checked" value="<?= ((int) $item['is_checked']) === 1 ? '0' : '1' ?>">
+                                <button class="check-button" type="submit">
+                                    <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-cart-plus' ?>"></span>
+                                    <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Confirmar' ?>
+                                </button>
+                            </form>
+                        <?php endif; ?>
                         <div class="market-item-copy">
                             <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
                             <small>
@@ -146,6 +167,7 @@ ob_start();
                                 | Subtotal: <?= htmlspecialchars($formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>
                             </small>
                         </div>
+                        <?php if (!$isFinished): ?>
                         <details>
                             <summary><span class="bi bi-pencil-square"></span>Editar</summary>
                             <form method="post" action="/shopping/market/items/update" class="compact-form market-price-form" data-market-item-form>
@@ -172,20 +194,48 @@ ob_start();
                                 <button class="button-danger" type="submit"><span class="bi bi-trash3"></span>Remover</button>
                             </form>
                         </details>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </div>
 
-            <form method="post" action="/shopping/market/lists/finish" class="inline-form total-form">
-                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                <label>
-                    Valor total da compra
-                    <input type="text" name="total_amount" placeholder="0,00" value="<?= htmlspecialchars((string) ($selectedMarketList['total_amount'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                </label>
-                <button class="inline-button" type="submit"><span class="bi bi-flag"></span>Finalizar lista</button>
-            </form>
+            <div class="market-total-summary">
+                <div>
+                    <span>Subtotal dos itens</span>
+                    <strong><?= htmlspecialchars($formatMoney($itemsSubtotal), ENT_QUOTES, 'UTF-8') ?></strong>
+                </div>
+                <div>
+                    <span>Valor final</span>
+                    <strong><?= htmlspecialchars($formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?></strong>
+                </div>
+                <div>
+                    <span>Desconto</span>
+                    <strong><?= htmlspecialchars($formatMoney($discountAmount), ENT_QUOTES, 'UTF-8') ?></strong>
+                </div>
+            </div>
+
+            <?php if (!$isFinished): ?>
+                <form method="post" action="/shopping/market/lists/finish" class="inline-form total-form">
+                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                    <label>
+                        Valor total da compra
+                        <input type="text" name="total_amount" inputmode="decimal" placeholder="R$ 0,00" value="<?= htmlspecialchars($selectedMarketList['total_amount'] === null ? '' : $formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>">
+                    </label>
+                    <button class="inline-button" type="submit"><span class="bi bi-flag"></span>Finalizar lista</button>
+                </form>
+            <?php endif; ?>
 
             <?php if ($isAdmin): ?>
+                <?php if ($isFinished): ?>
+                    <form method="post" action="/shopping/market/lists/reopen" class="inline-form total-form" onsubmit="return confirm('Remover a finalizacao da lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>?');">
+                        <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                        <div>
+                            <strong>Administracao da finalizacao</strong>
+                            <p class="muted">Reabre a lista para permitir ajustes, anexos e nova finalizacao.</p>
+                        </div>
+                        <button class="inline-button" type="submit"><span class="bi bi-unlock"></span>Remover finalizacao</button>
+                    </form>
+                <?php endif; ?>
                 <form method="post" action="/shopping/market/lists/delete" class="inline-form total-form" onsubmit="return confirm('Excluir a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?> com todos os itens e notas vinculadas?');">
                     <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                     <div>
@@ -208,37 +258,43 @@ ob_start();
             Escolha uma das formas abaixo para vincular notas a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
             XML e PDF da consulta publica importam itens automaticamente; imagem fica como anexo; chave de acesso salva os metadados.
         </p>
-        <div class="grid">
-            <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="soft-panel compact-form">
-                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                <h3><span class="bi bi-file-earmark-arrow-up"></span> Upload de arquivo</h3>
-                <p class="muted">Use XML ou PDF da consulta publica para importar itens. JPG e PNG ficam anexados para conferencia.</p>
-                <label>
-                    Mes da lista
-                    <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
-                </label>
-                <label>
-                    Arquivo da nota
-                    <input type="file" name="invoice" accept=".pdf,.xml,.jpg,.jpeg,.png" required>
-                </label>
-                <button type="submit"><span class="bi bi-upload"></span>Anexar nota</button>
-            </form>
+        <?php if ($isFinished): ?>
+            <div class="notice notice-success market-lock-notice">
+                <strong>Anexos bloqueados.</strong> Remova a finalizacao da lista para anexar novas notas ou chaves de acesso.
+            </div>
+        <?php else: ?>
+            <div class="grid">
+                <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="soft-panel compact-form">
+                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                    <h3><span class="bi bi-file-earmark-arrow-up"></span> Upload de arquivo</h3>
+                    <p class="muted">Use XML ou PDF da consulta publica para importar itens. JPG e PNG ficam anexados para conferencia.</p>
+                    <label>
+                        Mes da lista
+                        <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
+                    </label>
+                    <label>
+                        Arquivo da nota
+                        <input type="file" name="invoice" accept=".pdf,.xml,.jpg,.jpeg,.png" required>
+                    </label>
+                    <button type="submit"><span class="bi bi-upload"></span>Anexar nota</button>
+                </form>
 
-            <form method="post" action="/shopping/market/access-key" class="soft-panel compact-form">
-                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                <h3><span class="bi bi-key"></span> Chave de acesso</h3>
-                <p class="muted">Quando nao houver XML, salve a chave para consulta publica e controle da nota.</p>
-                <label>
-                    Mes da lista
-                    <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
-                </label>
-                <label>
-                    Chave de acesso
-                    <input type="text" name="access_key" inputmode="numeric" placeholder="0000 0000 0000 0000..." maxlength="60" required>
-                </label>
-                <button type="submit"><span class="bi bi-link-45deg"></span>Salvar chave</button>
-            </form>
-        </div>
+                <form method="post" action="/shopping/market/access-key" class="soft-panel compact-form">
+                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                    <h3><span class="bi bi-key"></span> Chave de acesso</h3>
+                    <p class="muted">Quando nao houver XML, salve a chave para consulta publica e controle da nota.</p>
+                    <label>
+                        Mes da lista
+                        <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
+                    </label>
+                    <label>
+                        Chave de acesso
+                        <input type="text" name="access_key" inputmode="numeric" placeholder="0000 0000 0000 0000..." maxlength="60" required>
+                    </label>
+                    <button type="submit"><span class="bi bi-link-45deg"></span>Salvar chave</button>
+                </form>
+            </div>
+        <?php endif; ?>
         <div class="settings-list">
             <?php foreach ($marketInvoices as $invoice): ?>
                 <div class="settings-item">

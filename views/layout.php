@@ -606,6 +606,16 @@
             min-width: 82px;
             padding: 9px 12px;
         }
+        .is-static-check {
+            align-items: center;
+            background: #eef7fb;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--muted);
+            display: inline-flex;
+            gap: 6px;
+            justify-content: center;
+        }
         .market-item-copy {
             display: grid;
             min-width: 0;
@@ -646,6 +656,33 @@
             border-top: 1px solid var(--border);
             margin-top: 18px;
             padding-top: 18px;
+        }
+        .market-lock-notice {
+            margin: 14px 0;
+        }
+        .market-total-summary {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            margin-top: 18px;
+        }
+        .market-total-summary div {
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+        }
+        .market-total-summary span,
+        .market-total-summary strong {
+            display: block;
+        }
+        .market-total-summary span {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+        .market-total-summary strong {
+            font-size: 1.2rem;
+            margin-top: 4px;
         }
         .app-footer {
             color: var(--muted);
