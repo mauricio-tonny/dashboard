@@ -19,7 +19,7 @@ final class DatabaseUserRepository implements UserRepository
     public function findByEmail(string $email): ?User
     {
         $statement = $this->database->connection()->prepare(
-            'SELECT users.name, users.email, users.password_hash, roles.name AS role
+            'SELECT users.id, users.name, users.email, users.password_hash, roles.name AS role
              FROM users
              INNER JOIN roles ON roles.id = users.role_id
              WHERE users.email = :email AND users.is_active = 1
@@ -34,6 +34,7 @@ final class DatabaseUserRepository implements UserRepository
         }
 
         return new User(
+            (int) $user['id'],
             $user['name'],
             $user['email'],
             $user['password_hash'],

@@ -34,9 +34,24 @@ final class Session
         unset($_SESSION[$key]);
     }
 
+    public function touchActivity(): void
+    {
+        $_SESSION['last_activity_at'] = time();
+    }
+
+    public function isIdleForMoreThan(int $seconds): bool
+    {
+        $lastActivityAt = $_SESSION['last_activity_at'] ?? null;
+
+        if (!is_int($lastActivityAt)) {
+            return false;
+        }
+
+        return time() - $lastActivityAt > $seconds;
+    }
+
     public function regenerate(): void
     {
         session_regenerate_id(true);
     }
 }
-

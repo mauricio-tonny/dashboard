@@ -57,6 +57,9 @@ try {
         $pdo->exec($statement);
     }
 
+    ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_created_at', 'CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at)');
+    ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_action', 'CREATE INDEX idx_audit_logs_action ON audit_logs (action)');
+
     $permissionStatement = $pdo->prepare(
         'INSERT INTO permissions (name, label, description)
          VALUES (:name, :label, :description)
@@ -93,12 +96,36 @@ try {
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
     $permissionCount = (int) $pdo->query('SELECT COUNT(*) FROM permissions')->fetchColumn();
     $rolePermissionCount = (int) $pdo->query('SELECT COUNT(*) FROM role_permissions')->fetchColumn();
+    $auditRetentionDays = (int) ($_ENV['AUDIT_LOG_RETENTION_DAYS'] ?? 90);
+    $pruneStatement = $pdo->prepare('DELETE FROM audit_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL :days DAY)');
+    $pruneStatement->bindValue('days', $auditRetentionDays, PDO::PARAM_INT);
+    $pruneStatement->execute();
 
     echo "Banco preparado com sucesso.\n";
     echo "Tabelas encontradas: " . implode(', ', $tables) . "\n";
     echo "Permissoes cadastradas: {$permissionCount}\n";
     echo "Vinculos perfil/permissao: {$rolePermissionCount}\n";
+    echo "Logs removidos por retencao ({$auditRetentionDays} dias): {$pruneStatement->rowCount()}\n";
 } catch (Throwable $exception) {
     fwrite(STDERR, "Erro ao preparar banco: {$exception->getMessage()}\n");
     exit(1);
+}
+
+function ensureIndex(PDO $pdo, string $table, string $index, string $sql): void
+{
+    $statement = $pdo->prepare(
+        'SELECT COUNT(*)
+         FROM information_schema.statistics
+         WHERE table_schema = DATABASE()
+           AND table_name = :table
+           AND index_name = :index'
+    );
+    $statement->execute([
+        'table' => $table,
+        'index' => $index,
+    ]);
+
+    if ((int) $statement->fetchColumn() === 0) {
+        $pdo->exec($sql);
+    }
 }

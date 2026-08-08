@@ -20,6 +20,7 @@ enum Permission: string
     case VIEW_ANNUAL_REPORT = 'view_annual_report';
     case VIEW_PERIOD_REPORT = 'view_period_report';
 
+    case VIEW_AUDIT_LOGS = 'view_audit_logs';
     case MANAGE_USERS = 'manage_users';
     case CHANGE_USER_ROLES = 'change_user_roles';
     case MANAGE_BACKUPS = 'manage_backups';

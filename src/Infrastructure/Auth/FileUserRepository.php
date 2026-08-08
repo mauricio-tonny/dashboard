@@ -19,6 +19,7 @@ final class FileUserRepository implements UserRepository
         foreach ($this->all() as $user) {
             if (mb_strtolower($user['email']) === mb_strtolower($email)) {
                 return new User(
+                    null,
                     $user['name'],
                     $user['email'],
                     $user['password_hash'],

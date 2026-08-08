@@ -36,6 +36,7 @@ final class RolePermissionMap
             ],
             Role::ADMIN => [
                 ...self::permissionsFor(Role::EDITOR),
+                Permission::VIEW_AUDIT_LOGS,
                 Permission::MANAGE_USERS,
                 Permission::CHANGE_USER_ROLES,
                 Permission::MANAGE_BACKUPS,
@@ -60,6 +61,7 @@ final class RolePermissionMap
             Permission::VIEW_MONTHLY_REPORT->value => ['Ver relatorio mensal', 'Permite visualizar relatorios mensais.'],
             Permission::VIEW_ANNUAL_REPORT->value => ['Ver relatorio anual', 'Permite visualizar relatorios anuais.'],
             Permission::VIEW_PERIOD_REPORT->value => ['Ver relatorio por periodo', 'Permite visualizar relatorios por periodo customizado.'],
+            Permission::VIEW_AUDIT_LOGS->value => ['Ver logs de auditoria', 'Permite visualizar logs de acesso e acoes de usuarios pelo painel.'],
             Permission::MANAGE_USERS->value => ['Gerenciar usuarios', 'Permite criar, editar, bloquear e excluir usuarios.'],
             Permission::CHANGE_USER_ROLES->value => ['Alterar perfil de usuario', 'Permite vincular usuarios a perfis ou permissoes, exigindo confirmacao de senha.'],
             Permission::MANAGE_BACKUPS->value => ['Acionar backup manual', 'Permite executar rotina de backup manualmente.'],

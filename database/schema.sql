@@ -128,6 +128,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     entity_id BIGINT UNSIGNED NULL,
     metadata JSON NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_audit_logs_created_at (created_at),
+    INDEX idx_audit_logs_action (action),
     CONSTRAINT fk_audit_logs_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 

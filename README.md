@@ -102,4 +102,5 @@ php bin/create_user.php --name="Nome" --email=email@dominio.com --role=viewer --
 - Fluxo previsto para OneDrive e Microsoft Graph: [docs/microsoft-graph.md](D:/GITHUB/mauricio-tonny/dashboard/docs/microsoft-graph.md)
 - Configuracao sugerida do NGINX: [docs/nginx.md](D:/GITHUB/mauricio-tonny/dashboard/docs/nginx.md)
 - Matriz de perfis e permissoes: [docs/permissions.md](D:/GITHUB/mauricio-tonny/dashboard/docs/permissions.md)
+- Logs de auditoria: [docs/audit-logs.md](D:/GITHUB/mauricio-tonny/dashboard/docs/audit-logs.md)
 - Schema inicial do banco: [database/schema.sql](D:/GITHUB/mauricio-tonny/dashboard/database/schema.sql)

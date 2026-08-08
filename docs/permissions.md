@@ -52,6 +52,7 @@ Pode fazer tudo que Editor e Visualizador fazem e tambem:
 - Habilitar ou desabilitar notificacao do Discord.
 - Inserir ou alterar webhook do Discord.
 - Inserir, editar ou excluir URL da planilha.
+- Visualizar logs de auditoria pelo painel administrativo.
 
 Alteracoes de perfil ou permissao de usuario devem exigir confirmacao de senha do administrador.
 
@@ -69,9 +70,9 @@ Alteracoes de perfil ou permissao de usuario devem exigir confirmacao de senha d
 - `view_monthly_report`
 - `view_annual_report`
 - `view_period_report`
+- `view_audit_logs`
 - `manage_users`
 - `change_user_roles`
 - `manage_backups`
 - `manage_discord_notifications`
 - `manage_spreadsheet_url`
-

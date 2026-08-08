@@ -8,6 +8,9 @@ ob_start();
     <p class="muted">Este painel inicial ja separa autenticacao, autorizacao e a camada que depois vai conversar com sua planilha.</p>
 
     <div class="actions">
+        <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
+            <a href="/admin/audit-logs"><button class="inline-button" type="button">Logs de auditoria</button></a>
+        <?php endif; ?>
         <?php if ($user->canEdit()): ?>
             <a href="/entries/create"><button class="inline-button" type="button">Novo lancamento</button></a>
         <?php endif; ?>
@@ -37,4 +40,3 @@ ob_start();
 <?php
 $content = (string) ob_get_clean();
 require base_path('views/layout.php');
-

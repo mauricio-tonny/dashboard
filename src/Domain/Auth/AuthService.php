@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Auth;
 
 use App\Core\Session;
+use App\Domain\Audit\AuditLogger;
 
 final class AuthService
 {
@@ -24,6 +25,7 @@ final class AuthService
 
         $this->session->regenerate();
         $this->session->put('user_email', $user->email);
+        $this->session->touchActivity();
 
         return true;
     }
@@ -47,7 +49,27 @@ final class AuthService
     public function logout(): void
     {
         $this->session->forget('user_email');
+        $this->session->forget('last_activity_at');
         $this->session->regenerate();
     }
-}
 
+    public function enforceIdleTimeout(int $seconds, AuditLogger $auditLogger): void
+    {
+        $user = $this->user();
+
+        if ($user === null) {
+            return;
+        }
+
+        if (!$this->session->isIdleForMoreThan($seconds)) {
+            $this->session->touchActivity();
+            return;
+        }
+
+        $auditLogger->log('session_timeout', 'auth', null, $user, [
+            'idle_limit_seconds' => $seconds,
+        ]);
+
+        $this->logout();
+    }
+}
