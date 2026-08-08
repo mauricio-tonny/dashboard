@@ -276,12 +276,22 @@ final class ShoppingController extends Controller
             return Response::redirect('/shopping/market?market_list_id=' . $id);
         }
 
-        $amount = $this->money((string) $request->input('total_amount'));
         $repository = $this->app->make(ShoppingRepository::class);
+        $list = $repository->marketList($id);
+        $amount = $this->money((string) $request->input('total_amount'));
 
         if ($repository->marketItemsCount($id) === 0) {
             $this->flash('error', 'Nao e possivel finalizar uma lista de mercado sem itens.');
             return Response::redirect('/shopping/market?market_list_id=' . $id);
+        }
+
+        if (($amount === null || $amount <= 0) && $list !== null && (float) ($list['total_amount'] ?? 0) > 0) {
+            $amount = (float) $list['total_amount'];
+        }
+
+        if ($amount === null || $amount <= 0) {
+            $subtotal = $repository->marketItemsSubtotal($id);
+            $amount = $subtotal > 0 ? $subtotal : $amount;
         }
 
         if ($amount === null || $amount <= 0) {

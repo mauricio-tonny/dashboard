@@ -61,6 +61,7 @@ $listPurchaseDate = $selectedMarketList['purchase_date'] ?? ($invoicePurchaseDat
 $pendingMarketItems = array_values(array_filter($marketItems, static fn (array $item): bool => ((int) $item['is_checked']) === 0));
 $checkedMarketItems = array_values(array_filter($marketItems, static fn (array $item): bool => ((int) $item['is_checked']) === 1));
 $itemsOpen = count($pendingMarketItems) <= 8;
+$finishAmount = $selectedMarketList['total_amount'] ?? ($itemsSubtotal > 0 ? $itemsSubtotal : null);
 ob_start();
 ?>
 <section class="page-hero">
@@ -299,7 +300,7 @@ ob_start();
                     <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                     <label>
                         Valor total da compra
-                        <input type="text" name="total_amount" inputmode="decimal" placeholder="R$ 0,00" value="<?= htmlspecialchars($selectedMarketList['total_amount'] === null ? '' : $formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>" data-money-input>
+                        <input type="text" name="total_amount" inputmode="decimal" placeholder="R$ 0,00" value="<?= htmlspecialchars($finishAmount === null ? '' : $formatMoney($finishAmount), ENT_QUOTES, 'UTF-8') ?>" data-money-input>
                     </label>
                     <label>
                         Data da compra
