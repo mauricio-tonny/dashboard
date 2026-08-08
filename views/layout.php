@@ -334,6 +334,63 @@
         .button-danger:hover {
             background: #8f1d14;
         }
+        .button-light {
+            background: var(--surface-soft);
+            color: var(--text);
+        }
+        .button-light:hover {
+            background: #dde9f1;
+            color: var(--text);
+        }
+        .btn-close {
+            background-color: transparent;
+            box-shadow: none;
+            margin-top: 0;
+            padding: 0.5rem;
+            transform: none;
+            width: auto;
+        }
+        .btn-close:hover {
+            background-color: transparent;
+            box-shadow: none;
+            transform: none;
+        }
+        .modal-title {
+            align-items: center;
+            display: inline-flex;
+            gap: 8px;
+        }
+        .modal-footer-actions {
+            align-items: end;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .form-check-group {
+            margin-bottom: 14px;
+        }
+        .field-label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .check-option {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .check-option input {
+            margin: 0;
+            width: auto;
+        }
+        .sr-only {
+            height: 1px;
+            overflow: hidden;
+            position: absolute;
+            width: 1px;
+        }
         .notice {
             border-radius: 8px;
             font-weight: 700;
@@ -402,6 +459,12 @@
         .inline-form label {
             min-width: 220px;
         }
+        .align-end-form {
+            align-items: flex-end;
+        }
+        .align-end-form button {
+            margin-bottom: 14px;
+        }
         .compact-form {
             display: grid;
             gap: 10px;
@@ -417,6 +480,30 @@
             display: grid;
             gap: 20px;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        .module-card-grid {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
+        .module-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            color: var(--text);
+            padding: 20px;
+            text-decoration: none;
+        }
+        .module-card:hover {
+            color: var(--text);
+            transform: translateY(-2px);
+        }
+        .module-card .bi {
+            color: var(--accent-strong);
+            display: block;
+            font-size: 1.5rem;
+            margin-bottom: 12px;
         }
         .shopping-panel {
             min-height: 100%;
@@ -863,7 +950,12 @@
                     </div>
                     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_SHOPPING)): ?>
                         <div class="nav-group">
-                            <a class="<?= $isActive('/shopping') ?>" href="/shopping"><span class="bi bi-basket2"></span>Compras</a>
+                            <div class="nav-group-title">Compras</div>
+                            <a class="nav-subitem <?= $isActive('/shopping') ?>" href="/shopping"><span class="bi bi-grid"></span>Visao geral</a>
+                            <a class="nav-subitem <?= $isActive('/shopping/market') ?>" href="/shopping/market"><span class="bi bi-basket2"></span>Mercado</a>
+                            <a class="nav-subitem <?= $isActive('/shopping/home') ?>" href="/shopping/home"><span class="bi bi-house-heart"></span>Para casa</a>
+                            <a class="nav-subitem <?= $isActive('/shopping/family') ?>" href="/shopping/family"><span class="bi bi-people"></span>Para a familia</a>
+                            <a class="nav-subitem <?= $isActive('/shopping/vehicle') ?>" href="/shopping/vehicle"><span class="bi bi-car-front"></span>Para o veiculo</a>
                         </div>
                     <?php endif; ?>
                     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CONTACTS)): ?>

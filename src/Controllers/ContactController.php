@@ -73,7 +73,8 @@ final class ContactController extends Controller
         }
 
         $data = [
-            'type' => (string) $request->input('type'),
+            'is_vendor' => (string) $request->input('is_vendor') === '1' ? 1 : 0,
+            'is_client' => (string) $request->input('is_client') === '1' ? 1 : 0,
             'first_name' => trim((string) $request->input('first_name')),
             'last_name' => trim((string) $request->input('last_name')) ?: null,
             'document' => trim((string) $request->input('document')) ?: null,
@@ -83,16 +84,18 @@ final class ContactController extends Controller
             'city' => trim((string) $request->input('city')),
             'state' => mb_strtoupper(trim((string) $request->input('state'))),
         ];
+        $data['type'] = $data['is_vendor'] === 1 ? 'vendor' : 'client';
 
-        if (!in_array($data['type'], ['vendor', 'client'], true) || $data['first_name'] === '' || $data['city'] === '' || !in_array($data['state'], $this->states(), true)) {
-            $this->app->make(Session::class)->flash('error', 'Preencha nome, tipo, cidade e UF corretamente.');
+        if (($data['is_vendor'] === 0 && $data['is_client'] === 0) || $data['first_name'] === '' || $data['city'] === '' || !in_array($data['state'], $this->states(), true)) {
+            $this->app->make(Session::class)->flash('error', 'Preencha nome, classificacao, cidade e UF corretamente.');
             return Response::redirect('/contacts');
         }
 
         try {
             $savedId = $this->app->make(ContactRepository::class)->save($id, $data, $auth->user()?->id);
             $this->audit($id === null ? 'contact_created' : 'contact_updated', $savedId, [
-                'type' => $data['type'],
+                'is_vendor' => $data['is_vendor'],
+                'is_client' => $data['is_client'],
                 'name' => $data['first_name'],
             ]);
             $this->app->make(Session::class)->flash('success', $id === null ? 'Contato criado.' : 'Contato atualizado.');

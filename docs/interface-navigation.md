@@ -32,6 +32,18 @@ O menu financeiro concentra:
 
 As telas A pagar e A receber foram posicionadas como paginas-base para detalhamento futuro.
 
+## Compras
+
+O menu Compras foi dividido em:
+
+- Visao geral.
+- Mercado.
+- Para casa.
+- Para a familia.
+- Para o veiculo.
+
+A tela Mercado permite anexar NFC-e/NF-e para facilitar relatorios futuros.
+
 ## Contatos
 
 A tela `/contacts` permite cadastrar fornecedores e clientes com:
@@ -44,6 +56,8 @@ A tela `/contacts` permite cadastrar fornecedores e clientes com:
 - Endereco.
 - Cidade.
 - UF.
+
+Um contato pode ser fornecedor, cliente ou ambos.
 
 ## Sistema
 

@@ -1,9 +1,13 @@
 # Modulo de compras
 
-O modulo de compras fica em:
+O modulo de compras fica organizado em telas separadas:
 
 ```text
 /shopping
+/shopping/market
+/shopping/home
+/shopping/family
+/shopping/vehicle
 ```
 
 ## Permissoes
@@ -24,6 +28,17 @@ Campos do item:
 - Sessao.
 
 Durante a compra, o usuario pode marcar cada item como pego. Ao finalizar, informa o valor total da compra.
+
+Tambem e possivel anexar arquivos de NFC-e/NF-e a lista de mercado. Nesta fase, o sistema armazena o arquivo para apoio futuro em relatorios, mas ainda nao interpreta automaticamente XML, PDF ou imagem.
+
+Formatos aceitos:
+
+- PDF.
+- XML.
+- JPG/JPEG.
+- PNG.
+
+Limite inicial: 5 MB por arquivo.
 
 Para evitar enviar dados domesticos para servicos externos, a primeira versao usa um marcador visual com a inicial do item no lugar de foto automatica. Futuramente podemos evoluir para upload local ou catalogo proprio de imagens.
 

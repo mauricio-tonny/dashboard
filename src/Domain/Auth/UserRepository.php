@@ -7,5 +7,6 @@ namespace App\Domain\Auth;
 interface UserRepository
 {
     public function findByEmail(string $email): ?User;
-}
 
+    public function recordLogin(string $email): void;
+}

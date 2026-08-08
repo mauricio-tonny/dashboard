@@ -94,12 +94,17 @@ $router->post('/admin/shopping-settings/vehicles', [ShoppingSettingsController::
 $router->post('/admin/shopping-settings/vehicles/toggle', [ShoppingSettingsController::class, 'toggleVehicle']);
 
 $router->get('/shopping', [ShoppingController::class, 'index']);
+$router->get('/shopping/market', [ShoppingController::class, 'market']);
+$router->get('/shopping/home', [ShoppingController::class, 'home']);
+$router->get('/shopping/family', [ShoppingController::class, 'family']);
+$router->get('/shopping/vehicle', [ShoppingController::class, 'vehicle']);
 $router->post('/shopping/market/lists', [ShoppingController::class, 'createMarketList']);
 $router->post('/shopping/market/items', [ShoppingController::class, 'addMarketItem']);
 $router->post('/shopping/market/items/update', [ShoppingController::class, 'updateMarketItem']);
 $router->post('/shopping/market/items/toggle', [ShoppingController::class, 'toggleMarketItem']);
 $router->post('/shopping/market/items/delete', [ShoppingController::class, 'deleteMarketItem']);
 $router->post('/shopping/market/lists/finish', [ShoppingController::class, 'finishMarketList']);
+$router->post('/shopping/market/invoices', [ShoppingController::class, 'uploadMarketInvoice']);
 $router->post('/shopping/wish-items', [ShoppingController::class, 'addWishItem']);
 $router->post('/shopping/wish-items/update', [ShoppingController::class, 'updateWishItem']);
 $router->post('/shopping/wish-items/toggle', [ShoppingController::class, 'toggleWishItem']);

@@ -124,6 +124,39 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function marketInvoices(int $listId): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT *
+             FROM shopping_market_invoices
+             WHERE list_id = :list_id
+             ORDER BY created_at DESC'
+        );
+        $statement->execute(['list_id' => $listId]);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function addMarketInvoice(int $listId, string $originalName, string $storedName, string $mimeType, int $fileSize, ?int $userId): int
+    {
+        $statement = $this->database->connection()->prepare(
+            'INSERT INTO shopping_market_invoices
+                (list_id, original_name, stored_name, mime_type, file_size, uploaded_by_user_id)
+             VALUES
+                (:list_id, :original_name, :stored_name, :mime_type, :file_size, :uploaded_by_user_id)'
+        );
+        $statement->execute([
+            'list_id' => $listId,
+            'original_name' => $originalName,
+            'stored_name' => $storedName,
+            'mime_type' => $mimeType,
+            'file_size' => $fileSize,
+            'uploaded_by_user_id' => $userId,
+        ]);
+
+        return (int) $this->database->connection()->lastInsertId();
+    }
+
     public function addMarketItem(int $listId, string $name, string $section, ?int $userId): int
     {
         $statement = $this->database->connection()->prepare(

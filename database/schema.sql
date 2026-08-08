@@ -182,6 +182,20 @@ CREATE TABLE IF NOT EXISTS shopping_market_lists (
     CONSTRAINT fk_market_lists_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS shopping_market_invoices (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    list_id BIGINT UNSIGNED NOT NULL,
+    original_name VARCHAR(255) NOT NULL,
+    stored_name VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(120) NOT NULL,
+    file_size BIGINT UNSIGNED NOT NULL,
+    uploaded_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_market_invoices_list (list_id),
+    CONSTRAINT fk_market_invoices_list FOREIGN KEY (list_id) REFERENCES shopping_market_lists(id),
+    CONSTRAINT fk_market_invoices_uploaded_by FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS shopping_market_items (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     list_id BIGINT UNSIGNED NOT NULL,
@@ -224,6 +238,8 @@ CREATE TABLE IF NOT EXISTS shopping_wish_items (
 CREATE TABLE IF NOT EXISTS contacts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     type ENUM('vendor', 'client') NOT NULL,
+    is_vendor TINYINT(1) NOT NULL DEFAULT 0,
+    is_client TINYINT(1) NOT NULL DEFAULT 0,
     first_name VARCHAR(120) NOT NULL,
     last_name VARCHAR(120) NULL,
     document VARCHAR(30) NULL,

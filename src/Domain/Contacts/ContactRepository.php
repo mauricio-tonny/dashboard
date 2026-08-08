@@ -18,9 +18,12 @@ final class ContactRepository
         $sql = 'SELECT * FROM contacts';
         $params = [];
 
-        if ($type !== null && in_array($type, ['vendor', 'client'], true)) {
-            $sql .= ' WHERE type = :type';
-            $params['type'] = $type;
+        if ($type === 'vendor') {
+            $sql .= ' WHERE is_vendor = 1';
+        }
+
+        if ($type === 'client') {
+            $sql .= ' WHERE is_client = 1';
         }
 
         $sql .= ' ORDER BY is_active DESC, first_name ASC, last_name ASC';
@@ -35,9 +38,9 @@ final class ContactRepository
         if ($id === null) {
             $statement = $this->database->connection()->prepare(
                 'INSERT INTO contacts
-                    (type, first_name, last_name, document, phone, email, address, city, state, created_by_user_id)
+                    (type, is_vendor, is_client, first_name, last_name, document, phone, email, address, city, state, created_by_user_id)
                  VALUES
-                    (:type, :first_name, :last_name, :document, :phone, :email, :address, :city, :state, :created_by_user_id)'
+                    (:type, :is_vendor, :is_client, :first_name, :last_name, :document, :phone, :email, :address, :city, :state, :created_by_user_id)'
             );
             $statement->execute([...$data, 'created_by_user_id' => $userId]);
 
@@ -47,6 +50,8 @@ final class ContactRepository
         $statement = $this->database->connection()->prepare(
             'UPDATE contacts
              SET type = :type,
+                 is_vendor = :is_vendor,
+                 is_client = :is_client,
                  first_name = :first_name,
                  last_name = :last_name,
                  document = :document,

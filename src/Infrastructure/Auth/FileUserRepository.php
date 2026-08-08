@@ -31,6 +31,10 @@ final class FileUserRepository implements UserRepository
         return null;
     }
 
+    public function recordLogin(string $email): void
+    {
+    }
+
     private function all(): array
     {
         if (!is_file($this->file)) {

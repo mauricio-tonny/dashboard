@@ -26,6 +26,7 @@ final class AuthService
         $this->session->regenerate();
         $this->session->put('user_email', $user->email);
         $this->session->touchActivity();
+        $this->users->recordLogin($user->email);
 
         return true;
     }

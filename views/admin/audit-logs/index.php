@@ -18,6 +18,7 @@ $labels = [
     'shopping_market_item_checked' => 'Item de mercado marcado',
     'shopping_market_item_unchecked' => 'Item de mercado desmarcado',
     'shopping_market_item_deleted' => 'Item de mercado removido',
+    'shopping_market_invoice_uploaded' => 'Nota de mercado anexada',
     'shopping_wish_item_created' => 'Item de compras criado',
     'shopping_wish_item_updated' => 'Item de compras atualizado',
     'shopping_wish_item_purchased' => 'Item de compras comprado',

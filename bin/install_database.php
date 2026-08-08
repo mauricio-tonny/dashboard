@@ -59,6 +59,10 @@ try {
 
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_created_at', 'CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at)');
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_action', 'CREATE INDEX idx_audit_logs_action ON audit_logs (action)');
+    ensureColumn($pdo, 'contacts', 'is_vendor', 'ALTER TABLE contacts ADD COLUMN is_vendor TINYINT(1) NOT NULL DEFAULT 0 AFTER type');
+    ensureColumn($pdo, 'contacts', 'is_client', 'ALTER TABLE contacts ADD COLUMN is_client TINYINT(1) NOT NULL DEFAULT 0 AFTER is_vendor');
+    $pdo->exec("UPDATE contacts SET is_vendor = 1 WHERE type = 'vendor' AND is_vendor = 0 AND is_client = 0");
+    $pdo->exec("UPDATE contacts SET is_client = 1 WHERE type = 'client' AND is_vendor = 0 AND is_client = 0");
 
     $permissionStatement = $pdo->prepare(
         'INSERT INTO permissions (name, label, description)
@@ -165,6 +169,25 @@ function ensureIndex(PDO $pdo, string $table, string $index, string $sql): void
     $statement->execute([
         'table' => $table,
         'index' => $index,
+    ]);
+
+    if ((int) $statement->fetchColumn() === 0) {
+        $pdo->exec($sql);
+    }
+}
+
+function ensureColumn(PDO $pdo, string $table, string $column, string $sql): void
+{
+    $statement = $pdo->prepare(
+        'SELECT COUNT(*)
+         FROM information_schema.columns
+         WHERE table_schema = DATABASE()
+           AND table_name = :table
+           AND column_name = :column'
+    );
+    $statement->execute([
+        'table' => $table,
+        'column' => $column,
     ]);
 
     if ((int) $statement->fetchColumn() === 0) {

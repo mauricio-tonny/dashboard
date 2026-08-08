@@ -41,4 +41,15 @@ final class DatabaseUserRepository implements UserRepository
             Role::from($user['role'])
         );
     }
+
+    public function recordLogin(string $email): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE users
+             SET last_login_at = NOW(),
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE email = :email'
+        );
+        $statement->execute(['email' => $email]);
+    }
 }

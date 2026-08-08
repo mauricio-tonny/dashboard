@@ -1,6 +1,80 @@
 <?php
 $title = 'Contatos';
-$typeLabel = static fn (string $type): string => $type === 'vendor' ? 'Fornecedor' : 'Cliente';
+$typeBadges = static function (array $contact): string {
+    $labels = [];
+
+    if ((int) ($contact['is_vendor'] ?? 0) === 1) {
+        $labels[] = 'Fornecedor';
+    }
+
+    if ((int) ($contact['is_client'] ?? 0) === 1) {
+        $labels[] = 'Cliente';
+    }
+
+    return implode(' / ', $labels) ?: 'Nao classificado';
+};
+$renderContactForm = static function (array $states, ?array $contact = null): void {
+    $isEdit = $contact !== null;
+    $action = $isEdit ? '/contacts/update' : '/contacts';
+?>
+    <form method="post" action="<?= $action ?>" class="form-grid">
+        <?php if ($isEdit): ?>
+            <input type="hidden" name="id" value="<?= (int) $contact['id'] ?>">
+        <?php endif; ?>
+        <div class="form-check-group">
+            <span class="field-label">Classificacao</span>
+            <label class="check-option">
+                <input type="checkbox" name="is_vendor" value="1" <?= ((int) ($contact['is_vendor'] ?? 0)) === 1 ? 'checked' : '' ?>>
+                Fornecedor
+            </label>
+            <label class="check-option">
+                <input type="checkbox" name="is_client" value="1" <?= ((int) ($contact['is_client'] ?? 0)) === 1 ? 'checked' : '' ?>>
+                Cliente
+            </label>
+        </div>
+        <label>
+            Nome
+            <input type="text" name="first_name" value="<?= htmlspecialchars($contact['first_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+        </label>
+        <label>
+            Sobrenome
+            <input type="text" name="last_name" value="<?= htmlspecialchars($contact['last_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+        </label>
+        <label>
+            CPF/CNPJ
+            <input type="text" name="document" value="<?= htmlspecialchars($contact['document'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+        </label>
+        <label>
+            Telefone
+            <input type="text" name="phone" value="<?= htmlspecialchars($contact['phone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+        </label>
+        <label>
+            E-mail
+            <input type="email" name="email" value="<?= htmlspecialchars($contact['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+        </label>
+        <label>
+            Endereco
+            <input type="text" name="address" value="<?= htmlspecialchars($contact['address'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+        </label>
+        <label>
+            Cidade
+            <input type="text" name="city" value="<?= htmlspecialchars($contact['city'] ?? '', ENT_QUOTES, 'UTF-8') ?>" required>
+        </label>
+        <label>
+            UF
+            <select name="state" required>
+                <?php foreach ($states as $state): ?>
+                    <option value="<?= htmlspecialchars($state, ENT_QUOTES, 'UTF-8') ?>" <?= ($contact['state'] ?? 'PR') === $state ? 'selected' : '' ?>><?= htmlspecialchars($state, ENT_QUOTES, 'UTF-8') ?></option>
+                <?php endforeach; ?>
+            </select>
+        </label>
+        <div class="modal-footer-actions">
+            <button type="button" class="inline-button button-light" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit"><span class="bi bi-check2-circle"></span><?= $isEdit ? 'Salvar alteracoes' : 'Salvar contato' ?></button>
+        </div>
+    </form>
+<?php
+};
 ob_start();
 ?>
 <section class="page-hero">
@@ -9,7 +83,7 @@ ob_start();
         <div>
             <span class="badge">Contatos</span>
             <h1>Fornecedores e clientes</h1>
-            <p class="muted">Cadastre contatos que depois poderao ser vinculados aos lancamentos financeiros.</p>
+            <p class="muted">Consulte contatos e abra o cadastro somente quando precisar criar ou alterar alguem.</p>
         </div>
     </div>
 
@@ -17,6 +91,11 @@ ob_start();
         <a href="/contacts"><button class="inline-button" type="button">Todos</button></a>
         <a href="/contacts?type=vendor"><button class="inline-button" type="button">Fornecedores</button></a>
         <a href="/contacts?type=client"><button class="inline-button" type="button">Clientes</button></a>
+        <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CONTACTS)): ?>
+            <button class="inline-button" type="button" data-bs-toggle="modal" data-bs-target="#createContactModal">
+                <span class="bi bi-person-plus"></span>Criar contato
+            </button>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -28,60 +107,6 @@ ob_start();
     <div class="notice notice-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CONTACTS)): ?>
-    <section class="card section-card">
-        <h2 class="section-title"><span class="bi bi-person-plus"></span>Novo contato</h2>
-        <form method="post" action="/contacts" class="form-grid">
-            <label>
-                Tipo
-                <select name="type" required>
-                    <option value="vendor">Fornecedor</option>
-                    <option value="client">Cliente</option>
-                </select>
-            </label>
-            <label>
-                Nome
-                <input type="text" name="first_name" required>
-            </label>
-            <label>
-                Sobrenome
-                <input type="text" name="last_name">
-            </label>
-            <label>
-                CPF/CNPJ
-                <input type="text" name="document">
-            </label>
-            <label>
-                Telefone
-                <input type="text" name="phone">
-            </label>
-            <label>
-                E-mail
-                <input type="email" name="email">
-            </label>
-            <label>
-                Endereco
-                <input type="text" name="address">
-            </label>
-            <label>
-                Cidade
-                <input type="text" name="city" required>
-            </label>
-            <label>
-                UF
-                <select name="state" required>
-                    <?php foreach ($states as $state): ?>
-                        <option value="<?= htmlspecialchars($state, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($state, ENT_QUOTES, 'UTF-8') ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </label>
-            <div class="form-actions">
-                <button type="submit"><span class="bi bi-person-plus"></span>Salvar contato</button>
-            </div>
-        </form>
-    </section>
-<?php endif; ?>
-
 <section class="card section-card">
     <h2 class="section-title"><span class="bi bi-card-list"></span>Contatos cadastrados</h2>
     <div class="responsive-table">
@@ -89,7 +114,7 @@ ob_start();
             <thead>
                 <tr>
                     <th>Nome</th>
-                    <th>Tipo</th>
+                    <th>Classificacao</th>
                     <th>Contato</th>
                     <th>Cidade/UF</th>
                     <th>Status</th>
@@ -105,7 +130,7 @@ ob_start();
                             <strong><?= htmlspecialchars($contact['first_name'], ENT_QUOTES, 'UTF-8') ?> <?= htmlspecialchars($contact['last_name'] ?? '', ENT_QUOTES, 'UTF-8') ?></strong><br>
                             <span class="muted"><?= htmlspecialchars($contact['document'] ?? '-', ENT_QUOTES, 'UTF-8') ?></span>
                         </td>
-                        <td><span class="badge"><?= htmlspecialchars($typeLabel($contact['type']), ENT_QUOTES, 'UTF-8') ?></span></td>
+                        <td><span class="badge"><?= htmlspecialchars($typeBadges($contact), ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td>
                             <?= htmlspecialchars($contact['phone'] ?? '-', ENT_QUOTES, 'UTF-8') ?><br>
                             <span class="muted"><?= htmlspecialchars($contact['email'] ?? '-', ENT_QUOTES, 'UTF-8') ?></span>
@@ -114,55 +139,10 @@ ob_start();
                         <td><?= ((int) $contact['is_active']) === 1 ? 'Ativo' : 'Inativo' ?></td>
                         <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CONTACTS)): ?>
                             <td>
-                                <details class="user-details">
-                                    <summary><span class="bi bi-pencil-square"></span>Editar</summary>
-                                    <form method="post" action="/contacts/update" class="form-grid compact-form">
-                                        <input type="hidden" name="id" value="<?= (int) $contact['id'] ?>">
-                                        <label>
-                                            Tipo
-                                            <select name="type" required>
-                                                <option value="vendor" <?= $contact['type'] === 'vendor' ? 'selected' : '' ?>>Fornecedor</option>
-                                                <option value="client" <?= $contact['type'] === 'client' ? 'selected' : '' ?>>Cliente</option>
-                                            </select>
-                                        </label>
-                                        <label>
-                                            Nome
-                                            <input type="text" name="first_name" value="<?= htmlspecialchars($contact['first_name'], ENT_QUOTES, 'UTF-8') ?>" required>
-                                        </label>
-                                        <label>
-                                            Sobrenome
-                                            <input type="text" name="last_name" value="<?= htmlspecialchars($contact['last_name'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                        </label>
-                                        <label>
-                                            CPF/CNPJ
-                                            <input type="text" name="document" value="<?= htmlspecialchars($contact['document'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                        </label>
-                                        <label>
-                                            Telefone
-                                            <input type="text" name="phone" value="<?= htmlspecialchars($contact['phone'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                        </label>
-                                        <label>
-                                            E-mail
-                                            <input type="email" name="email" value="<?= htmlspecialchars($contact['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                        </label>
-                                        <label>
-                                            Endereco
-                                            <input type="text" name="address" value="<?= htmlspecialchars($contact['address'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
-                                        </label>
-                                        <label>
-                                            Cidade
-                                            <input type="text" name="city" value="<?= htmlspecialchars($contact['city'], ENT_QUOTES, 'UTF-8') ?>" required>
-                                        </label>
-                                        <label>
-                                            UF
-                                            <select name="state" required>
-                                                <?php foreach ($states as $state): ?>
-                                                    <option value="<?= htmlspecialchars($state, ENT_QUOTES, 'UTF-8') ?>" <?= $contact['state'] === $state ? 'selected' : '' ?>><?= htmlspecialchars($state, ENT_QUOTES, 'UTF-8') ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </label>
-                                        <button type="submit"><span class="bi bi-check2-circle"></span>Salvar alteracoes</button>
-                                    </form>
+                                <div class="actions">
+                                    <button class="inline-button" type="button" data-bs-toggle="modal" data-bs-target="#editContactModal<?= (int) $contact['id'] ?>">
+                                        <span class="bi bi-pencil-square"></span>Editar
+                                    </button>
                                     <form method="post" action="/contacts/toggle">
                                         <input type="hidden" name="id" value="<?= (int) $contact['id'] ?>">
                                         <input type="hidden" name="active" value="<?= ((int) $contact['is_active']) === 1 ? '0' : '1' ?>">
@@ -171,7 +151,7 @@ ob_start();
                                             <?= ((int) $contact['is_active']) === 1 ? 'Desativar' : 'Reativar' ?>
                                         </button>
                                     </form>
-                                </details>
+                                </div>
                             </td>
                         <?php endif; ?>
                     </tr>
@@ -185,6 +165,38 @@ ob_start();
         </table>
     </div>
 </section>
+
+<?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CONTACTS)): ?>
+    <div class="modal fade" id="createContactModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5"><span class="bi bi-person-plus"></span>Criar contato</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <?php $renderContactForm($states); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php foreach ($contacts as $contact): ?>
+        <div class="modal fade" id="editContactModal<?= (int) $contact['id'] ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title h5"><span class="bi bi-pencil-square"></span>Editar <?= htmlspecialchars($contact['first_name'], ENT_QUOTES, 'UTF-8') ?></h2>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <?php $renderContactForm($states, $contact); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
+<?php endif; ?>
 <?php
 $content = (string) ob_get_clean();
 require base_path('views/layout.php');
