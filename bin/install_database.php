@@ -93,6 +93,48 @@ try {
         }
     }
 
+    seedSimpleOptions($pdo, 'shopping_rooms', [
+        'SALA',
+        'COZINHA',
+        'COPA',
+        'BANHEIRO SOCIAL',
+        'BANHEIRO SUITE',
+        'QUARTO INFANTIL',
+        'QUARTO CASAL',
+        'ESCRITORIO',
+        'GARAGEM',
+        'CORREDOR',
+        'QUINTAL',
+    ]);
+
+    seedSimpleOptions($pdo, 'shopping_people', [
+        'MAURICIO',
+        'KARINA',
+        'MAITE',
+        'BETHOVEM',
+    ]);
+
+    seedSimpleOptions($pdo, 'shopping_vehicle_areas', [
+        'ELETRICA',
+        'SUSPENSAO',
+        'ALIMENTACAO',
+        'LATARIA',
+        'FREIO',
+        'ACESSORIO',
+        'ACABAMENTO',
+        'INTERNA',
+        'CUSTOMIZACAO',
+    ]);
+
+    $vehicleStatement = $pdo->prepare(
+        'INSERT IGNORE INTO shopping_vehicles (name)
+         VALUES (:name)'
+    );
+
+    foreach (['FOX VERMELHO', 'VARIANT'] as $vehicle) {
+        $vehicleStatement->execute(['name' => $vehicle]);
+    }
+
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
     $permissionCount = (int) $pdo->query('SELECT COUNT(*) FROM permissions')->fetchColumn();
     $rolePermissionCount = (int) $pdo->query('SELECT COUNT(*) FROM role_permissions')->fetchColumn();
@@ -127,5 +169,17 @@ function ensureIndex(PDO $pdo, string $table, string $index, string $sql): void
 
     if ((int) $statement->fetchColumn() === 0) {
         $pdo->exec($sql);
+    }
+}
+
+function seedSimpleOptions(PDO $pdo, string $table, array $names): void
+{
+    $statement = $pdo->prepare(
+        "INSERT IGNORE INTO {$table} (name)
+         VALUES (:name)"
+    );
+
+    foreach ($names as $name) {
+        $statement->execute(['name' => $name]);
     }
 }

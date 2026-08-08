@@ -133,4 +133,92 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     CONSTRAINT fk_audit_logs_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS shopping_rooms (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS shopping_people (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS shopping_vehicle_areas (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS shopping_vehicles (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    model VARCHAR(120) NULL,
+    brand VARCHAR(120) NULL,
+    model_year SMALLINT UNSIGNED NULL,
+    manufacture_year SMALLINT UNSIGNED NULL,
+    renavam VARCHAR(40) NULL,
+    plate VARCHAR(20) NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS shopping_market_lists (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    reference_month DATE NOT NULL UNIQUE,
+    total_amount DECIMAL(14,2) NULL,
+    finished_at DATETIME NULL,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_market_lists_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS shopping_market_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    list_id BIGINT UNSIGNED NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    section VARCHAR(120) NOT NULL,
+    image_url VARCHAR(500) NULL,
+    is_checked TINYINT(1) NOT NULL DEFAULT 0,
+    checked_at DATETIME NULL,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_market_items_list (list_id),
+    CONSTRAINT fk_market_items_list FOREIGN KEY (list_id) REFERENCES shopping_market_lists(id),
+    CONSTRAINT fk_market_items_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS shopping_wish_items (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    type ENUM('home', 'family', 'vehicle') NOT NULL,
+    name VARCHAR(160) NOT NULL,
+    room_id BIGINT UNSIGNED NULL,
+    person_id BIGINT UNSIGNED NULL,
+    vehicle_id BIGINT UNSIGNED NULL,
+    vehicle_area_id BIGINT UNSIGNED NULL,
+    estimated_amount DECIMAL(14,2) NULL,
+    priority TINYINT UNSIGNED NULL,
+    is_purchased TINYINT(1) NOT NULL DEFAULT 0,
+    purchased_at DATETIME NULL,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_wish_items_type (type),
+    CONSTRAINT fk_wish_items_room FOREIGN KEY (room_id) REFERENCES shopping_rooms(id),
+    CONSTRAINT fk_wish_items_person FOREIGN KEY (person_id) REFERENCES shopping_people(id),
+    CONSTRAINT fk_wish_items_vehicle FOREIGN KEY (vehicle_id) REFERENCES shopping_vehicles(id),
+    CONSTRAINT fk_wish_items_vehicle_area FOREIGN KEY (vehicle_area_id) REFERENCES shopping_vehicle_areas(id),
+    CONSTRAINT fk_wish_items_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
 INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('viewer');

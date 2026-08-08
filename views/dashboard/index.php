@@ -8,8 +8,14 @@ ob_start();
     <p class="muted">Este painel inicial ja separa autenticacao, autorizacao e a camada que depois vai conversar com sua planilha.</p>
 
     <div class="actions">
+        <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_SHOPPING)): ?>
+            <a href="/shopping"><button class="inline-button" type="button">Compras</button></a>
+        <?php endif; ?>
         <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_USERS)): ?>
             <a href="/admin/users"><button class="inline-button" type="button">Usuarios</button></a>
+        <?php endif; ?>
+        <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING_SETTINGS)): ?>
+            <a href="/admin/shopping-settings"><button class="inline-button" type="button">Configuracao compras</button></a>
         <?php endif; ?>
         <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
             <a href="/admin/audit-logs"><button class="inline-button" type="button">Logs de auditoria</button></a>

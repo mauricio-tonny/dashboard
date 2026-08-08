@@ -18,6 +18,7 @@ Pode:
 - Ver o valor total de despesas do mes atual.
 - Ver totais estimados dos proximos meses.
 - Ver relatorio por DR/categoria.
+- Acessar e usar listas de compras.
 
 Nao pode:
 
@@ -38,6 +39,7 @@ Pode fazer tudo que o Visualizador faz e tambem:
 - Visualizar relatorio mensal.
 - Visualizar relatorio anual.
 - Visualizar relatorio por periodo.
+- Acessar e usar listas de compras.
 
 ## Administrador
 
@@ -53,6 +55,7 @@ Pode fazer tudo que Editor e Visualizador fazem e tambem:
 - Inserir ou alterar webhook do Discord.
 - Inserir, editar ou excluir URL da planilha.
 - Visualizar logs de auditoria pelo painel administrativo.
+- Gerenciar configuracoes do modulo de compras.
 
 Alteracoes de perfil ou permissao de usuario devem exigir confirmacao de senha do administrador.
 
@@ -70,6 +73,9 @@ Alteracoes de perfil ou permissao de usuario devem exigir confirmacao de senha d
 - `view_monthly_report`
 - `view_annual_report`
 - `view_period_report`
+- `view_shopping`
+- `manage_shopping`
+- `manage_shopping_settings`
 - `view_audit_logs`
 - `manage_users`
 - `change_user_roles`
