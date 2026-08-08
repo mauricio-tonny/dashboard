@@ -33,7 +33,7 @@ $repository = new ShoppingRepository($database);
 $pdo = $database->connection();
 $directory = dirname(__DIR__) . '/storage/shopping-invoices';
 $statement = $pdo->query(
-    'SELECT id, original_name, stored_name
+    'SELECT id, list_id, original_name, stored_name
      FROM shopping_market_invoices
      WHERE source_type = "file"
        AND stored_name <> ""
@@ -62,6 +62,7 @@ foreach ($invoices as $invoice) {
             'access_key' => $parsed['access_key'] ?? null,
             'issued_at' => $parsed['issued_at'] ?? null,
         ]);
+        $repository->updateMarketListPurchaseDate((int) $invoice['list_id'], $parsed['issued_at'] ?? null);
         $updated++;
     } catch (Throwable $exception) {
         $failed++;

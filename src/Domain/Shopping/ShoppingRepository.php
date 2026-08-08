@@ -81,21 +81,6 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function homePrioritySummary(): array
-    {
-        $statement = $this->database->connection()->query(
-            'SELECT COUNT(*) AS high_priority_count,
-                    COALESCE(SUM(estimated_amount), 0) AS estimated_total
-             FROM shopping_wish_items
-             WHERE type = "home"
-               AND is_purchased = 0
-               AND priority >= 8'
-        );
-        $summary = $statement->fetch(PDO::FETCH_ASSOC);
-
-        return $summary === false ? ['high_priority_count' => 0, 'estimated_total' => 0.0] : $summary;
-    }
-
     public function findOrCreateMarketList(string $referenceMonth, ?int $userId): int
     {
         $month = $this->normalizeMonth($referenceMonth);
@@ -323,13 +308,15 @@ final class ShoppingRepository
         $statement->execute(['id' => $id]);
     }
 
-    public function finishMarketList(int $id, ?float $totalAmount): void
+    public function finishMarketList(int $id, ?float $totalAmount, string $purchaseDate): void
     {
         $discountAmount = $this->discountAmount($id, $totalAmount);
+        $normalizedPurchaseDate = $this->normalizeDateTime($purchaseDate);
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_market_lists
              SET total_amount = :total_amount,
                  discount_amount = :discount_amount,
+                 purchase_date = :purchase_date,
                  finished_at = NOW(),
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
@@ -338,6 +325,7 @@ final class ShoppingRepository
             'id' => $id,
             'total_amount' => $totalAmount,
             'discount_amount' => $discountAmount,
+            'purchase_date' => $normalizedPurchaseDate,
         ]);
     }
 
@@ -367,6 +355,26 @@ final class ShoppingRepository
              WHERE id = :id'
         );
         $statement->execute(['id' => $id]);
+    }
+
+    public function updateMarketListPurchaseDate(int $id, mixed $purchaseDate): void
+    {
+        $normalizedPurchaseDate = $this->normalizeDateTime($purchaseDate);
+
+        if ($normalizedPurchaseDate === null) {
+            return;
+        }
+
+        $statement = $this->database->connection()->prepare(
+            'UPDATE shopping_market_lists
+             SET purchase_date = COALESCE(purchase_date, :purchase_date),
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $statement->execute([
+            'id' => $id,
+            'purchase_date' => $normalizedPurchaseDate,
+        ]);
     }
 
     public function deleteMarketList(int $id): array
@@ -659,7 +667,7 @@ final class ShoppingRepository
             return null;
         }
 
-        $formats = ['Y-m-d\TH:i:sP', 'Y-m-d\TH:i:s', 'Y-m-d H:i:s', 'd/m/Y H:i:s', 'd/m/Y H:i'];
+        $formats = ['Y-m-d\TH:i:sP', 'Y-m-d\TH:i:s', 'Y-m-d H:i:s', 'Y-m-d', 'd/m/Y H:i:s', 'd/m/Y H:i', 'd/m/Y'];
 
         foreach ($formats as $format) {
             $date = \DateTimeImmutable::createFromFormat($format, $value);

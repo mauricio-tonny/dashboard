@@ -77,6 +77,7 @@ try {
     ensureColumn($pdo, 'shopping_market_invoices', 'status', "ALTER TABLE shopping_market_invoices ADD COLUMN status VARCHAR(40) NOT NULL DEFAULT 'stored' AFTER public_url");
     ensureIndex($pdo, 'shopping_market_invoices', 'idx_market_invoices_access_key', 'CREATE INDEX idx_market_invoices_access_key ON shopping_market_invoices (access_key)');
     ensureColumn($pdo, 'shopping_market_lists', 'discount_amount', 'ALTER TABLE shopping_market_lists ADD COLUMN discount_amount DECIMAL(14,2) NULL AFTER total_amount');
+    ensureColumn($pdo, 'shopping_market_lists', 'purchase_date', 'ALTER TABLE shopping_market_lists ADD COLUMN purchase_date DATETIME NULL AFTER discount_amount');
     ensureColumn($pdo, 'shopping_market_items', 'section_id', 'ALTER TABLE shopping_market_items ADD COLUMN section_id BIGINT UNSIGNED NULL AFTER list_id');
     ensureColumn($pdo, 'shopping_market_items', 'quantity', 'ALTER TABLE shopping_market_items ADD COLUMN quantity DECIMAL(10,3) NOT NULL DEFAULT 1.000 AFTER section');
     ensureColumn($pdo, 'shopping_market_items', 'unit_amount', 'ALTER TABLE shopping_market_items ADD COLUMN unit_amount DECIMAL(14,2) NULL AFTER quantity');

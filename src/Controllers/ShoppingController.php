@@ -220,15 +220,24 @@ final class ShoppingController extends Controller
         }
 
         $id = (int) $request->input('list_id');
+        $purchaseDate = trim((string) $request->input('purchase_date'));
 
         if ($this->marketListIsFinished($id)) {
             $this->flash('error', 'Esta lista ja esta finalizada.');
             return Response::redirect('/shopping/market?market_list_id=' . $id);
         }
 
+        if ($purchaseDate === '') {
+            $this->flash('error', 'Informe a data da compra antes de finalizar a lista.');
+            return Response::redirect('/shopping/market?market_list_id=' . $id);
+        }
+
         $amount = $this->money((string) $request->input('total_amount'));
-        $this->app->make(ShoppingRepository::class)->finishMarketList($id, $amount);
-        $this->audit('shopping_market_list_finished', 'shopping_market_list', $id, ['total_amount' => $amount]);
+        $this->app->make(ShoppingRepository::class)->finishMarketList($id, $amount, $purchaseDate);
+        $this->audit('shopping_market_list_finished', 'shopping_market_list', $id, [
+            'total_amount' => $amount,
+            'purchase_date' => $purchaseDate,
+        ]);
         $this->flash('success', 'Lista finalizada com valor total.');
 
         return Response::redirect('/shopping/market?market_list_id=' . $id);
@@ -366,6 +375,7 @@ final class ShoppingController extends Controller
                     'access_key' => $summary['access_key'] ?? null,
                     'issued_at' => $summary['issued_at'] ?? null,
                 ]);
+                $repository->updateMarketListPurchaseDate($listId, $summary['issued_at'] ?? null);
                 if (@unlink($target)) {
                     $repository->clearMarketInvoiceFile($id);
                 }

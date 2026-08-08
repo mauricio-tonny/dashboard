@@ -35,7 +35,6 @@ final class DashboardController extends Controller
             'upcoming' => $finance->upcomingForecast(),
             'marketSummary' => $shopping->marketSummaryForMonth($nextMonth),
             'pendingHomeItems' => $shopping->pendingHomeItems(10),
-            'homePrioritySummary' => $shopping->homePrioritySummary(),
             'annualExpenses' => $finance->annualExpenseSeries((int) (new \DateTimeImmutable('now'))->format('Y')),
         ]);
     }

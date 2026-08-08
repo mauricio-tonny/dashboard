@@ -184,6 +184,7 @@ CREATE TABLE IF NOT EXISTS shopping_market_lists (
     reference_month DATE NOT NULL UNIQUE,
     total_amount DECIMAL(14,2) NULL,
     discount_amount DECIMAL(14,2) NULL,
+    purchase_date DATETIME NULL,
     finished_at DATETIME NULL,
     created_by_user_id BIGINT UNSIGNED NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

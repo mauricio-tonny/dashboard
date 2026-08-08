@@ -35,6 +35,8 @@ Durante a compra, o usuario pode confirmar cada item. Ao finalizar, informa o va
 
 Quando o subtotal dos itens for maior que o valor final da compra, o sistema registra a diferenca como desconto da lista: `subtotal dos itens - total final`.
 
+Ao finalizar manualmente uma lista, a data da compra e obrigatoria. Quando uma nota XML/PDF e importada, a data da compra da lista e preenchida automaticamente com a data da nota.
+
 Administradores podem excluir uma lista mensal de mercado inteira. A exclusao remove os itens e registros de notas vinculadas a lista.
 
 Tambem e possivel vincular NFC-e/NF-e a lista de mercado por tres caminhos:

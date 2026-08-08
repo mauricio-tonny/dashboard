@@ -629,6 +629,38 @@
         .market-item details {
             min-width: 0;
         }
+        .market-items-panel {
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-top: 18px;
+            padding: 0;
+        }
+        .market-items-panel > summary {
+            align-items: center;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            list-style: none;
+            padding: 14px 16px;
+        }
+        .market-items-panel > summary::-webkit-details-marker {
+            display: none;
+        }
+        .market-items-panel > summary span {
+            align-items: center;
+            display: inline-flex;
+            font-weight: 800;
+            gap: 8px;
+        }
+        .market-items-panel > summary small {
+            color: var(--muted);
+        }
+        .market-items-panel .market-checklist {
+            border-top: 1px solid var(--border);
+            margin: 0;
+            padding: 14px;
+        }
         .market-price-form {
             align-items: end;
         }
@@ -657,6 +689,9 @@
             margin-top: 18px;
             padding-top: 18px;
         }
+        .finish-form {
+            align-items: end;
+        }
         .market-lock-notice {
             margin: 14px 0;
         }
@@ -673,7 +708,8 @@
             padding: 14px;
         }
         .market-total-summary span,
-        .market-total-summary strong {
+        .market-total-summary strong,
+        .market-total-summary small {
             display: block;
         }
         .market-total-summary span {
@@ -683,6 +719,10 @@
         .market-total-summary strong {
             font-size: 1.2rem;
             margin-top: 4px;
+        }
+        .market-total-summary small {
+            color: var(--muted);
+            margin-top: 6px;
         }
         .app-footer {
             color: var(--muted);
@@ -754,10 +794,43 @@
             border-radius: 12px;
             padding: 12px;
         }
+        .mini-list-item-compact {
+            padding: 7px 10px;
+        }
+        .mini-list-item-compact strong {
+            font-size: 0.82rem;
+            line-height: 1.15;
+        }
         .dashboard-indicator {
             display: block;
             font-size: 1.55rem;
             margin: 10px 0;
+        }
+        .pie-placeholder {
+            align-items: center;
+            aspect-ratio: 1;
+            background:
+                conic-gradient(var(--accent-strong) 0 38%, var(--accent-blue) 38% 68%, #f59e0b 68% 86%, #e5edf2 86% 100%);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            margin: 14px auto;
+            max-width: 180px;
+            position: relative;
+        }
+        .pie-placeholder::after {
+            background: var(--surface);
+            border-radius: 50%;
+            content: "";
+            height: 54%;
+            position: absolute;
+            width: 54%;
+        }
+        .pie-placeholder .bi {
+            color: var(--brand-dark);
+            font-size: 1.8rem;
+            position: relative;
+            z-index: 1;
         }
         .mini-list-item span {
             color: var(--muted);
