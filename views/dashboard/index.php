@@ -5,17 +5,36 @@ $formatMoney = static fn ($value): string => 'R$ ' . number_format((float) $valu
 $marketTotal = (int) ($marketSummary['item_count'] ?? 0);
 $marketChecked = (int) ($marketSummary['checked_count'] ?? 0);
 $marketProgress = $marketTotal > 0 ? round(($marketChecked / $marketTotal) * 100) : 0;
+$months = [
+    1 => 'janeiro',
+    2 => 'fevereiro',
+    3 => 'marco',
+    4 => 'abril',
+    5 => 'maio',
+    6 => 'junho',
+    7 => 'julho',
+    8 => 'agosto',
+    9 => 'setembro',
+    10 => 'outubro',
+    11 => 'novembro',
+    12 => 'dezembro',
+];
+$today = new DateTimeImmutable('now');
+$todayLabel = sprintf(
+    '%d de %s de %s',
+    (int) $today->format('d'),
+    $months[(int) $today->format('n')],
+    $today->format('Y')
+);
 ob_start();
 ?>
 <section class="dashboard-hero">
     <div>
         <span class="badge"><?= htmlspecialchars($user->role->label(), ENT_QUOTES, 'UTF-8') ?></span>
         <h1>Ola, <?= htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8') ?></h1>
-        <p class="muted">Visao rapida para decidir o que merece atencao primeiro.</p>
-    </div>
-    <div class="hero-version">
-        <small>Versao</small>
-        <strong><?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?></strong>
+        <p class="muted">
+            Hoje e dia <?= htmlspecialchars($todayLabel, ENT_QUOTES, 'UTF-8') ?>. Abaixo esta um resumo das suas proximas despesas e dos itens mapeados para compra.
+        </p>
     </div>
 </section>
 

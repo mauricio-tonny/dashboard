@@ -143,10 +143,37 @@
         .logout-nav {
             margin-top: 20px;
         }
+        .logout-nav button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            color: #fff;
+            margin-top: 8px;
+        }
+        .logout-nav button:hover {
+            background: #fff;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+            color: var(--brand-dark);
+        }
         .app-main {
             display: flex;
             flex-direction: column;
             min-width: 0;
+        }
+        .sidebar-mobile-header {
+            display: none;
+        }
+        .mobile-menu-overlay {
+            background: rgba(4, 26, 56, 0.58);
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+            position: fixed;
+            transition: opacity 180ms ease;
+            z-index: 29;
+        }
+        .mobile-menu-overlay.is-open {
+            opacity: 1;
+            pointer-events: auto;
         }
         .mobile-topbar {
             align-items: center;
@@ -165,6 +192,19 @@
         }
         .mobile-menu-toggle {
             width: auto;
+        }
+        .mobile-menu-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            color: #fff;
+            margin-top: 0;
+            padding: 9px 12px;
+            width: auto;
+        }
+        .mobile-menu-close:hover {
+            background: #fff;
+            color: var(--brand-dark);
+            transform: none;
         }
         .container {
             max-width: 1080px;
@@ -612,18 +652,6 @@
             margin-bottom: 22px;
             padding: 28px;
         }
-        .hero-version {
-            background: var(--brand-dark);
-            border-radius: 16px;
-            color: #fff;
-            min-width: 120px;
-            padding: 14px 18px;
-            text-align: center;
-        }
-        .hero-version small,
-        .hero-version strong {
-            display: block;
-        }
         .metric-grid {
             display: grid;
             gap: 20px;
@@ -853,12 +881,29 @@
                 display: block;
             }
             .app-sidebar {
-                display: none;
-                height: auto;
-                position: static;
+                bottom: 0;
+                box-shadow: 22px 0 48px rgba(4, 26, 56, 0.28);
+                display: block;
+                height: 100vh;
+                left: 0;
+                max-width: 340px;
+                padding-top: 18px;
+                position: fixed;
+                top: 0;
+                transform: translateX(-105%);
+                transition: transform 220ms ease;
+                width: min(86vw, 340px);
+                z-index: 30;
             }
             .app-sidebar.is-open {
-                display: block;
+                transform: translateX(0);
+            }
+            .sidebar-mobile-header {
+                align-items: center;
+                display: flex;
+                gap: 12px;
+                justify-content: space-between;
+                margin-bottom: 14px;
             }
             .mobile-topbar {
                 display: flex;
@@ -924,7 +969,14 @@
         $isActive = static fn (string $path): string => $currentPath === $path ? 'is-active' : '';
         ?>
         <div class="app-shell">
+            <div class="mobile-menu-overlay" data-menu-overlay></div>
             <aside class="app-sidebar" id="appSidebar">
+                <div class="sidebar-mobile-header">
+                    <strong>Menu</strong>
+                    <button class="mobile-menu-close" type="button" data-menu-close aria-label="Fechar menu">
+                        <span class="bi bi-x-lg"></span>
+                    </button>
+                </div>
                 <a class="sidebar-brand" href="/">
                     <img src="/assets/brand/logo.svg?v=<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>" alt="Oficina do DEV">
                 </a>
@@ -1001,7 +1053,9 @@
             <div class="app-main">
                 <header class="mobile-topbar">
                     <img src="/assets/brand/logo.svg?v=<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>" alt="Oficina do DEV">
-                    <button class="mobile-menu-toggle" type="button" data-menu-toggle>Menu</button>
+                    <button class="mobile-menu-toggle" type="button" data-menu-toggle aria-controls="appSidebar" aria-expanded="false">
+                        <span class="bi bi-list"></span>Menu
+                    </button>
                 </header>
                 <main class="container">
                     <?= $content ?>
@@ -1023,8 +1077,30 @@
     <?php endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
     <script>
-        document.querySelector('[data-menu-toggle]')?.addEventListener('click', () => {
-            document.querySelector('#appSidebar')?.classList.toggle('is-open');
+        const sidebar = document.querySelector('#appSidebar');
+        const menuToggle = document.querySelector('[data-menu-toggle]');
+        const menuOverlay = document.querySelector('[data-menu-overlay]');
+        const closeMenu = () => {
+            sidebar?.classList.remove('is-open');
+            menuOverlay?.classList.remove('is-open');
+            menuToggle?.setAttribute('aria-expanded', 'false');
+        };
+        const openMenu = () => {
+            sidebar?.classList.add('is-open');
+            menuOverlay?.classList.add('is-open');
+            menuToggle?.setAttribute('aria-expanded', 'true');
+        };
+
+        menuToggle?.addEventListener('click', () => {
+            sidebar?.classList.contains('is-open') ? closeMenu() : openMenu();
+        });
+        document.querySelector('[data-menu-close]')?.addEventListener('click', closeMenu);
+        menuOverlay?.addEventListener('click', closeMenu);
+        sidebar?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeMenu();
+            }
         });
     </script>
 </body>
