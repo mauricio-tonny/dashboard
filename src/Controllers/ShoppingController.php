@@ -10,6 +10,7 @@ use App\Core\Session;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\Permission;
+use App\Domain\Shopping\AccessKeyParser;
 use App\Domain\Shopping\MarketInvoiceXmlParser;
 use App\Domain\Shopping\ShoppingRepository;
 
@@ -281,6 +282,33 @@ final class ShoppingController extends Controller
         }
 
         $this->flash('success', 'Nota anexada a lista de mercado.');
+
+        return Response::redirect('/shopping/market?market_list_id=' . $listId);
+    }
+
+    public function storeMarketAccessKey(Request $request): Response
+    {
+        $auth = $this->authorizeManage();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $listId = (int) $request->input('list_id');
+
+        if ($listId <= 0) {
+            $this->flash('error', 'Selecione uma lista de mercado antes de informar a chave.');
+            return Response::redirect('/shopping/market');
+        }
+
+        try {
+            $data = (new AccessKeyParser())->parse((string) $request->input('access_key'));
+            $id = $this->app->make(ShoppingRepository::class)->addMarketInvoiceAccessKey($listId, $data, $auth->user()?->id);
+            $this->audit('shopping_market_invoice_access_key_saved', 'shopping_market_invoice', $id, $data);
+            $this->flash('success', 'Chave de acesso salva. Use o link de consulta publica para conferir a NFC-e; o XML completo depende de disponibilizacao do emissor ou certificado digital.');
+        } catch (\Throwable $exception) {
+            $this->flash('error', $exception->getMessage());
+        }
 
         return Response::redirect('/shopping/market?market_list_id=' . $listId);
     }

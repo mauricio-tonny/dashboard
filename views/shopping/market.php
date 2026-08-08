@@ -11,6 +11,20 @@ $monthLabel = static function (?string $date): string {
 };
 $initial = static fn (string $name): string => mb_strtoupper(mb_substr(trim($name), 0, 1)) ?: '?';
 $selectedListId = $selectedMarketList === null ? 0 : (int) $selectedMarketList['id'];
+$formatAccessKey = static function (?string $key): string {
+    $digits = preg_replace('/\D+/', '', (string) $key) ?? '';
+
+    return trim((string) preg_replace('/(\d{4})(?=\d)/', '$1 ', $digits));
+};
+$formatDocument = static function (?string $document): string {
+    $digits = preg_replace('/\D+/', '', (string) $document) ?? '';
+
+    if (strlen($digits) !== 14) {
+        return $digits ?: '-';
+    }
+
+    return substr($digits, 0, 2) . '.' . substr($digits, 2, 3) . '.' . substr($digits, 5, 3) . '/' . substr($digits, 8, 4) . '-' . substr($digits, 12, 2);
+};
 $itemsSubtotal = array_reduce(
     $marketItems,
     static fn (float $carry, array $item): float => $carry + (float) ($item['subtotal_amount'] ?? 0),
@@ -179,26 +193,56 @@ ob_start();
     <section class="card section-card">
         <h2 class="section-title"><span class="bi bi-receipt"></span>NFC-e / NF-e anexadas</h2>
         <p class="muted">
-            O upload abaixo sera vinculado claramente a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
-            Arquivos XML serao importados automaticamente, atualizando itens semelhantes e incluindo itens novos da nota.
+            Escolha uma das formas abaixo para vincular notas a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
+            XML importa itens automaticamente; PDF/imagem ficam como anexo; chave de acesso salva os metadados para consulta publica.
         </p>
-        <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="inline-form align-end-form">
-            <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-            <label>
-                Mes da lista
-                <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
-            </label>
-            <label>
-                Arquivo da nota
-                <input type="file" name="invoice" accept=".pdf,.xml,.jpg,.jpeg,.png" required>
-            </label>
-            <button class="inline-button" type="submit"><span class="bi bi-upload"></span>Anexar nota</button>
-        </form>
+        <div class="grid">
+            <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="soft-panel compact-form">
+                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                <h3><span class="bi bi-file-earmark-arrow-up"></span> Upload de arquivo</h3>
+                <p class="muted">Use XML para importar itens. PDF, JPG e PNG ficam anexados para conferencia.</p>
+                <label>
+                    Mes da lista
+                    <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
+                </label>
+                <label>
+                    Arquivo da nota
+                    <input type="file" name="invoice" accept=".pdf,.xml,.jpg,.jpeg,.png" required>
+                </label>
+                <button type="submit"><span class="bi bi-upload"></span>Anexar nota</button>
+            </form>
+
+            <form method="post" action="/shopping/market/access-key" class="soft-panel compact-form">
+                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                <h3><span class="bi bi-key"></span> Chave de acesso</h3>
+                <p class="muted">Quando nao houver XML, salve a chave para consulta publica e controle da nota.</p>
+                <label>
+                    Chave de acesso
+                    <input type="text" name="access_key" inputmode="numeric" placeholder="0000 0000 0000 0000..." maxlength="60" required>
+                </label>
+                <button type="submit"><span class="bi bi-link-45deg"></span>Salvar chave</button>
+            </form>
+        </div>
         <div class="settings-list">
             <?php foreach ($marketInvoices as $invoice): ?>
                 <div class="settings-item">
-                    <strong><?= htmlspecialchars($invoice['original_name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                    <small><?= number_format(((int) $invoice['file_size']) / 1024, 1, ',', '.') ?> KB | <?= htmlspecialchars((string) $invoice['created_at'], ENT_QUOTES, 'UTF-8') ?></small>
+                    <?php if (($invoice['source_type'] ?? 'file') === 'access_key'): ?>
+                        <strong>Chave <?= htmlspecialchars($formatAccessKey($invoice['access_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
+                        <small>
+                            NFC-e <?= htmlspecialchars((string) ($invoice['document_number'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                            | Serie <?= htmlspecialchars((string) ($invoice['document_series'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                            | CNPJ <?= htmlspecialchars($formatDocument($invoice['issuer_document'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                            | <?= htmlspecialchars((string) $invoice['created_at'], ENT_QUOTES, 'UTF-8') ?>
+                        </small>
+                        <?php if (!empty($invoice['public_url'])): ?>
+                            <a href="<?= htmlspecialchars((string) $invoice['public_url'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">
+                                <button class="inline-button" type="button"><span class="bi bi-box-arrow-up-right"></span>Abrir consulta publica</button>
+                            </a>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <strong><?= htmlspecialchars($invoice['original_name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                        <small><?= number_format(((int) $invoice['file_size']) / 1024, 1, ',', '.') ?> KB | <?= htmlspecialchars((string) $invoice['created_at'], ENT_QUOTES, 'UTF-8') ?></small>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
             <?php if ($marketInvoices === []): ?>

@@ -33,7 +33,11 @@ Campos do item:
 
 Durante a compra, o usuario pode marcar cada item como pego. Ao finalizar, informa o valor total da compra.
 
-Tambem e possivel anexar arquivos de NFC-e/NF-e a lista de mercado. Arquivos XML sao interpretados automaticamente na importacao. PDF e imagem ainda ficam armazenados apenas para apoio futuro em relatorios.
+Tambem e possivel vincular NFC-e/NF-e a lista de mercado por tres caminhos:
+
+- Upload de XML, com importacao automatica dos itens.
+- Upload de PDF ou imagem, apenas como anexo para apoio futuro em relatorios.
+- Cadastro da chave de acesso de 44 digitos, quando o XML nao estiver disponivel.
 
 Formatos aceitos:
 
@@ -43,6 +47,8 @@ Formatos aceitos:
 - PNG.
 
 Limite inicial: 5 MB por arquivo.
+
+No cadastro por chave de acesso, o sistema valida o digito verificador e extrai UF, ano/mes, CNPJ emitente, modelo, serie, numero, tipo de emissao, codigo numerico e digito verificador. Para NFC-e do Parana, o sistema tambem salva o link da consulta publica da SEFA/PR. Esta opcao nao baixa o XML automaticamente, pois o download completo normalmente depende de disponibilizacao do emissor ou de certificado digital.
 
 Na leitura de XML, o sistema trata a lista como uma lista generica de intencao de compra. Exemplo: o usuario pode cadastrar `Arroz` ou `Pacote 5Kg Arroz`, sem informar marca. Ao importar o XML, o sistema procura itens similares na lista do mes selecionado e atualiza quantidade, valor unitario e subtotal quando encontra correspondencia. Itens da nota que nao existirem na lista sao incluidos automaticamente.
 

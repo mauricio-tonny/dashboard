@@ -144,9 +144,9 @@ final class ShoppingRepository
     {
         $statement = $this->database->connection()->prepare(
             'INSERT INTO shopping_market_invoices
-                (list_id, original_name, stored_name, mime_type, file_size, uploaded_by_user_id)
+                (list_id, source_type, original_name, stored_name, mime_type, file_size, uploaded_by_user_id)
              VALUES
-                (:list_id, :original_name, :stored_name, :mime_type, :file_size, :uploaded_by_user_id)'
+                (:list_id, "file", :original_name, :stored_name, :mime_type, :file_size, :uploaded_by_user_id)'
         );
         $statement->execute([
             'list_id' => $listId,
@@ -154,6 +154,38 @@ final class ShoppingRepository
             'stored_name' => $storedName,
             'mime_type' => $mimeType,
             'file_size' => $fileSize,
+            'uploaded_by_user_id' => $userId,
+        ]);
+
+        return (int) $this->database->connection()->lastInsertId();
+    }
+
+    public function addMarketInvoiceAccessKey(int $listId, array $data, ?int $userId): int
+    {
+        $statement = $this->database->connection()->prepare(
+            'INSERT INTO shopping_market_invoices
+                (list_id, source_type, original_name, stored_name, mime_type, file_size, access_key, uf_code, issued_year_month,
+                 issuer_document, document_model, document_series, document_number, issue_type, numeric_code, check_digit,
+                 public_url, status, uploaded_by_user_id)
+             VALUES
+                (:list_id, "access_key", :original_name, "", "application/x-nfe-access-key", 0, :access_key, :uf_code, :issued_year_month,
+                 :issuer_document, :document_model, :document_series, :document_number, :issue_type, :numeric_code, :check_digit,
+                 :public_url, "pending_public_consultation", :uploaded_by_user_id)'
+        );
+        $statement->execute([
+            'list_id' => $listId,
+            'original_name' => 'Chave ' . $data['access_key'],
+            'access_key' => $data['access_key'],
+            'uf_code' => $data['uf_code'],
+            'issued_year_month' => $data['issued_year_month'],
+            'issuer_document' => $data['issuer_document'],
+            'document_model' => $data['document_model'],
+            'document_series' => $data['document_series'],
+            'document_number' => $data['document_number'],
+            'issue_type' => $data['issue_type'],
+            'numeric_code' => $data['numeric_code'],
+            'check_digit' => $data['check_digit'],
+            'public_url' => $data['public_url'],
             'uploaded_by_user_id' => $userId,
         ]);
 

@@ -21,6 +21,7 @@ $labels = [
     'shopping_market_invoice_uploaded' => 'Nota de mercado anexada',
     'shopping_market_invoice_imported' => 'XML de mercado importado',
     'shopping_market_invoice_import_failed' => 'Falha ao importar XML de mercado',
+    'shopping_market_invoice_access_key_saved' => 'Chave de acesso de mercado salva',
     'shopping_wish_item_created' => 'Item de compras criado',
     'shopping_wish_item_updated' => 'Item de compras atualizado',
     'shopping_wish_item_purchased' => 'Item de compras comprado',
