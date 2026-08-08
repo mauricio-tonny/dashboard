@@ -217,6 +217,10 @@ ob_start();
                 <h3><span class="bi bi-key"></span> Chave de acesso</h3>
                 <p class="muted">Quando nao houver XML, salve a chave para consulta publica e controle da nota.</p>
                 <label>
+                    Mes da lista
+                    <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
+                </label>
+                <label>
                     Chave de acesso
                     <input type="text" name="access_key" inputmode="numeric" placeholder="0000 0000 0000 0000..." maxlength="60" required>
                 </label>
