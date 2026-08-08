@@ -308,6 +308,18 @@ final class ShoppingRepository
         $statement->execute(['id' => $id]);
     }
 
+    public function marketItemsCount(int $listId): int
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT COUNT(*)
+             FROM shopping_market_items
+             WHERE list_id = :list_id'
+        );
+        $statement->execute(['list_id' => $listId]);
+
+        return (int) $statement->fetchColumn();
+    }
+
     public function finishMarketList(int $id, ?float $totalAmount, string $purchaseDate): void
     {
         $discountAmount = $this->discountAmount($id, $totalAmount);
@@ -495,18 +507,20 @@ final class ShoppingRepository
         ]);
     }
 
-    public function toggleWishItem(int $id, bool $purchased): void
+    public function toggleWishItem(int $id, bool $purchased, ?string $purchasedAt = null): void
     {
+        $normalizedPurchasedAt = $purchased ? $this->normalizeDateTime($purchasedAt ?? 'now') : null;
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_wish_items
              SET is_purchased = :is_purchased,
-                 purchased_at = ' . ($purchased ? 'NOW()' : 'NULL') . ',
+                 purchased_at = :purchased_at,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
         $statement->execute([
             'id' => $id,
             'is_purchased' => $purchased ? 1 : 0,
+            'purchased_at' => $normalizedPurchasedAt,
         ]);
     }
 

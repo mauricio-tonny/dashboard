@@ -233,7 +233,19 @@ final class ShoppingController extends Controller
         }
 
         $amount = $this->money((string) $request->input('total_amount'));
-        $this->app->make(ShoppingRepository::class)->finishMarketList($id, $amount, $purchaseDate);
+        $repository = $this->app->make(ShoppingRepository::class);
+
+        if ($repository->marketItemsCount($id) === 0) {
+            $this->flash('error', 'Nao e possivel finalizar uma lista de mercado sem itens.');
+            return Response::redirect('/shopping/market?market_list_id=' . $id);
+        }
+
+        if ($amount === null || $amount <= 0) {
+            $this->flash('error', 'Informe um valor total maior que zero antes de finalizar a lista.');
+            return Response::redirect('/shopping/market?market_list_id=' . $id);
+        }
+
+        $repository->finishMarketList($id, $amount, $purchaseDate);
         $this->audit('shopping_market_list_finished', 'shopping_market_list', $id, [
             'total_amount' => $amount,
             'purchase_date' => $purchaseDate,
@@ -488,10 +500,21 @@ final class ShoppingController extends Controller
 
         $id = (int) $request->input('id');
         $purchased = (string) $request->input('purchased') === '1';
-        $this->app->make(ShoppingRepository::class)->toggleWishItem($id, $purchased);
-        $this->audit($purchased ? 'shopping_wish_item_purchased' : 'shopping_wish_item_reopened', 'shopping_wish_item', $id);
+        $type = (string) $request->input('type', 'home');
+        $purchasedAt = trim((string) $request->input('purchased_at'));
 
-        return Response::redirect($this->wishRedirect((string) $request->input('type', 'home')));
+        if ($purchased && $type === 'vehicle' && $purchasedAt === '') {
+            $this->flash('error', 'Informe a data da compra para baixar o item do veiculo.');
+            return Response::redirect($this->wishRedirect($type));
+        }
+
+        $this->app->make(ShoppingRepository::class)->toggleWishItem($id, $purchased, $purchasedAt === '' ? null : $purchasedAt);
+        $this->audit($purchased ? 'shopping_wish_item_purchased' : 'shopping_wish_item_reopened', 'shopping_wish_item', $id, [
+            'type' => $type,
+            'purchased_at' => $purchasedAt ?: null,
+        ]);
+
+        return Response::redirect($this->wishRedirect($type));
     }
 
     public function deleteWishItem(Request $request): Response

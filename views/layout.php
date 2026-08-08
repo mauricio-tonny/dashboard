@@ -548,6 +548,21 @@
         .shopping-panel {
             min-height: 100%;
         }
+        .wish-create-panel {
+            padding-bottom: 18px;
+        }
+        .wish-form-grid {
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+        .wish-form-grid .form-actions {
+            align-self: end;
+        }
+        .wish-form-grid .form-actions button,
+        .finish-form .inline-button {
+            justify-content: center;
+            width: 100%;
+        }
         .month-pill {
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -579,6 +594,45 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 12px;
+        }
+        .shopping-item-card {
+            align-items: center;
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            padding: 12px;
+        }
+        .shopping-item-main {
+            display: grid;
+            min-width: 0;
+        }
+        .shopping-item-main strong,
+        .shopping-item-main small {
+            overflow-wrap: anywhere;
+        }
+        .shopping-item-actions {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-top: 0;
+        }
+        .vehicle-group {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px;
+        }
+        .vehicle-group h3 {
+            align-items: center;
+            color: var(--brand-dark);
+            display: flex;
+            font-size: 1rem;
+            gap: 8px;
+            margin: 0 0 12px;
+        }
+        .vehicle-group-list {
+            gap: 16px;
         }
         .market-item {
             align-items: center;
@@ -691,6 +745,9 @@
         }
         .finish-form {
             align-items: end;
+        }
+        .finish-form button {
+            min-width: 220px;
         }
         .market-lock-notice {
             margin: 14px 0;
@@ -1094,6 +1151,18 @@
             .market-item .check-form {
                 grid-column: 1 / -1;
             }
+            .shopping-item-card {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .shopping-item-actions {
+                justify-content: stretch;
+            }
+            .shopping-item-actions .inline-button,
+            .shopping-item-actions form,
+            .shopping-item-actions button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -1232,6 +1301,30 @@
         document.querySelector('[data-menu-close]')?.addEventListener('click', closeMenu);
         menuOverlay?.addEventListener('click', closeMenu);
         sidebar?.querySelectorAll('a').forEach((link) => link.addEventListener('click', closeMenu));
+        document.querySelectorAll('[data-money-input]').forEach((input) => {
+            const formatCurrency = (rawValue) => {
+                const digits = String(rawValue).replace(/\D+/g, '');
+
+                if (digits === '') {
+                    return '';
+                }
+
+                const value = Number(digits) / 100;
+
+                return value.toLocaleString('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                });
+            };
+
+            input.addEventListener('input', () => {
+                input.value = formatCurrency(input.value);
+            });
+
+            input.addEventListener('blur', () => {
+                input.value = formatCurrency(input.value);
+            });
+        });
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 closeMenu();

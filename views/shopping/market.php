@@ -149,11 +149,11 @@ ob_start();
                     </label>
                     <label>
                         Valor unitario
-                        <input type="text" name="unit_amount" inputmode="decimal" placeholder="0,00" data-unit-amount>
+                        <input type="text" name="unit_amount" inputmode="decimal" placeholder="R$ 0,00" data-unit-amount data-money-input>
                     </label>
                     <label>
                         Valor
-                        <input type="text" name="amount" inputmode="decimal" placeholder="0,00">
+                        <input type="text" name="amount" inputmode="decimal" placeholder="R$ 0,00" data-money-input>
                     </label>
                     <label>
                         Sub total
@@ -215,8 +215,8 @@ ob_start();
                                         <?php endforeach; ?>
                                     </select>
                                     <input type="number" name="quantity" min="0.001" step="0.001" value="<?= htmlspecialchars((string) ($item['quantity'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>" required>
-                                    <input type="text" name="unit_amount" inputmode="decimal" value="<?= htmlspecialchars($item['unit_amount'] === null ? '' : number_format((float) $item['unit_amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor unitario" data-unit-amount>
-                                    <input type="text" name="amount" inputmode="decimal" value="<?= htmlspecialchars($item['amount'] === null ? '' : number_format((float) $item['amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor">
+                                    <input type="text" name="unit_amount" inputmode="decimal" value="<?= htmlspecialchars($item['unit_amount'] === null ? '' : $formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor unitario" data-unit-amount data-money-input>
+                                    <input type="text" name="amount" inputmode="decimal" value="<?= htmlspecialchars($item['amount'] === null ? '' : $formatMoney($item['amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor" data-money-input>
                                     <input type="text" name="subtotal_preview" value="<?= htmlspecialchars($item['subtotal_amount'] === null ? '' : number_format((float) $item['subtotal_amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Sub total" data-subtotal-preview readonly>
                                     <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
                                 </form>
@@ -253,7 +253,7 @@ ob_start();
                     <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                     <label>
                         Valor total da compra
-                        <input type="text" name="total_amount" inputmode="decimal" placeholder="R$ 0,00" value="<?= htmlspecialchars($selectedMarketList['total_amount'] === null ? '' : $formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>">
+                        <input type="text" name="total_amount" inputmode="decimal" placeholder="R$ 0,00" value="<?= htmlspecialchars($selectedMarketList['total_amount'] === null ? '' : $formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>" data-money-input>
                     </label>
                     <label>
                         Data da compra
@@ -375,7 +375,7 @@ ob_start();
         const unitAmount = form.querySelector('[name="unit_amount"]');
         const preview = form.querySelector('[data-subtotal-preview]');
         const parseMoney = (value) => {
-            const normalized = value.replace(/\./g, '').replace(',', '.').trim();
+            const normalized = value.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.').trim();
             return normalized === '' ? null : Number(normalized);
         };
         const formatMoney = (value) => value.toLocaleString('pt-BR', {

@@ -37,6 +37,8 @@ Quando o subtotal dos itens for maior que o valor final da compra, o sistema reg
 
 Ao finalizar manualmente uma lista, a data da compra e obrigatoria. Quando uma nota XML/PDF e importada, a data da compra da lista e preenchida automaticamente com a data da nota.
 
+Uma lista de mercado so pode ser finalizada quando possuir ao menos um item e valor total maior que zero.
+
 Administradores podem excluir uma lista mensal de mercado inteira. A exclusao remove os itens e registros de notas vinculadas a lista.
 
 Tambem e possivel vincular NFC-e/NF-e a lista de mercado por tres caminhos:
@@ -92,7 +94,7 @@ Campos:
 - Nome do item.
 - Comodo.
 - Valor previsto.
-- Prioridade de 0 a 10.
+- Prioridade de 0 a 10 selecionada em dropdown.
 
 ## Para a familia
 
@@ -114,6 +116,8 @@ Campos:
 - Para qual veiculo.
 - Area.
 - Valor previsto.
+
+Os itens sao agrupados por veiculo. Ao baixar um item como comprado, o usuario informa a data da compra para manter historico.
 
 ## Configuracao compras
 
