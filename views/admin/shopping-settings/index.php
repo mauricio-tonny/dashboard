@@ -12,7 +12,7 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
                 Nome
                 <input type="text" name="name" required>
             </label>
-            <button class="inline-button" type="submit">Adicionar</button>
+            <button class="inline-button" type="submit"><span class="bi bi-plus-circle"></span>Adicionar</button>
         </form>
 
         <div class="settings-list">
@@ -26,13 +26,14 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
                         <input type="hidden" name="kind" value="<?= htmlspecialchars($kind, ENT_QUOTES, 'UTF-8') ?>">
                         <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                         <input type="text" name="name" value="<?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?>" required>
-                        <button type="submit">Salvar</button>
+                        <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
                     </form>
                     <form method="post" action="/admin/shopping-settings/simple/toggle">
                         <input type="hidden" name="kind" value="<?= htmlspecialchars($kind, ENT_QUOTES, 'UTF-8') ?>">
                         <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                         <input type="hidden" name="active" value="<?= ((int) $item['is_active']) === 1 ? '0' : '1' ?>">
                         <button class="inline-button <?= ((int) $item['is_active']) === 1 ? 'button-danger' : '' ?>" type="submit">
+                            <span class="bi <?= ((int) $item['is_active']) === 1 ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' ?>"></span>
                             <?= ((int) $item['is_active']) === 1 ? 'Desativar' : 'Reativar' ?>
                         </button>
                     </form>
@@ -109,7 +110,7 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
             <input type="text" name="plate">
         </label>
         <div class="form-actions">
-            <button type="submit">Adicionar veiculo</button>
+            <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar veiculo</button>
         </div>
     </form>
 
@@ -161,12 +162,13 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
                         Placa
                         <input type="text" name="plate" value="<?= htmlspecialchars($vehicle['plate'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     </label>
-                    <button type="submit">Salvar veiculo</button>
+                    <button type="submit"><span class="bi bi-check2-circle"></span>Salvar veiculo</button>
                 </form>
                 <form method="post" action="/admin/shopping-settings/vehicles/toggle">
                     <input type="hidden" name="id" value="<?= (int) $vehicle['id'] ?>">
                     <input type="hidden" name="active" value="<?= ((int) $vehicle['is_active']) === 1 ? '0' : '1' ?>">
                     <button class="inline-button <?= ((int) $vehicle['is_active']) === 1 ? 'button-danger' : '' ?>" type="submit">
+                        <span class="bi <?= ((int) $vehicle['is_active']) === 1 ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' ?>"></span>
                         <?= ((int) $vehicle['is_active']) === 1 ? 'Desativar' : 'Reativar' ?>
                     </button>
                 </form>

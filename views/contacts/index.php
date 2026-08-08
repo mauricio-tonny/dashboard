@@ -76,7 +76,7 @@ ob_start();
                 </select>
             </label>
             <div class="form-actions">
-                <button type="submit">Salvar contato</button>
+                <button type="submit"><span class="bi bi-person-plus"></span>Salvar contato</button>
             </div>
         </form>
     </section>
@@ -115,7 +115,7 @@ ob_start();
                         <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CONTACTS)): ?>
                             <td>
                                 <details class="user-details">
-                                    <summary>Editar</summary>
+                                    <summary><span class="bi bi-pencil-square"></span>Editar</summary>
                                     <form method="post" action="/contacts/update" class="form-grid compact-form">
                                         <input type="hidden" name="id" value="<?= (int) $contact['id'] ?>">
                                         <label>
@@ -161,12 +161,13 @@ ob_start();
                                                 <?php endforeach; ?>
                                             </select>
                                         </label>
-                                        <button type="submit">Salvar alteracoes</button>
+                                        <button type="submit"><span class="bi bi-check2-circle"></span>Salvar alteracoes</button>
                                     </form>
                                     <form method="post" action="/contacts/toggle">
                                         <input type="hidden" name="id" value="<?= (int) $contact['id'] ?>">
                                         <input type="hidden" name="active" value="<?= ((int) $contact['is_active']) === 1 ? '0' : '1' ?>">
                                         <button class="inline-button <?= ((int) $contact['is_active']) === 1 ? 'button-danger' : '' ?>" type="submit">
+                                            <span class="bi <?= ((int) $contact['is_active']) === 1 ? 'bi-slash-circle' : 'bi-arrow-counterclockwise' ?>"></span>
                                             <?= ((int) $contact['is_active']) === 1 ? 'Desativar' : 'Reativar' ?>
                                         </button>
                                     </form>

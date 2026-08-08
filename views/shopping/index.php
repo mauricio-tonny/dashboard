@@ -63,7 +63,7 @@ $renderWishSection = static function (
                 </label>
             <?php endif; ?>
             <div class="form-actions">
-                <button type="submit">Adicionar</button>
+                <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar</button>
             </div>
         </form>
 
@@ -125,18 +125,21 @@ $renderWishSection = static function (
                                 <input type="number" name="priority" min="0" max="10" value="<?= (int) ($item['priority'] ?? 0) ?>">
                             </label>
                         <?php endif; ?>
-                        <button type="submit">Salvar</button>
+                        <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
                     </form>
 
                     <div class="actions">
                         <form method="post" action="/shopping/wish-items/toggle">
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                             <input type="hidden" name="purchased" value="<?= ((int) $item['is_purchased']) === 1 ? '0' : '1' ?>">
-                            <button class="inline-button" type="submit"><?= ((int) $item['is_purchased']) === 1 ? 'Reabrir' : 'Marcar comprado' ?></button>
+                            <button class="inline-button" type="submit">
+                                <span class="bi <?= ((int) $item['is_purchased']) === 1 ? 'bi-arrow-counterclockwise' : 'bi-check2-square' ?>"></span>
+                                <?= ((int) $item['is_purchased']) === 1 ? 'Reabrir' : 'Marcar comprado' ?>
+                            </button>
                         </form>
                         <form method="post" action="/shopping/wish-items/delete">
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                            <button class="inline-button button-danger" type="submit">Remover</button>
+                            <button class="inline-button button-danger" type="submit"><span class="bi bi-trash3"></span>Remover</button>
                         </form>
                     </div>
                 </details>
@@ -184,7 +187,7 @@ $renderWishSection = static function (
             Mes da lista
             <input type="month" name="reference_month" value="<?= htmlspecialchars(substr($nextMonth, 0, 7), ENT_QUOTES, 'UTF-8') ?>" required>
         </label>
-        <button class="inline-button" type="submit">Criar/selecionar lista</button>
+        <button class="inline-button" type="submit"><span class="bi bi-calendar-plus"></span>Criar/selecionar lista</button>
     </form>
 </section>
 
@@ -220,7 +223,7 @@ $renderWishSection = static function (
                     <input type="text" name="section" placeholder="Hortifruti, limpeza, carnes..." required>
                 </label>
                 <div class="form-actions">
-                    <button type="submit">Adicionar item</button>
+                    <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar item</button>
                 </div>
             </form>
 
@@ -232,25 +235,28 @@ $renderWishSection = static function (
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                             <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                             <input type="hidden" name="checked" value="<?= ((int) $item['is_checked']) === 1 ? '0' : '1' ?>">
-                            <button class="check-button" type="submit"><?= ((int) $item['is_checked']) === 1 ? 'OK' : 'Pegar' ?></button>
+                            <button class="check-button" type="submit">
+                                <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-cart-plus' ?>"></span>
+                                <?= ((int) $item['is_checked']) === 1 ? 'OK' : 'Pegar' ?>
+                            </button>
                         </form>
                         <div class="market-item-copy">
                             <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
                             <small><?= htmlspecialchars($item['section'], ENT_QUOTES, 'UTF-8') ?></small>
                         </div>
                         <details>
-                            <summary>Editar</summary>
+                            <summary><span class="bi bi-pencil-square"></span>Editar</summary>
                             <form method="post" action="/shopping/market/items/update" class="compact-form">
                                 <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                                 <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                                 <input type="text" name="name" value="<?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?>" required>
                                 <input type="text" name="section" value="<?= htmlspecialchars($item['section'], ENT_QUOTES, 'UTF-8') ?>" required>
-                                <button type="submit">Salvar</button>
+                                <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
                             </form>
                             <form method="post" action="/shopping/market/items/delete">
                                 <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                                 <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                                <button class="button-danger" type="submit">Remover</button>
+                                <button class="button-danger" type="submit"><span class="bi bi-trash3"></span>Remover</button>
                             </form>
                         </details>
                     </div>
@@ -263,7 +269,7 @@ $renderWishSection = static function (
                     Valor total da compra
                     <input type="text" name="total_amount" placeholder="0,00" value="<?= htmlspecialchars((string) ($selectedMarketList['total_amount'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                 </label>
-                <button class="inline-button" type="submit">Finalizar lista</button>
+                <button class="inline-button" type="submit"><span class="bi bi-flag"></span>Finalizar lista</button>
             </form>
         <?php else: ?>
             <p class="muted">Selecione ou crie uma lista mensal.</p>

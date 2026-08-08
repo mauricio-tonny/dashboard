@@ -55,7 +55,7 @@ ob_start();
         </label>
 
         <div class="actions">
-            <button type="submit">Salvar</button>
+            <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
             <a href="/finance/payable"><button class="inline-button" type="button">Cancelar</button></a>
         </div>
     </form>

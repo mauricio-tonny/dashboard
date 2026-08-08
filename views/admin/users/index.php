@@ -55,7 +55,7 @@ ob_start();
             <input type="password" name="admin_password" required>
         </label>
         <div class="form-actions">
-            <button type="submit">Criar usuario</button>
+            <button type="submit"><span class="bi bi-person-plus"></span>Criar usuario</button>
         </div>
     </form>
 </section>
@@ -89,7 +89,7 @@ ob_start();
                         <td><?= htmlspecialchars($managedUser['last_login_at'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
                             <details class="user-details">
-                                <summary>Editar</summary>
+                                <summary><span class="bi bi-pencil-square"></span>Editar</summary>
                                 <form method="post" action="/admin/users/update" class="stacked-form">
                                     <input type="hidden" name="id" value="<?= (int) $managedUser['id'] ?>">
                                     <label>
@@ -118,7 +118,7 @@ ob_start();
                                         Sua senha de administrador
                                         <input type="password" name="admin_password" required>
                                     </label>
-                                    <button type="submit">Salvar alteracoes</button>
+                                    <button type="submit"><span class="bi bi-check2-circle"></span>Salvar alteracoes</button>
                                 </form>
 
                                 <form method="post" action="/admin/users/toggle-status" class="stacked-form">
@@ -129,6 +129,7 @@ ob_start();
                                         <input type="password" name="admin_password" required>
                                     </label>
                                     <button type="submit" class="<?= ((int) $managedUser['is_active']) === 1 ? 'button-danger' : '' ?>">
+                                        <span class="bi <?= ((int) $managedUser['is_active']) === 1 ? 'bi-lock' : 'bi-unlock' ?>"></span>
                                         <?= ((int) $managedUser['is_active']) === 1 ? 'Bloquear usuario' : 'Desbloquear usuario' ?>
                                     </button>
                                 </form>

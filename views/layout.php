@@ -294,10 +294,14 @@
             font-size: 1rem;
         }
         button {
+            align-items: center;
             background: var(--brand-dark);
             color: #fff;
             border: none;
             cursor: pointer;
+            display: inline-flex;
+            gap: 8px;
+            justify-content: center;
             font-weight: 700;
             transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
         }
@@ -382,8 +386,11 @@
             background: #f8fbfd;
         }
         .user-details summary {
+            align-items: center;
             color: var(--brand-dark);
             cursor: pointer;
+            display: inline-flex;
+            gap: 6px;
             font-weight: 800;
         }
         .inline-form {
@@ -483,7 +490,10 @@
         }
         .shopping-item summary,
         .settings-item summary {
+            align-items: center;
             cursor: pointer;
+            display: flex;
+            gap: 8px;
         }
         .is-done {
             opacity: 0.66;
