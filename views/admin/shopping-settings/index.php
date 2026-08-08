@@ -50,7 +50,7 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
         <div>
             <span class="badge">Administrador</span>
             <h1>Configuracao compras</h1>
-            <p class="muted">Gerencie os cadastros usados nas listas de casa, familia e veiculos.</p>
+            <p class="muted">Gerencie os cadastros usados nas listas de mercado, casa, familia e veiculos.</p>
         </div>
     </div>
 
@@ -68,6 +68,7 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
 <?php endif; ?>
 
 <section class="grid">
+    <?php $renderSimple('Sessoes do mercado', 'market_sections', $marketSections); ?>
     <?php $renderSimple('Comodos', 'rooms', $rooms); ?>
     <?php $renderSimple('Para quem', 'people', $people); ?>
     <?php $renderSimple('Areas do veiculo', 'vehicle_areas', $vehicleAreas); ?>

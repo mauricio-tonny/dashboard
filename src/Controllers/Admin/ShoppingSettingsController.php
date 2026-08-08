@@ -31,6 +31,7 @@ final class ShoppingSettingsController extends Controller
             'user' => $auth->user(),
             'success' => $session->pullFlash('success'),
             'error' => $session->pullFlash('error'),
+            'marketSections' => $repository->simpleOptions('market_sections'),
             'rooms' => $repository->simpleOptions('rooms'),
             'people' => $repository->simpleOptions('people'),
             'vehicleAreas' => $repository->simpleOptions('vehicle_areas'),
@@ -50,7 +51,7 @@ final class ShoppingSettingsController extends Controller
         $kind = (string) $request->input('kind');
         $id = $this->nullableInt($request->input('id'));
         $name = mb_strtoupper(trim((string) $request->input('name')));
-        $allowed = ['rooms', 'people', 'vehicle_areas'];
+        $allowed = ['market_sections', 'rooms', 'people', 'vehicle_areas'];
 
         if (!in_array($kind, $allowed, true) || $name === '') {
             $this->flash('error', 'Cadastro invalido.');
@@ -79,7 +80,7 @@ final class ShoppingSettingsController extends Controller
         $kind = (string) $request->input('kind');
         $id = (int) $request->input('id');
         $active = (string) $request->input('active') === '1';
-        $allowed = ['rooms', 'people', 'vehicle_areas'];
+        $allowed = ['market_sections', 'rooms', 'people', 'vehicle_areas'];
 
         if (in_array($kind, $allowed, true) && $id > 0) {
             $this->app->make(ShoppingRepository::class)->setSimpleOptionActive($kind, $id, $active);

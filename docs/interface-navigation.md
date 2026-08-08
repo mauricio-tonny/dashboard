@@ -42,7 +42,7 @@ O menu Compras foi dividido em:
 - Para a familia.
 - Para o veiculo.
 
-A tela Mercado permite anexar NFC-e/NF-e para facilitar relatorios futuros.
+A tela Mercado permite cadastrar itens com sessao, quantidade, valor unitario e subtotal, alem de anexar NFC-e/NF-e para facilitar relatorios futuros.
 
 ## Contatos
 
@@ -70,4 +70,4 @@ O menu Sistema concentra as configuracoes administrativas:
 - Cadastro de Categoria (DR).
 - Discord.
 - Gerenciar planilha.
-- Configuracao compras.
+- Configuracao compras, incluindo sessoes do mercado.

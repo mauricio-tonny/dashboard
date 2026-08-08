@@ -61,6 +61,12 @@ try {
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_action', 'CREATE INDEX idx_audit_logs_action ON audit_logs (action)');
     ensureColumn($pdo, 'contacts', 'is_vendor', 'ALTER TABLE contacts ADD COLUMN is_vendor TINYINT(1) NOT NULL DEFAULT 0 AFTER type');
     ensureColumn($pdo, 'contacts', 'is_client', 'ALTER TABLE contacts ADD COLUMN is_client TINYINT(1) NOT NULL DEFAULT 0 AFTER is_vendor');
+    ensureColumn($pdo, 'shopping_market_items', 'section_id', 'ALTER TABLE shopping_market_items ADD COLUMN section_id BIGINT UNSIGNED NULL AFTER list_id');
+    ensureColumn($pdo, 'shopping_market_items', 'quantity', 'ALTER TABLE shopping_market_items ADD COLUMN quantity DECIMAL(10,3) NOT NULL DEFAULT 1.000 AFTER section');
+    ensureColumn($pdo, 'shopping_market_items', 'unit_amount', 'ALTER TABLE shopping_market_items ADD COLUMN unit_amount DECIMAL(14,2) NULL AFTER quantity');
+    ensureColumn($pdo, 'shopping_market_items', 'amount', 'ALTER TABLE shopping_market_items ADD COLUMN amount DECIMAL(14,2) NULL AFTER unit_amount');
+    ensureColumn($pdo, 'shopping_market_items', 'subtotal_amount', 'ALTER TABLE shopping_market_items ADD COLUMN subtotal_amount DECIMAL(14,2) NULL AFTER amount');
+    ensureIndex($pdo, 'shopping_market_items', 'idx_market_items_section', 'CREATE INDEX idx_market_items_section ON shopping_market_items (section_id)');
     $pdo->exec("UPDATE contacts SET is_vendor = 1 WHERE type = 'vendor' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("UPDATE contacts SET is_client = 1 WHERE type = 'client' AND is_vendor = 0 AND is_client = 0");
 
@@ -128,6 +134,22 @@ try {
         'ACABAMENTO',
         'INTERNA',
         'CUSTOMIZACAO',
+    ]);
+
+    seedSimpleOptions($pdo, 'shopping_market_sections', [
+        'LIMPEZA',
+        'CARNES',
+        'ENLATADOS',
+        'BEBIDAS',
+        'LEITES E DERIVADOS',
+        'HIGIENE E BELEZA',
+        'BEBE E INFANTIL',
+        'PADARIA',
+        'DOCES',
+        'CASA',
+        'PET',
+        'COMIDAS PRONTAS',
+        'DESPENSA',
     ]);
 
     $vehicleStatement = $pdo->prepare(

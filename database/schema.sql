@@ -157,6 +157,14 @@ CREATE TABLE IF NOT EXISTS shopping_vehicle_areas (
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS shopping_market_sections (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL UNIQUE,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS shopping_vehicles (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
@@ -199,8 +207,13 @@ CREATE TABLE IF NOT EXISTS shopping_market_invoices (
 CREATE TABLE IF NOT EXISTS shopping_market_items (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     list_id BIGINT UNSIGNED NOT NULL,
+    section_id BIGINT UNSIGNED NULL,
     name VARCHAR(160) NOT NULL,
     section VARCHAR(120) NOT NULL,
+    quantity DECIMAL(10,3) NOT NULL DEFAULT 1.000,
+    unit_amount DECIMAL(14,2) NULL,
+    amount DECIMAL(14,2) NULL,
+    subtotal_amount DECIMAL(14,2) NULL,
     image_url VARCHAR(500) NULL,
     is_checked TINYINT(1) NOT NULL DEFAULT 0,
     checked_at DATETIME NULL,
@@ -208,7 +221,9 @@ CREATE TABLE IF NOT EXISTS shopping_market_items (
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_market_items_list (list_id),
+    INDEX idx_market_items_section (section_id),
     CONSTRAINT fk_market_items_list FOREIGN KEY (list_id) REFERENCES shopping_market_lists(id),
+    CONSTRAINT fk_market_items_section FOREIGN KEY (section_id) REFERENCES shopping_market_sections(id),
     CONSTRAINT fk_market_items_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 

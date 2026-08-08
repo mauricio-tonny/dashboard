@@ -1,6 +1,7 @@
 <?php
 $title = 'Mercado';
 $formatMoney = static fn ($value): string => $value === null ? '-' : 'R$ ' . number_format((float) $value, 2, ',', '.');
+$formatDecimal = static fn ($value): string => rtrim(rtrim(number_format((float) $value, 3, ',', ''), '0'), ',');
 $monthLabel = static function (?string $date): string {
     if ($date === null || $date === '') {
         return '-';
@@ -10,6 +11,11 @@ $monthLabel = static function (?string $date): string {
 };
 $initial = static fn (string $name): string => mb_strtoupper(mb_substr(trim($name), 0, 1)) ?: '?';
 $selectedListId = $selectedMarketList === null ? 0 : (int) $selectedMarketList['id'];
+$itemsSubtotal = array_reduce(
+    $marketItems,
+    static fn (float $carry, array $item): float => $carry + (float) ($item['subtotal_amount'] ?? 0),
+    0.0
+);
 ob_start();
 ?>
 <section class="page-hero">
@@ -64,17 +70,39 @@ ob_start();
         <?php if ($selectedMarketList): ?>
             <p class="muted">
                 Lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
-                Total: <?= htmlspecialchars($formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>
+                Total final: <?= htmlspecialchars($formatMoney($selectedMarketList['total_amount']), ENT_QUOTES, 'UTF-8') ?>.
+                Subtotal dos itens: <?= htmlspecialchars($formatMoney($itemsSubtotal), ENT_QUOTES, 'UTF-8') ?>
             </p>
-            <form method="post" action="/shopping/market/items" class="form-grid">
+            <form method="post" action="/shopping/market/items" class="form-grid market-price-form" data-market-item-form>
                 <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                 <label>
                     Nome do item
-                    <input type="text" name="name" required>
+                    <input type="text" name="name" placeholder="Ex.: Arroz, Sabao em po, Leite" required>
                 </label>
                 <label>
                     Sessao
-                    <input type="text" name="section" placeholder="Hortifruti, limpeza, carnes..." required>
+                    <select name="section_id" required>
+                        <option value="">Selecione</option>
+                        <?php foreach ($marketSections as $section): ?>
+                            <option value="<?= (int) $section['id'] ?>"><?= htmlspecialchars($section['name'], ENT_QUOTES, 'UTF-8') ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </label>
+                <label>
+                    Quantidade
+                    <input type="number" name="quantity" min="0.001" step="0.001" value="1" required>
+                </label>
+                <label>
+                    Valor unitario
+                    <input type="text" name="unit_amount" inputmode="decimal" placeholder="0,00" data-unit-amount>
+                </label>
+                <label>
+                    Valor
+                    <input type="text" name="amount" inputmode="decimal" placeholder="0,00">
+                </label>
+                <label>
+                    Sub total
+                    <input type="text" name="subtotal_preview" placeholder="0,00" data-subtotal-preview readonly>
                 </label>
                 <div class="form-actions">
                     <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar item</button>
@@ -96,15 +124,31 @@ ob_start();
                         </form>
                         <div class="market-item-copy">
                             <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                            <small><?= htmlspecialchars($item['section'], ENT_QUOTES, 'UTF-8') ?></small>
+                            <small>
+                                <?= htmlspecialchars($item['section_name'] ?? $item['section'], ENT_QUOTES, 'UTF-8') ?>
+                                | Qtd: <?= htmlspecialchars($formatDecimal($item['quantity'] ?? 1), ENT_QUOTES, 'UTF-8') ?>
+                                | Unit.: <?= htmlspecialchars($formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>
+                                | Subtotal: <?= htmlspecialchars($formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>
+                            </small>
                         </div>
                         <details>
                             <summary><span class="bi bi-pencil-square"></span>Editar</summary>
-                            <form method="post" action="/shopping/market/items/update" class="compact-form">
+                            <form method="post" action="/shopping/market/items/update" class="compact-form market-price-form" data-market-item-form>
                                 <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                                 <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                                 <input type="text" name="name" value="<?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?>" required>
-                                <input type="text" name="section" value="<?= htmlspecialchars($item['section'], ENT_QUOTES, 'UTF-8') ?>" required>
+                                <select name="section_id" required>
+                                    <option value="">Selecione</option>
+                                    <?php foreach ($marketSections as $section): ?>
+                                        <option value="<?= (int) $section['id'] ?>" <?= (int) ($item['section_id'] ?? 0) === (int) $section['id'] || (($item['section_id'] ?? null) === null && ($item['section'] ?? '') === $section['name']) ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($section['name'], ENT_QUOTES, 'UTF-8') ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <input type="number" name="quantity" min="0.001" step="0.001" value="<?= htmlspecialchars((string) ($item['quantity'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>" required>
+                                <input type="text" name="unit_amount" inputmode="decimal" value="<?= htmlspecialchars($item['unit_amount'] === null ? '' : number_format((float) $item['unit_amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor unitario" data-unit-amount>
+                                <input type="text" name="amount" inputmode="decimal" value="<?= htmlspecialchars($item['amount'] === null ? '' : number_format((float) $item['amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor">
+                                <input type="text" name="subtotal_preview" value="<?= htmlspecialchars($item['subtotal_amount'] === null ? '' : number_format((float) $item['subtotal_amount'], 2, ',', '.'), ENT_QUOTES, 'UTF-8') ?>" placeholder="Sub total" data-subtotal-preview readonly>
                                 <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
                             </form>
                             <form method="post" action="/shopping/market/items/delete">
@@ -134,8 +178,16 @@ ob_start();
 <?php if ($selectedMarketList): ?>
     <section class="card section-card">
         <h2 class="section-title"><span class="bi bi-receipt"></span>NFC-e / NF-e anexadas</h2>
+        <p class="muted">
+            O upload abaixo sera vinculado claramente a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
+            Na proxima etapa, o XML podera preencher valores e cruzar itens por similaridade.
+        </p>
         <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="inline-form align-end-form">
             <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+            <label>
+                Mes da lista
+                <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
+            </label>
             <label>
                 Arquivo da nota
                 <input type="file" name="invoice" accept=".pdf,.xml,.jpg,.jpeg,.png" required>
@@ -155,6 +207,38 @@ ob_start();
         </div>
     </section>
 <?php endif; ?>
+<script>
+    document.querySelectorAll('[data-market-item-form]').forEach((form) => {
+        const quantity = form.querySelector('[name="quantity"]');
+        const unitAmount = form.querySelector('[name="unit_amount"]');
+        const preview = form.querySelector('[data-subtotal-preview]');
+        const parseMoney = (value) => {
+            const normalized = value.replace(/\./g, '').replace(',', '.').trim();
+            return normalized === '' ? null : Number(normalized);
+        };
+        const formatMoney = (value) => value.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+        const updateSubtotal = () => {
+            const qty = Number(String(quantity?.value ?? '').replace(',', '.'));
+            const unit = parseMoney(String(unitAmount?.value ?? ''));
+
+            if (!preview || Number.isNaN(qty) || qty <= 0 || unit === null || Number.isNaN(unit)) {
+                if (preview) {
+                    preview.value = '';
+                }
+                return;
+            }
+
+            preview.value = formatMoney(qty * unit);
+        };
+
+        quantity?.addEventListener('input', updateSubtotal);
+        unitAmount?.addEventListener('input', updateSubtotal);
+        updateSubtotal();
+    });
+</script>
 <?php
 $content = (string) ob_get_clean();
 require base_path('views/layout.php');

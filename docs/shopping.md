@@ -25,7 +25,11 @@ A lista de mercado e mensal. Ao criar uma lista, o sistema sugere automaticament
 Campos do item:
 
 - Nome do item.
-- Sessao.
+- Sessao cadastrada em configuracao de compras.
+- Quantidade.
+- Valor unitario.
+- Valor.
+- Sub total calculado pelo sistema quando houver valor unitario.
 
 Durante a compra, o usuario pode marcar cada item como pego. Ao finalizar, informa o valor total da compra.
 
@@ -39,6 +43,10 @@ Formatos aceitos:
 - PNG.
 
 Limite inicial: 5 MB por arquivo.
+
+Na futura leitura de XML, o sistema deve tratar a lista como uma lista generica de intencao de compra. Exemplo: o usuario pode cadastrar `Arroz` ou `Pacote 5Kg Arroz`, sem informar marca. Ao importar o XML, o sistema devera procurar itens similares na lista do mes selecionado e atualizar quantidade, valor unitario e subtotal quando encontrar correspondencia. Itens da nota que nao existirem na lista deverao ser incluidos automaticamente.
+
+Tambem sera necessario manter um DE/PARA de sessao para classificar itens obvios. Exemplos: arroz entra em `DESPENSA`, sabao em po entra em `LIMPEZA`, leite entra em `LEITES E DERIVADOS`.
 
 Para evitar enviar dados domesticos para servicos externos, a primeira versao usa um marcador visual com a inicial do item no lugar de foto automatica. Futuramente podemos evoluir para upload local ou catalogo proprio de imagens.
 
@@ -84,6 +92,7 @@ O painel administrativo fica em:
 
 Cadastros disponiveis:
 
+- Sessoes do mercado.
 - Comodos.
 - Pessoas.
 - Veiculos.

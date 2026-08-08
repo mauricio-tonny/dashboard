@@ -54,6 +54,7 @@ final class ShoppingController extends Controller
             'selectedMarketList' => $selectedList,
             'marketItems' => $selectedList === null ? [] : $repository->marketItems((int) $selectedList['id']),
             'marketInvoices' => $selectedList === null ? [] : $repository->marketInvoices((int) $selectedList['id']),
+            'marketSections' => $repository->simpleOptions('market_sections', true),
         ]);
     }
 
@@ -117,16 +118,15 @@ final class ShoppingController extends Controller
         }
 
         $listId = (int) $request->input('list_id');
-        $name = trim((string) $request->input('name'));
-        $section = trim((string) $request->input('section'));
+        $data = $this->marketItemPayload($request);
 
-        if ($listId <= 0 || $name === '' || $section === '') {
-            $this->flash('error', 'Informe item e sessao.');
+        if ($listId <= 0 || $data === null) {
+            $this->flash('error', 'Informe nome, sessao e quantidade.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
-        $id = $this->app->make(ShoppingRepository::class)->addMarketItem($listId, $name, $section, $auth->user()?->id);
-        $this->audit('shopping_market_item_created', 'shopping_market_item', $id, ['name' => $name]);
+        $id = $this->app->make(ShoppingRepository::class)->addMarketItem(['list_id' => $listId, ...$data], $auth->user()?->id);
+        $this->audit('shopping_market_item_created', 'shopping_market_item', $id, ['name' => $data['name']]);
         $this->flash('success', 'Item adicionado ao mercado.');
 
         return Response::redirect('/shopping/market?market_list_id=' . $listId);
@@ -142,11 +142,10 @@ final class ShoppingController extends Controller
 
         $id = (int) $request->input('id');
         $listId = (int) $request->input('list_id');
-        $name = trim((string) $request->input('name'));
-        $section = trim((string) $request->input('section'));
+        $data = $this->marketItemPayload($request);
 
-        if ($id > 0 && $name !== '' && $section !== '') {
-            $this->app->make(ShoppingRepository::class)->updateMarketItem($id, $name, $section);
+        if ($id > 0 && $data !== null) {
+            $this->app->make(ShoppingRepository::class)->updateMarketItem($id, $data);
             $this->audit('shopping_market_item_updated', 'shopping_market_item', $id);
         }
 
@@ -412,6 +411,33 @@ final class ShoppingController extends Controller
         ];
     }
 
+    private function marketItemPayload(Request $request): ?array
+    {
+        $repository = $this->app->make(ShoppingRepository::class);
+        $name = trim((string) $request->input('name'));
+        $sectionId = (int) $request->input('section_id');
+        $quantity = $this->decimal((string) $request->input('quantity'));
+        $section = $sectionId > 0 ? $repository->simpleOption('market_sections', $sectionId, true) : null;
+
+        if ($name === '' || $section === null || $quantity === null || $quantity <= 0) {
+            return null;
+        }
+
+        $unitAmount = $this->money((string) $request->input('unit_amount'));
+        $amount = $this->money((string) $request->input('amount'));
+        $subtotal = $unitAmount === null ? $amount : round($quantity * $unitAmount, 2);
+
+        return [
+            'name' => $name,
+            'section_id' => $sectionId,
+            'section' => (string) $section['name'],
+            'quantity' => $quantity,
+            'unit_amount' => $unitAmount,
+            'amount' => $amount,
+            'subtotal_amount' => $subtotal,
+        ];
+    }
+
     private function nullableInt(mixed $value): ?int
     {
         $int = (int) $value;
@@ -422,6 +448,13 @@ final class ShoppingController extends Controller
     private function money(string $value): ?float
     {
         $normalized = str_replace(['.', ','], ['', '.'], trim($value));
+
+        return $normalized === '' ? null : (float) $normalized;
+    }
+
+    private function decimal(string $value): ?float
+    {
+        $normalized = str_replace(',', '.', trim($value));
 
         return $normalized === '' ? null : (float) $normalized;
     }

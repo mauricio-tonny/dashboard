@@ -10,6 +10,7 @@ use PDO;
 final class ShoppingRepository
 {
     private const SIMPLE_TABLES = [
+        'market_sections' => 'shopping_market_sections',
         'rooms' => 'shopping_rooms',
         'people' => 'shopping_people',
         'vehicle_areas' => 'shopping_vehicle_areas',
@@ -114,10 +115,12 @@ final class ShoppingRepository
     public function marketItems(int $listId): array
     {
         $statement = $this->database->connection()->prepare(
-            'SELECT *
-             FROM shopping_market_items
-             WHERE list_id = :list_id
-             ORDER BY is_checked ASC, section ASC, name ASC'
+            'SELECT items.*,
+                    COALESCE(sections.name, items.section) AS section_name
+             FROM shopping_market_items items
+             LEFT JOIN shopping_market_sections sections ON sections.id = items.section_id
+             WHERE items.list_id = :list_id
+             ORDER BY items.is_checked ASC, section_name ASC, items.name ASC'
         );
         $statement->execute(['list_id' => $listId]);
 
@@ -157,35 +160,52 @@ final class ShoppingRepository
         return (int) $this->database->connection()->lastInsertId();
     }
 
-    public function addMarketItem(int $listId, string $name, string $section, ?int $userId): int
+    public function addMarketItem(array $data, ?int $userId): int
     {
         $statement = $this->database->connection()->prepare(
-            'INSERT INTO shopping_market_items (list_id, name, section, created_by_user_id)
-             VALUES (:list_id, :name, :section, :created_by_user_id)'
+            'INSERT INTO shopping_market_items
+                (list_id, section_id, name, section, quantity, unit_amount, amount, subtotal_amount, created_by_user_id)
+             VALUES
+                (:list_id, :section_id, :name, :section, :quantity, :unit_amount, :amount, :subtotal_amount, :created_by_user_id)'
         );
         $statement->execute([
-            'list_id' => $listId,
-            'name' => $name,
-            'section' => $section,
+            'list_id' => $data['list_id'],
+            'section_id' => $data['section_id'],
+            'name' => $data['name'],
+            'section' => $data['section'],
+            'quantity' => $data['quantity'],
+            'unit_amount' => $data['unit_amount'],
+            'amount' => $data['amount'],
+            'subtotal_amount' => $data['subtotal_amount'],
             'created_by_user_id' => $userId,
         ]);
 
         return (int) $this->database->connection()->lastInsertId();
     }
 
-    public function updateMarketItem(int $id, string $name, string $section): void
+    public function updateMarketItem(int $id, array $data): void
     {
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_market_items
              SET name = :name,
+                 section_id = :section_id,
                  section = :section,
+                 quantity = :quantity,
+                 unit_amount = :unit_amount,
+                 amount = :amount,
+                 subtotal_amount = :subtotal_amount,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
         $statement->execute([
             'id' => $id,
-            'name' => $name,
-            'section' => $section,
+            'name' => $data['name'],
+            'section_id' => $data['section_id'],
+            'section' => $data['section'],
+            'quantity' => $data['quantity'],
+            'unit_amount' => $data['unit_amount'],
+            'amount' => $data['amount'],
+            'subtotal_amount' => $data['subtotal_amount'],
         ]);
     }
 
@@ -325,6 +345,19 @@ final class ShoppingRepository
         );
 
         return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function simpleOption(string $kind, int $id, bool $activeOnly = false): ?array
+    {
+        $table = self::SIMPLE_TABLES[$kind];
+        $whereActive = $activeOnly ? 'AND is_active = 1' : '';
+        $statement = $this->database->connection()->prepare(
+            "SELECT * FROM {$table} WHERE id = :id {$whereActive} LIMIT 1"
+        );
+        $statement->execute(['id' => $id]);
+        $option = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $option === false ? null : $option;
     }
 
     public function saveSimpleOption(string $kind, ?int $id, string $name): int
