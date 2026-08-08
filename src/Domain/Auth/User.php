@@ -16,7 +16,12 @@ final class User
 
     public function canEdit(): bool
     {
-        return $this->hasRole(Role::ADMIN, Role::EDITOR);
+        return $this->can(Permission::CREATE_EXPENSE) || $this->can(Permission::CREATE_INCOME);
+    }
+
+    public function can(Permission $permission): bool
+    {
+        return RolePermissionMap::grants($this->role, $permission);
     }
 
     public function hasRole(Role ...$roles): bool
@@ -30,4 +35,3 @@ final class User
         return false;
     }
 }
-

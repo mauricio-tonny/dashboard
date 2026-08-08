@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Request;
 use App\Core\Response;
 use App\Domain\Auth\AuthService;
+use App\Domain\Auth\Permission;
 use App\Domain\Finance\FinanceService;
 
 final class DashboardController extends Controller
@@ -19,6 +20,10 @@ final class DashboardController extends Controller
             return Response::redirect('/login');
         }
 
+        if (!$auth->user()?->can(Permission::VIEW_DASHBOARD)) {
+            return new Response('Acesso negado.', 403);
+        }
+
         $finance = $this->app->make(FinanceService::class);
 
         return Response::view('dashboard/index', [
@@ -28,4 +33,3 @@ final class DashboardController extends Controller
         ]);
     }
 }
-

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Auth\Role;
+use App\Domain\Auth\RolePermissionMap;
 use App\Support\Env;
 
 require_once dirname(__DIR__) . '/src/Support/helpers.php';
@@ -55,10 +57,47 @@ try {
         $pdo->exec($statement);
     }
 
+    $permissionStatement = $pdo->prepare(
+        'INSERT INTO permissions (name, label, description)
+         VALUES (:name, :label, :description)
+         ON DUPLICATE KEY UPDATE label = VALUES(label), description = VALUES(description)'
+    );
+
+    foreach (RolePermissionMap::definitions() as $name => [$label, $description]) {
+        $permissionStatement->execute([
+            'name' => $name,
+            'label' => $label,
+            'description' => $description,
+        ]);
+    }
+
+    $pdo->exec('DELETE FROM role_permissions');
+
+    $rolePermissionStatement = $pdo->prepare(
+        'INSERT IGNORE INTO role_permissions (role_id, permission_id)
+         SELECT roles.id, permissions.id
+         FROM roles
+         INNER JOIN permissions ON permissions.name = :permission
+         WHERE roles.name = :role'
+    );
+
+    foreach (Role::cases() as $role) {
+        foreach (RolePermissionMap::permissionsFor($role) as $permission) {
+            $rolePermissionStatement->execute([
+                'role' => $role->value,
+                'permission' => $permission->value,
+            ]);
+        }
+    }
+
     $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
+    $permissionCount = (int) $pdo->query('SELECT COUNT(*) FROM permissions')->fetchColumn();
+    $rolePermissionCount = (int) $pdo->query('SELECT COUNT(*) FROM role_permissions')->fetchColumn();
 
     echo "Banco preparado com sucesso.\n";
     echo "Tabelas encontradas: " . implode(', ', $tables) . "\n";
+    echo "Permissoes cadastradas: {$permissionCount}\n";
+    echo "Vinculos perfil/permissao: {$rolePermissionCount}\n";
 } catch (Throwable $exception) {
     fwrite(STDERR, "Erro ao preparar banco: {$exception->getMessage()}\n");
     exit(1);

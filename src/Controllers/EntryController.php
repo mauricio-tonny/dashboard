@@ -7,7 +7,7 @@ namespace App\Controllers;
 use App\Core\Request;
 use App\Core\Response;
 use App\Domain\Auth\AuthService;
-use App\Domain\Auth\Role;
+use App\Domain\Auth\Permission;
 use App\Domain\Finance\FinanceService;
 
 final class EntryController extends Controller
@@ -37,7 +37,10 @@ final class EntryController extends Controller
             return Response::redirect('/login');
         }
 
-        if (!$auth->user()?->hasRole(Role::ADMIN, Role::EDITOR)) {
+        $type = (string) $request->input('type', '');
+        $permission = $type === 'income' ? Permission::CREATE_INCOME : Permission::CREATE_EXPENSE;
+
+        if (!$auth->user()?->can($permission)) {
             return new Response('Acesso negado.', 403);
         }
 
@@ -55,4 +58,3 @@ final class EntryController extends Controller
         return Response::redirect('/');
     }
 }
-
