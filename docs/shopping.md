@@ -47,7 +47,7 @@ Tambem e possivel vincular NFC-e/NF-e a lista de mercado por tres caminhos:
 - Upload de imagem, apenas como anexo para apoio futuro em relatorios.
 - Cadastro da chave de acesso de 44 digitos, quando o XML nao estiver disponivel.
 
-Quando XML ou PDF sao importados com sucesso, o sistema salva a data da compra e a chave de acesso extraidas da nota. Depois disso, o arquivo fisico importado e removido e o registro permanece com os metadados necessarios para consulta futura. Se a importacao falhar, o arquivo continua salvo para conferencia.
+Quando XML ou PDF sao importados com sucesso, o sistema salva a data da compra e a chave de acesso extraidas da nota. O arquivo fisico permanece armazenado para conferencia e download posterior, inclusive quando a importacao for concluida com sucesso.
 
 Para notas antigas que ainda tenham arquivo fisico armazenado, o comando `php bin/backfill_market_invoice_metadata.php` tenta preencher data da compra e chave de acesso sem reimportar os itens.
 

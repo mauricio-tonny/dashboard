@@ -116,6 +116,7 @@ $router->post('/shopping/market/lists/finish', [ShoppingController::class, 'fini
 $router->post('/shopping/market/lists/reopen', [ShoppingController::class, 'reopenMarketList']);
 $router->post('/shopping/market/lists/delete', [ShoppingController::class, 'deleteMarketList']);
 $router->post('/shopping/market/invoices', [ShoppingController::class, 'uploadMarketInvoice']);
+$router->get('/shopping/market/invoices/download', [ShoppingController::class, 'downloadMarketInvoice']);
 $router->post('/shopping/market/access-key', [ShoppingController::class, 'storeMarketAccessKey']);
 $router->post('/shopping/wish-items', [ShoppingController::class, 'addWishItem']);
 $router->post('/shopping/wish-items/update', [ShoppingController::class, 'updateWishItem']);

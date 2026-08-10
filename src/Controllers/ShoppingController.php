@@ -442,9 +442,6 @@ final class ShoppingController extends Controller
                     'issued_at' => $summary['issued_at'] ?? null,
                 ]);
                 $repository->updateMarketListPurchaseDate($listId, $summary['issued_at'] ?? null);
-                if (@unlink($target)) {
-                    $repository->clearMarketInvoiceFile($id);
-                }
                 $this->audit('shopping_market_invoice_imported', 'shopping_market_invoice', $id, ['source' => $extension, ...$summary]);
                 $this->flash('success', sprintf(
                     'Nota anexada e %s importado: %d itens atualizados, %d itens incluidos e %d itens lidos.',
@@ -467,6 +464,49 @@ final class ShoppingController extends Controller
         $this->flash('success', 'Nota anexada a lista de mercado.');
 
         return Response::redirect('/shopping/market?market_list_id=' . $listId);
+    }
+
+    public function downloadMarketInvoice(Request $request): Response
+    {
+        $auth = $this->authorizeView();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $id = (int) $request->input('id');
+
+        if ($id <= 0) {
+            return new Response('Arquivo nao encontrado.', 404);
+        }
+
+        $invoice = $this->app->make(ShoppingRepository::class)->marketInvoice($id);
+
+        if ($invoice === null || ($invoice['source_type'] ?? 'file') !== 'file') {
+            return new Response('Arquivo nao encontrado.', 404);
+        }
+
+        $storedName = trim((string) ($invoice['stored_name'] ?? ''));
+
+        if ($storedName === '' || preg_match('/^[A-Za-z0-9._-]+$/', $storedName) !== 1) {
+            return new Response('Arquivo indisponivel.', 404);
+        }
+
+        $file = base_path('storage/shopping-invoices/' . $storedName);
+
+        if (!is_file($file) || !is_readable($file)) {
+            return new Response('Arquivo indisponivel.', 404);
+        }
+
+        $downloadName = $this->downloadFileName((string) ($invoice['original_name'] ?? 'nota'));
+        $mimeType = trim((string) ($invoice['mime_type'] ?? ''));
+
+        return new Response((string) file_get_contents($file), 200, [
+            'Content-Type' => $mimeType !== '' ? $mimeType : 'application/octet-stream',
+            'Content-Length' => (string) filesize($file),
+            'Content-Disposition' => 'attachment; filename="' . $downloadName . '"',
+            'Cache-Control' => 'private, max-age=0, must-revalidate',
+        ]);
     }
 
     public function storeMarketAccessKey(Request $request): Response
@@ -947,6 +987,16 @@ final class ShoppingController extends Controller
     private function flash(string $key, string $message): void
     {
         $this->app->make(Session::class)->flash($key, $message);
+    }
+
+    private function downloadFileName(string $name): string
+    {
+        $name = trim($name);
+        $name = str_replace(["\r", "\n", '"', '\\', '/', ':', '*', '?', '<', '>', '|'], '-', $name);
+        $name = preg_replace('/\s+/', ' ', $name) ?? $name;
+        $name = trim($name, ". \t\n\r\0\x0B-");
+
+        return $name !== '' ? $name : 'nota-fiscal';
     }
 
     private function notifyMarketListCreated(string $referenceMonth, bool $automatic): void

@@ -663,10 +663,12 @@
             gap: 16px;
         }
         .market-item {
-            align-items: center;
+            display: block;
+            min-width: 0;
+        }
+        .market-item-body {
             display: grid;
-            gap: 12px;
-            grid-template-columns: 48px auto minmax(0, 1fr) minmax(160px, auto);
+            gap: 10px;
             min-width: 0;
         }
         .item-photo {
@@ -688,6 +690,37 @@
             min-width: 82px;
             padding: 9px 12px;
         }
+        .market-item-actions-row {
+            align-items: center;
+            border-top: 1px solid rgba(10, 61, 98, 0.08);
+            display: grid;
+            gap: 10px;
+            padding-top: 10px;
+            grid-template-columns: minmax(56px, 20%) minmax(0, 1fr);
+        }
+        .market-item-actions-row .item-photo {
+            height: 100%;
+            min-height: 48px;
+            width: 100%;
+        }
+        .market-item-actions-row details {
+            grid-column: 1 / -1;
+            width: 100%;
+        }
+        .market-item-actions-row summary {
+            align-items: center;
+            display: inline-flex;
+            gap: 8px;
+        }
+        .market-item-actions-row .check-form,
+        .market-item-actions-row .is-static-check {
+            min-width: 0;
+        }
+        .market-item-actions-row .check-form button,
+        .market-item-actions-row .is-static-check {
+            min-height: 48px;
+            width: 100%;
+        }
         .is-static-check {
             align-items: center;
             background: #eef7fb;
@@ -700,6 +733,7 @@
         }
         .market-item-copy {
             display: grid;
+            gap: 8px;
             min-width: 0;
             overflow-wrap: anywhere;
         }
@@ -708,8 +742,68 @@
             min-width: 0;
             overflow-wrap: anywhere;
         }
+        .market-item-meta,
+        .invoice-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
+        }
+        .market-meta-chip,
+        .invoice-badge {
+            background: #eef7fb;
+            border: 1px solid rgba(10, 61, 98, 0.08);
+            border-radius: 999px;
+            color: var(--muted);
+            display: inline-flex;
+            font-size: 0.86rem;
+            line-height: 1.25;
+            max-width: 100%;
+            padding: 5px 10px;
+        }
+        .market-meta-chip.is-strong {
+            color: var(--brand-dark);
+            font-weight: 700;
+        }
+        .invoice-badge.is-done {
+            background: rgba(20, 184, 166, 0.12);
+            border-color: rgba(20, 184, 166, 0.22);
+            color: #0f766e;
+            font-weight: 700;
+        }
+        .invoice-badge.is-warn {
+            background: rgba(245, 158, 11, 0.14);
+            border-color: rgba(245, 158, 11, 0.24);
+            color: #b45309;
+            font-weight: 700;
+        }
         .market-item details {
             min-width: 0;
+        }
+        @media (min-width: 768px) {
+            .market-item-body {
+                align-items: start;
+                grid-template-columns: minmax(0, 1fr);
+            }
+            .market-item-copy {
+                display: grid;
+                gap: 10px;
+            }
+            .market-item-copy strong {
+                line-height: 1.3;
+            }
+            .market-item-meta {
+                justify-content: flex-start;
+            }
+            .market-item-actions-row {
+                grid-template-columns: minmax(56px, 20%) minmax(0, 1fr);
+            }
+            .market-item-actions-row details {
+                min-width: 0;
+            }
+        }
+        .invoice-actions {
+            margin-top: 10px;
         }
         .market-items-panel {
             background: #f8fbfd;
@@ -1285,14 +1379,14 @@
                 flex-direction: column;
             }
             .market-item {
-                grid-template-columns: 44px 1fr;
+                grid-template-columns: 44px minmax(0, 1fr);
             }
             .market-item-copy {
-                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr);
             }
-            .market-item details,
-            .market-item .check-form {
-                grid-column: 1 / -1;
+            .market-item-meta {
+                min-width: 0;
             }
             .shopping-item-card {
                 align-items: stretch;

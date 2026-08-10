@@ -165,6 +165,20 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function marketInvoice(int $id): ?array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT *
+             FROM shopping_market_invoices
+             WHERE id = :id
+             LIMIT 1'
+        );
+        $statement->execute(['id' => $id]);
+        $invoice = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $invoice === false ? null : $invoice;
+    }
+
     public function marketReport(string $startDate, string $endDate): array
     {
         $statement = $this->database->connection()->prepare(

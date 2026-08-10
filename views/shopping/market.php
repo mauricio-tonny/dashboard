@@ -46,6 +46,11 @@ $formatDateInput = static function (?string $value): string {
 
     return (new DateTimeImmutable($value))->format('Y-m-d');
 };
+$invoiceBadgeClass = static fn (string $kind): string => match ($kind) {
+    'done' => 'invoice-badge is-done',
+    'warn' => 'invoice-badge is-warn',
+    default => 'invoice-badge',
+};
 $itemsSubtotal = array_reduce(
     $marketItems,
     static fn (float $carry, array $item): float => $carry + (float) ($item['subtotal_amount'] ?? 0),
@@ -176,59 +181,61 @@ ob_start();
                 <div class="market-checklist">
                     <?php foreach ($pendingMarketItems as $item): ?>
                         <div class="market-item <?= ((int) $item['is_checked']) === 1 ? 'is-done' : '' ?>">
-                            <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
-                            <?php if ($isFinished): ?>
-                                <span class="check-button is-static-check">
-                                    <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-lock' ?>"></span>
-                                    <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Pendente' ?>
-                                </span>
-                            <?php else: ?>
-                                <form method="post" action="/shopping/market/items/toggle" class="check-form">
-                                    <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                                    <input type="hidden" name="checked" value="<?= ((int) $item['is_checked']) === 1 ? '0' : '1' ?>">
-                                    <button class="check-button" type="submit">
-                                        <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-cart-plus' ?>"></span>
-                                        <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Confirmar' ?>
-                                    </button>
-                                </form>
-                            <?php endif; ?>
-                            <div class="market-item-copy">
-                                <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                                <small>
-                                    <?= htmlspecialchars($item['section_name'] ?? $item['section'], ENT_QUOTES, 'UTF-8') ?>
-                                    | Qtd: <?= htmlspecialchars($formatDecimal($item['quantity'] ?? 1), ENT_QUOTES, 'UTF-8') ?>
-                                    | Unit.: <?= htmlspecialchars($formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>
-                                    | Subtotal: <?= htmlspecialchars($formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>
-                                </small>
+                            <div class="market-item-body">
+                                <div class="market-item-copy">
+                                    <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                </div>
+                                <div class="market-item-meta">
+                                    <span class="market-meta-chip"><?= htmlspecialchars($item['section_name'] ?? $item['section'], ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="market-meta-chip">Qtd: <?= htmlspecialchars($formatDecimal($item['quantity'] ?? 1), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="market-meta-chip">Unit.: <?= htmlspecialchars($formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="market-meta-chip is-strong">Subtotal: <?= htmlspecialchars($formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
+                                <div class="market-item-actions-row">
+                                    <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
+                                    <?php if ($isFinished): ?>
+                                        <span class="check-button is-static-check">
+                                            <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-lock' ?>"></span>
+                                            <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Pendente' ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <form method="post" action="/shopping/market/items/toggle" class="check-form">
+                                            <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                            <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                                            <input type="hidden" name="checked" value="<?= ((int) $item['is_checked']) === 1 ? '0' : '1' ?>">
+                                            <button class="check-button" type="submit">
+                                                <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-cart-plus' ?>"></span>
+                                                <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Confirmar' ?>
+                                            </button>
+                                        </form>
+                                        <details>
+                                            <summary><span class="bi bi-pencil-square"></span>Editar</summary>
+                                            <form method="post" action="/shopping/market/items/update" class="compact-form market-price-form" data-market-item-form>
+                                                <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                                                <input type="text" name="name" value="<?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?>" required>
+                                                <select name="section_id" required>
+                                                    <option value="">Selecione</option>
+                                                    <?php foreach ($marketSections as $section): ?>
+                                                        <option value="<?= (int) $section['id'] ?>" <?= (int) ($item['section_id'] ?? 0) === (int) $section['id'] || (($item['section_id'] ?? null) === null && ($item['section'] ?? '') === $section['name']) ? 'selected' : '' ?>>
+                                                            <?= htmlspecialchars($section['name'], ENT_QUOTES, 'UTF-8') ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <input type="number" name="quantity" min="0.001" step="0.001" value="<?= htmlspecialchars((string) ($item['quantity'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>" required>
+                                                <input type="text" name="unit_amount" inputmode="decimal" value="<?= htmlspecialchars($item['unit_amount'] === null ? '' : $formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor unitario" data-unit-amount data-money-input>
+                                                <input type="text" name="subtotal_preview" value="<?= htmlspecialchars($item['subtotal_amount'] === null ? '' : $formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Sub total" data-subtotal-preview readonly>
+                                                <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
+                                            </form>
+                                            <form method="post" action="/shopping/market/items/delete">
+                                                <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                                <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                                                <button class="button-danger" type="submit"><span class="bi bi-trash3"></span>Remover</button>
+                                            </form>
+                                        </details>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                            <?php if (!$isFinished): ?>
-                            <details>
-                                <summary><span class="bi bi-pencil-square"></span>Editar</summary>
-                                <form method="post" action="/shopping/market/items/update" class="compact-form market-price-form" data-market-item-form>
-                                    <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                                    <input type="text" name="name" value="<?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?>" required>
-                                    <select name="section_id" required>
-                                        <option value="">Selecione</option>
-                                        <?php foreach ($marketSections as $section): ?>
-                                            <option value="<?= (int) $section['id'] ?>" <?= (int) ($item['section_id'] ?? 0) === (int) $section['id'] || (($item['section_id'] ?? null) === null && ($item['section'] ?? '') === $section['name']) ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($section['name'], ENT_QUOTES, 'UTF-8') ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <input type="number" name="quantity" min="0.001" step="0.001" value="<?= htmlspecialchars((string) ($item['quantity'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>" required>
-                                    <input type="text" name="unit_amount" inputmode="decimal" value="<?= htmlspecialchars($item['unit_amount'] === null ? '' : $formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Valor unitario" data-unit-amount data-money-input>
-                                    <input type="text" name="subtotal_preview" value="<?= htmlspecialchars($item['subtotal_amount'] === null ? '' : $formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>" placeholder="Sub total" data-subtotal-preview readonly>
-                                    <button type="submit"><span class="bi bi-check2-circle"></span>Salvar</button>
-                                </form>
-                                <form method="post" action="/shopping/market/items/delete">
-                                    <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                                    <button class="button-danger" type="submit"><span class="bi bi-trash3"></span>Remover</button>
-                                </form>
-                            </details>
-                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                     <?php if ($pendingMarketItems === []): ?>
@@ -245,31 +252,35 @@ ob_start();
                 <div class="market-checklist">
                     <?php foreach ($checkedMarketItems as $item): ?>
                         <div class="market-item is-done">
-                            <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
-                            <?php if ($isFinished): ?>
-                                <span class="check-button is-static-check">
-                                    <span class="bi bi-check2"></span>
-                                    Confirmado
-                                </span>
-                            <?php else: ?>
-                                <form method="post" action="/shopping/market/items/toggle" class="check-form">
-                                    <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                                    <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
-                                    <input type="hidden" name="checked" value="0">
-                                    <button class="check-button" type="submit">
-                                        <span class="bi bi-arrow-counterclockwise"></span>
-                                        Reabrir
-                                    </button>
-                                </form>
-                            <?php endif; ?>
-                            <div class="market-item-copy">
-                                <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                                <small>
-                                    <?= htmlspecialchars($item['section_name'] ?? $item['section'], ENT_QUOTES, 'UTF-8') ?>
-                                    | Qtd: <?= htmlspecialchars($formatDecimal($item['quantity'] ?? 1), ENT_QUOTES, 'UTF-8') ?>
-                                    | Unit.: <?= htmlspecialchars($formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?>
-                                    | Subtotal: <?= htmlspecialchars($formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?>
-                                </small>
+                            <div class="market-item-body">
+                                <div class="market-item-copy">
+                                    <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
+                                </div>
+                                <div class="market-item-meta">
+                                    <span class="market-meta-chip"><?= htmlspecialchars($item['section_name'] ?? $item['section'], ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="market-meta-chip">Qtd: <?= htmlspecialchars($formatDecimal($item['quantity'] ?? 1), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="market-meta-chip">Unit.: <?= htmlspecialchars($formatMoney($item['unit_amount']), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <span class="market-meta-chip is-strong">Subtotal: <?= htmlspecialchars($formatMoney($item['subtotal_amount']), ENT_QUOTES, 'UTF-8') ?></span>
+                                </div>
+                                <div class="market-item-actions-row">
+                                    <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
+                                    <?php if ($isFinished): ?>
+                                        <span class="check-button is-static-check">
+                                            <span class="bi bi-check2"></span>
+                                            Confirmado
+                                        </span>
+                                    <?php else: ?>
+                                        <form method="post" action="/shopping/market/items/toggle" class="check-form">
+                                            <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
+                                            <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
+                                            <input type="hidden" name="checked" value="0">
+                                            <button class="check-button" type="submit">
+                                                <span class="bi bi-arrow-counterclockwise"></span>
+                                                Reabrir
+                                            </button>
+                                        </form>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -342,6 +353,7 @@ ob_start();
         <p class="muted">
             Escolha uma das formas abaixo para vincular notas a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
             XML e PDF da consulta publica importam itens automaticamente; imagem fica como anexo; chave de acesso salva os metadados.
+            Os arquivos enviados ficam armazenados para consulta e download depois.
         </p>
         <?php if ($isFinished): ?>
             <div class="notice notice-success market-lock-notice">
@@ -399,14 +411,24 @@ ob_start();
                         <?php endif; ?>
                     <?php else: ?>
                         <strong><?= htmlspecialchars($invoice['original_name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                        <small>
-                            <?= ((int) $invoice['file_size']) > 0 ? number_format(((int) $invoice['file_size']) / 1024, 1, ',', '.') . ' KB' : 'Arquivo processado' ?>
-                            | Compra <?= htmlspecialchars($formatDateTime($invoice['purchase_date'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                        <div class="market-item-meta invoice-meta">
+                            <span class="market-meta-chip"><?= ((int) $invoice['file_size']) > 0 ? number_format(((int) $invoice['file_size']) / 1024, 1, ',', '.') . ' KB' : 'Arquivo sem tamanho informado' ?></span>
+                            <span class="market-meta-chip">Compra <?= htmlspecialchars($formatDateTime($invoice['purchase_date'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
                             <?php if (!empty($invoice['access_key'])): ?>
-                                | Chave <?= htmlspecialchars($formatAccessKey($invoice['access_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+                                <span class="market-meta-chip">Chave <?= htmlspecialchars($formatAccessKey($invoice['access_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                             <?php endif; ?>
-                            | Anexado em <?= htmlspecialchars($formatDateTime($invoice['created_at'] ?? null), ENT_QUOTES, 'UTF-8') ?>
-                        </small>
+                            <span class="<?= htmlspecialchars($invoiceBadgeClass(str_starts_with((string) ($invoice['status'] ?? ''), 'imported') ? 'done' : 'warn'), ENT_QUOTES, 'UTF-8') ?>">
+                                <?= str_starts_with((string) ($invoice['status'] ?? ''), 'imported') ? 'Importado' : 'Armazenado' ?>
+                            </span>
+                            <span class="market-meta-chip">Anexado em <?= htmlspecialchars($formatDateTime($invoice['created_at'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
+                        </div>
+                        <?php if (!empty($invoice['stored_name'])): ?>
+                            <div class="actions invoice-actions">
+                                <a href="/shopping/market/invoices/download?id=<?= (int) $invoice['id'] ?>">
+                                    <button class="inline-button button-light" type="button"><span class="bi bi-download"></span>Baixar arquivo</button>
+                                </a>
+                            </div>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </div>
             <?php endforeach; ?>
