@@ -74,7 +74,7 @@ ob_start();
         <span class="page-hero-icon bi bi-basket2"></span>
         <div>
             <span class="badge">Compras</span>
-            <h1><?= $isMarketHistory ? 'Mercado - historico' : 'Mercado - listas ativas' ?></h1>
+            <h1><?= $isMarketHistory ? 'Mercado - histórico' : 'Mercado - listas ativas' ?></h1>
             <p class="muted">Crie a lista mensal, marque os itens no mercado e anexe NFC-e/NF-e para facilitar relatórios futuros.</p>
         </div>
     </div>
@@ -91,7 +91,7 @@ ob_start();
 <section class="card section-card shopping-hero">
     <div>
         <h2 class="section-title"><span class="bi bi-calendar-plus"></span>Mercado mensal</h2>
-        <p class="muted">A tela principal mostra o mes atual enquanto estiver aberto e tambem prepara a lista do proximo mes. Use o historico para consultar meses ja fechados.</p>
+        <p class="muted">A tela principal mostra o mês atual enquanto estiver aberto e também prepara a lista do próximo mês. Use o histórico para consultar meses já fechados.</p>
         <div class="actions">
             <a href="/shopping/market"><button class="inline-button <?= !$isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-calendar-heart"></span>Listas ativas</button></a>
             <a href="/shopping/market/history"><button class="inline-button <?= $isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-clock-history"></span>Meses anteriores</button></a>
@@ -99,7 +99,7 @@ ob_start();
     </div>
     <form method="post" action="/shopping/market/lists" class="inline-form align-end-form">
         <label>
-            Mes da lista
+            Mês da lista
             <input type="month" name="reference_month" value="<?= htmlspecialchars(substr($nextMonth, 0, 7), ENT_QUOTES, 'UTF-8') ?>" required>
         </label>
         <button class="inline-button" type="submit"><span class="bi bi-calendar-plus"></span>Criar/selecionar lista</button>
@@ -119,7 +119,7 @@ ob_start();
             </a>
         <?php endforeach; ?>
         <?php if ($marketLists === []): ?>
-            <p class="muted">Crie a primeira lista para comecar.</p>
+            <p class="muted">Crie a primeira lista para começar.</p>
         <?php endif; ?>
     </article>
 
@@ -137,7 +137,7 @@ ob_start();
             </p>
             <?php if ($isFinished): ?>
                 <div class="notice notice-success market-lock-notice">
-                    <strong>Lista finalizada.</strong> Esta lista esta travada para evitar alteracoes acidentais. Somente um administrador pode remover a finalizacao.
+                    <strong>Lista finalizada.</strong> Esta lista está travada para evitar alterações acidentais. Somente um administrador pode remover a finalizacao.
                 </div>
             <?php else: ?>
                 <form method="post" action="/shopping/market/items" class="form-grid market-price-form" data-market-item-form>
@@ -147,7 +147,7 @@ ob_start();
                         <input type="text" name="name" placeholder="Ex.: Arroz, Sabao em po, Leite" required>
                     </label>
                     <label>
-                        Sessao
+                        Sessão
                         <select name="section_id" required>
                             <option value="">Selecione</option>
                             <?php foreach ($marketSections as $section): ?>
@@ -352,7 +352,7 @@ ob_start();
         <h2 class="section-title"><span class="bi bi-receipt"></span>NFC-e / NF-e anexadas</h2>
         <p class="muted">
             Escolha uma das formas abaixo para vincular notas a lista de <?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>.
-            XML e PDF da consulta publica importam itens automaticamente; imagem fica como anexo; chave de acesso salva os metadados.
+            XML e PDF da consulta pública importam itens automaticamente; imagem fica como anexo; chave de acesso salva os metadados.
             Os arquivos enviados ficam armazenados para consulta e download depois.
         </p>
         <?php if ($isFinished): ?>
@@ -364,9 +364,9 @@ ob_start();
                 <form method="post" action="/shopping/market/invoices" enctype="multipart/form-data" class="soft-panel compact-form">
                     <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                     <h3><span class="bi bi-file-earmark-arrow-up"></span> Upload de arquivo</h3>
-                    <p class="muted">Use XML ou PDF da consulta publica para importar itens. JPG e PNG ficam anexados para conferencia.</p>
+                    <p class="muted">Use XML ou PDF da consulta pública para importar itens. JPG e PNG ficam anexados para conferência.</p>
                     <label>
-                        Mes da lista
+                        Mês da lista
                         <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
                     </label>
                     <label>
@@ -379,9 +379,9 @@ ob_start();
                 <form method="post" action="/shopping/market/access-key" class="soft-panel compact-form">
                     <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                     <h3><span class="bi bi-key"></span> Chave de acesso</h3>
-                    <p class="muted">Quando nao houver XML, salve a chave para consulta publica e controle da nota.</p>
+                    <p class="muted">Quando não houver XML, salve a chave para consulta pública e controle da nota.</p>
                     <label>
-                        Mes da lista
+                        Mês da lista
                         <input type="text" value="<?= htmlspecialchars($monthLabel($selectedMarketList['reference_month']), ENT_QUOTES, 'UTF-8') ?>" readonly>
                     </label>
                     <label>
@@ -399,14 +399,14 @@ ob_start();
                         <strong>Chave <?= htmlspecialchars($formatAccessKey($invoice['access_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
                         <small>
                             NFC-e <?= htmlspecialchars((string) ($invoice['document_number'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
-                            | Serie <?= htmlspecialchars((string) ($invoice['document_series'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                            | Série <?= htmlspecialchars((string) ($invoice['document_series'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
                             | CNPJ <?= htmlspecialchars($formatDocument($invoice['issuer_document'] ?? null), ENT_QUOTES, 'UTF-8') ?>
                             | Compra <?= htmlspecialchars($formatDateTime($invoice['purchase_date'] ?? null), ENT_QUOTES, 'UTF-8') ?>
                             | <?= htmlspecialchars((string) $invoice['created_at'], ENT_QUOTES, 'UTF-8') ?>
                         </small>
                         <?php if (!empty($invoice['public_url'])): ?>
                             <a href="<?= htmlspecialchars((string) $invoice['public_url'], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">
-                                <button class="inline-button" type="button"><span class="bi bi-box-arrow-up-right"></span>Abrir consulta publica</button>
+                                <button class="inline-button" type="button"><span class="bi bi-box-arrow-up-right"></span>Abrir consulta pública</button>
                             </a>
                         <?php endif; ?>
                     <?php else: ?>
@@ -433,7 +433,7 @@ ob_start();
                 </div>
             <?php endforeach; ?>
             <?php if ($marketInvoices === []): ?>
-                <p class="muted">Nenhuma nota anexada para esta lista.</p>
+                <p class="muted">Nenhuma nota anexada para está lista.</p>
             <?php endif; ?>
         </div>
     </section>

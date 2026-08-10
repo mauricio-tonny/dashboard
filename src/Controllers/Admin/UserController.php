@@ -63,12 +63,12 @@ final class UserController extends Controller
         $session = $this->app->make(Session::class);
 
         if ($currentUser->id === $id && !$active) {
-            $session->flash('error', 'Voce nao pode bloquear o proprio usuario.');
+            $session->flash('error', 'Você não pode bloquear o próprio usuário.');
             return Response::redirect('/admin/users');
         }
 
         if (!$auth->verifyPassword($currentUser, (string) $request->input('admin_password'))) {
-            $session->flash('error', 'Senha de confirmacao invalida.');
+            $session->flash('error', 'Senha de confirmação inválida.');
             return Response::redirect('/admin/users');
         }
 
@@ -76,7 +76,7 @@ final class UserController extends Controller
         $target = $repository->find($id);
 
         if ($target === null) {
-            $session->flash('error', 'Usuario nao encontrado.');
+            $session->flash('error', 'Usuário não encontrado.');
             return Response::redirect('/admin/users');
         }
 
@@ -85,7 +85,7 @@ final class UserController extends Controller
             'target_email' => $target['email'],
         ]);
 
-        $session->flash('success', $active ? 'Usuario desbloqueado com sucesso.' : 'Usuario bloqueado com sucesso.');
+        $session->flash('success', $active ? 'Usuário desbloqueado com sucesso.' : 'Usuário bloqueado com sucesso.');
 
         return Response::redirect('/admin/users');
     }
@@ -107,7 +107,7 @@ final class UserController extends Controller
         try {
             $role = Role::from((string) $request->input('role'));
         } catch (ValueError) {
-            $session->flash('error', 'Perfil informado e invalido.');
+            $session->flash('error', 'Perfil informado é inválido.');
             return Response::redirect('/admin/users');
         }
 
@@ -117,12 +117,12 @@ final class UserController extends Controller
         }
 
         if ($id === null && $password === '') {
-            $session->flash('error', 'Informe uma senha temporaria para criar o usuario.');
+            $session->flash('error', 'Informe uma senha temporária para criar o usuário.');
             return Response::redirect('/admin/users');
         }
 
         if (!$auth->verifyPassword($currentUser, (string) $request->input('admin_password'))) {
-            $session->flash('error', 'Senha de confirmacao invalida.');
+            $session->flash('error', 'Senha de confirmação inválida.');
             return Response::redirect('/admin/users');
         }
 
@@ -136,7 +136,7 @@ final class UserController extends Controller
                     'target_email' => $email,
                     'role' => $role->value,
                 ]);
-                $session->flash('success', 'Usuario criado com sucesso.');
+                $session->flash('success', 'Usuário criado com sucesso.');
             } else {
                 $repository->update($id, $name, $email, $role, $password);
                 $this->app->make(AuditLogger::class)->log('user_updated', 'user', $id, $currentUser, [
@@ -145,10 +145,10 @@ final class UserController extends Controller
                     'role' => $role->value,
                     'password_changed' => $password !== '',
                 ]);
-                $session->flash('success', 'Usuario atualizado com sucesso.');
+                $session->flash('success', 'Usuário atualizado com sucesso.');
             }
         } catch (PDOException) {
-            $session->flash('error', 'Nao foi possivel salvar. Verifique se o e-mail ja esta em uso.');
+            $session->flash('error', 'Não foi possível salvar. Verifique se o e-mail já está em uso.');
         }
 
         return Response::redirect('/admin/users');

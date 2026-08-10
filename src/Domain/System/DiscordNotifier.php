@@ -30,16 +30,24 @@ final class DiscordNotifier
         $origin = $automatic ? 'automaticamente' : 'pelo painel';
         $this->send($webhookUrl, [
             'username' => 'Dashboard Oficina do DEV',
-            'content' => "Lista de mercado de {$monthLabel} criada {$origin}. Ja deixei tudo pronto para voces planejarem as compras com calma.",
+            'content' => "Lista de mercado de {$monthLabel} criada {$origin}. Já deixei tudo pronto para voces planejarem as compras com calma.",
         ]);
     }
 
-    private function send(string $webhookUrl, array $payload): void
+    public function testWebhook(string $webhookUrl): bool
+    {
+        return $this->send($webhookUrl, [
+            'username' => 'Dashboard Oficina do DEV',
+            'content' => 'Teste de webhook do Discord enviado pelo painel do dashboard.',
+        ]);
+    }
+
+    private function send(string $webhookUrl, array $payload): bool
     {
         $body = json_encode($payload, JSON_UNESCAPED_UNICODE);
 
         if ($body === false) {
-            return;
+            return false;
         }
 
         $context = stream_context_create([
@@ -53,5 +61,9 @@ final class DiscordNotifier
         ]);
 
         @file_get_contents($webhookUrl, false, $context);
+        $headers = $http_response_header ?? [];
+        $statusLine = $headers[0] ?? '';
+
+        return preg_match('/^HTTP\/\S+\s+2\d\d\b/', $statusLine) === 1;
     }
 }

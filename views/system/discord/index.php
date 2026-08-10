@@ -10,7 +10,7 @@ ob_start();
         <div>
             <span class="badge">Sistema</span>
             <h1>Discord</h1>
-            <p class="muted">Configure notificacoes amigaveis para eventos importantes do dashboard.</p>
+            <p class="muted">Configure notificações amigaveis para eventos importantes do dashboard.</p>
         </div>
     </div>
 </section>
@@ -24,7 +24,7 @@ ob_start();
 <?php endif; ?>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-bell"></span>Configuracao de notificacoes</h2>
+    <h2 class="section-title"><span class="bi bi-bell"></span>Configuração de notificações</h2>
     <form method="post" action="/system/discord" class="form-grid">
         <label>
             Status
@@ -43,17 +43,26 @@ ob_start();
                 <input type="checkbox" name="notify_market_list_created" value="1" <?= $notifyMarketListCreated ? 'checked' : '' ?>>
                 <span>Notificar quando criar lista do mercado</span>
             </label>
-            <p class="muted">Novos eventos serao adicionados aqui conforme o sistema ganhar novas automacoes.</p>
+            <p class="muted">Novos eventos serão adicionados aqui conforme o sistema ganhar novas automações.</p>
         </div>
         <div class="form-actions">
-            <button type="submit"><span class="bi bi-save"></span>Salvar configuracao</button>
+            <button type="submit"><span class="bi bi-save"></span>Salvar configuração</button>
         </div>
+    </form>
+    <form method="post" action="/system/discord/test" class="inline-form total-form">
+        <div>
+            <strong>Teste do webhook</strong>
+            <p class="muted">Envia uma mensagem simples usando o webhook salvo acima.</p>
+        </div>
+        <button class="inline-button button-light" type="submit" <?= trim((string) ($settings['webhook_url'] ?? '')) === '' ? 'disabled' : '' ?>>
+            <span class="bi bi-send"></span>Enviar teste
+        </button>
     </form>
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-robot"></span>Automacao sugerida</h2>
-    <p class="muted">Para garantir a lista do proximo mes automaticamente, configure o cron do servidor para executar uma vez ao dia:</p>
+    <h2 class="section-title"><span class="bi bi-robot"></span>Automação sugerida</h2>
+    <p class="muted">Para garantir a lista do próximo mês automaticamente, configure o cron do servidor para executar uma vez ao dia:</p>
     <pre><code>php /var/www/dashboard.oficinadodev.com.br/html/bin/ensure_next_market_list.php</code></pre>
 </section>
 

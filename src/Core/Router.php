@@ -31,7 +31,7 @@ final class Router
         }
 
         if (!isset($this->routes[$key])) {
-            return new Response('Pagina nao encontrada.', 404);
+            return new Response('Pagina não encontrada.', 404);
         }
 
         [$controllerClass, $method] = $this->routes[$key];

@@ -137,6 +137,7 @@ $router->get('/system/sync', [NavigationPageController::class, 'systemSync']);
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
 $router->get('/system/discord', [DiscordController::class, 'index']);
 $router->post('/system/discord', [DiscordController::class, 'save']);
+$router->post('/system/discord/test', [DiscordController::class, 'test']);
 $router->get('/system/spreadsheet', [NavigationPageController::class, 'systemSpreadsheet']);
 
 $router->get('/entries/create', [EntryController::class, 'create']);

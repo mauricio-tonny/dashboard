@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Registrar acoes relevantes dos usuarios para que o administrador consiga acompanhar o uso do sistema pelo painel, sem precisar consultar o banco diretamente.
+Registrar ações relevantes dos usuários para que o administrador consiga acompanhar o uso do sistema pelo painel, sem precisar consultar o banco diretamente.
 
 ## Eventos Iniciais
 
@@ -19,11 +19,11 @@ O painel fica em:
 /admin/audit-logs
 ```
 
-Somente usuarios com a permissao `view_audit_logs` podem acessar.
+Somente usuários com a permissão `view_audit_logs` podem acessar.
 
-## Retencao
+## Retenção
 
-A retencao padrao e de 90 dias, configuravel por:
+A retenção padrão e de 90 dias, configuravel por:
 
 ```env
 AUDIT_LOG_RETENTION_DAYS=90
@@ -43,5 +43,5 @@ O logout automatico por inatividade usa:
 SESSION_IDLE_TIMEOUT_MINUTES=15
 ```
 
-Quando o limite e ultrapassado, o sistema registra `session_timeout` e encerra a sessao.
+Quando o limite e ultrapassado, o sistema registra `session_timeout` e encerra a sessão.
 

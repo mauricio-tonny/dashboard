@@ -11,7 +11,7 @@ $typeBadges = static function (array $contact): string {
         $labels[] = 'Cliente';
     }
 
-    return implode(' / ', $labels) ?: 'Nao classificado';
+    return implode(' / ', $labels) ?: 'Não classificado';
 };
 $renderContactForm = static function (array $states, ?array $contact = null): void {
     $isEdit = $contact !== null;
@@ -22,7 +22,7 @@ $renderContactForm = static function (array $states, ?array $contact = null): vo
             <input type="hidden" name="id" value="<?= (int) $contact['id'] ?>">
         <?php endif; ?>
         <div class="form-check-group">
-            <span class="field-label">Classificacao</span>
+            <span class="field-label">Classificação</span>
             <label class="check-option">
                 <input type="checkbox" name="is_vendor" value="1" <?= ((int) ($contact['is_vendor'] ?? 0)) === 1 ? 'checked' : '' ?>>
                 Fornecedor
@@ -53,7 +53,7 @@ $renderContactForm = static function (array $states, ?array $contact = null): vo
             <input type="email" name="email" value="<?= htmlspecialchars($contact['email'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <label>
-            Endereco
+            Endereço
             <input type="text" name="address" value="<?= htmlspecialchars($contact['address'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <label>
@@ -70,7 +70,7 @@ $renderContactForm = static function (array $states, ?array $contact = null): vo
         </label>
         <div class="modal-footer-actions">
             <button type="button" class="inline-button button-light" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit"><span class="bi bi-check2-circle"></span><?= $isEdit ? 'Salvar alteracoes' : 'Salvar contato' ?></button>
+            <button type="submit"><span class="bi bi-check2-circle"></span><?= $isEdit ? 'Salvar alterações' : 'Salvar contato' ?></button>
         </div>
     </form>
 <?php
@@ -114,12 +114,12 @@ ob_start();
             <thead>
                 <tr>
                     <th>Nome</th>
-                    <th>Classificacao</th>
+                    <th>Classificação</th>
                     <th>Contato</th>
                     <th>Cidade/UF</th>
                     <th>Status</th>
                     <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CONTACTS)): ?>
-                        <th>Acoes</th>
+                        <th>Ações</th>
                     <?php endif; ?>
                 </tr>
             </thead>

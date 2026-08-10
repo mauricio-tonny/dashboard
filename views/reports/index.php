@@ -1,24 +1,24 @@
 <?php
-$title = 'Relatorios';
+$title = 'Relatórios';
 $formatMoney = static fn ($value): string => 'R$ ' . number_format((float) $value, 2, ',', '.');
 $amounts = array_map(static fn (array $row): float => (float) $row['total_amount'], $marketRows);
 $maxAmount = $amounts === [] ? 1.0 : max($amounts);
-$periodLabel = (new DateTimeImmutable($startDate))->format('d/m/Y') . ' ate ' . (new DateTimeImmutable($endDate))->format('d/m/Y');
+$periodLabel = (new DateTimeImmutable($startDate))->format('d/m/Y') . ' até ' . (new DateTimeImmutable($endDate))->format('d/m/Y');
 ob_start();
 ?>
 <section class="page-hero">
     <div class="page-hero-content">
         <span class="page-hero-icon bi bi-bar-chart-line"></span>
         <div>
-            <span class="badge">Relatorios</span>
-            <h1>Relatorio de mercado</h1>
-            <p class="muted">Compare o valor total das compras de mercado dentro do periodo selecionado.</p>
+            <span class="badge">Relatórios</span>
+            <h1>Relatório de mercado</h1>
+            <p class="muted">Compare o valor total das compras de mercado dentro do período selecionado.</p>
         </div>
     </div>
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-calendar-range"></span>Periodo de analise</h2>
+    <h2 class="section-title"><span class="bi bi-calendar-range"></span>Período de analise</h2>
     <form method="get" action="/reports/market" class="inline-form report-filter">
         <label>
             Data inicial
@@ -28,17 +28,17 @@ ob_start();
             Data final
             <input type="date" name="end_date" value="<?= htmlspecialchars($endDate, ENT_QUOTES, 'UTF-8') ?>" required>
         </label>
-        <button class="inline-button" type="submit"><span class="bi bi-funnel"></span>Gerar relatorio</button>
+        <button class="inline-button" type="submit"><span class="bi bi-funnel"></span>Gerar relatório</button>
     </form>
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-basket2"></span>Mercado no periodo</h2>
+    <h2 class="section-title"><span class="bi bi-basket2"></span>Mercado no período</h2>
     <p class="muted">Resultado consolidado de <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
 
     <div class="report-summary-grid">
         <div class="report-summary-card">
-            <small>Total do periodo</small>
+            <small>Total do período</small>
             <strong><?= htmlspecialchars($formatMoney($marketSummary['total']), ENT_QUOTES, 'UTF-8') ?></strong>
         </div>
         <div class="report-summary-card">
@@ -46,17 +46,17 @@ ob_start();
             <strong><?= htmlspecialchars($formatMoney($marketSummary['average']), ENT_QUOTES, 'UTF-8') ?></strong>
         </div>
         <div class="report-summary-card">
-            <small>Maior mes</small>
+            <small>Maior mês</small>
             <strong><?= htmlspecialchars($formatMoney($marketSummary['max']), ENT_QUOTES, 'UTF-8') ?></strong>
         </div>
         <div class="report-summary-card">
-            <small>Menor mes</small>
+            <small>Menor mês</small>
             <strong><?= htmlspecialchars($formatMoney($marketSummary['min']), ENT_QUOTES, 'UTF-8') ?></strong>
         </div>
     </div>
 
     <?php if ($marketRows === []): ?>
-        <p class="muted">Nenhuma lista de mercado finalizada com valor neste periodo.</p>
+        <p class="muted">Nenhuma lista de mercado finalizada com valor neste período.</p>
     <?php else: ?>
         <div class="report-bar-chart" aria-label="Grafico de barras com valores mensais de mercado">
             <?php foreach ($marketRows as $row): ?>
@@ -78,7 +78,7 @@ ob_start();
             <table>
                 <thead>
                     <tr>
-                        <th>Mes</th>
+                        <th>Mês</th>
                         <th>Listas</th>
                         <th>Total</th>
                         <th>Media por lista</th>

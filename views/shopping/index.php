@@ -14,7 +14,7 @@ ob_start();
 
     <div class="page-hero-actions">
         <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING_SETTINGS)): ?>
-            <a href="/admin/shopping-settings"><button class="inline-button" type="button"><span class="bi bi-sliders"></span>Configuracao compras</button></a>
+            <a href="/admin/shopping-settings"><button class="inline-button" type="button"><span class="bi bi-sliders"></span>Configuração compras</button></a>
         <?php endif; ?>
     </div>
 </section>
@@ -28,17 +28,17 @@ ob_start();
     <a class="module-card" href="/shopping/home">
         <span class="bi bi-house-heart"></span>
         <h2>Para casa</h2>
-        <p class="muted">Itens por comodo, valor previsto e prioridade.</p>
+        <p class="muted">Itens por cômodo, valor previsto e prioridade.</p>
     </a>
     <a class="module-card" href="/shopping/family">
         <span class="bi bi-people"></span>
-        <h2>Para a familia</h2>
+        <h2>Para a família</h2>
         <p class="muted">Itens vinculados a quem precisa comprar ou receber.</p>
     </a>
     <a class="module-card" href="/shopping/vehicle">
         <span class="bi bi-car-front"></span>
-        <h2>Para o veiculo</h2>
-        <p class="muted">Itens por veiculo e area de manutencao.</p>
+        <h2>Para o veículo</h2>
+        <p class="muted">Itens por veículo e área de manutenção.</p>
     </a>
 </section>
 <?php

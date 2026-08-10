@@ -8,7 +8,7 @@ ob_start();
         <div>
             <span class="badge">Financeiro</span>
             <h1>Novo lancamento</h1>
-            <p class="muted">Formulario inicial para cadastro enquanto a integracao real com o Excel ainda nao foi implementada.</p>
+            <p class="muted">Formulario inicial para cadastro enquanto a integração real com o Excel ainda não foi implementada.</p>
         </div>
     </div>
 </section>

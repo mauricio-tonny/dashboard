@@ -298,4 +298,37 @@ CREATE TABLE IF NOT EXISTS discord_notification_settings (
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS scheduled_tasks (
+    code VARCHAR(120) PRIMARY KEY,
+    name VARCHAR(160) NOT NULL,
+    interval_minutes INT UNSIGNED NOT NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    last_run_at DATETIME NULL,
+    next_run_at DATETIME NOT NULL,
+    locked_until DATETIME NULL,
+    lock_token CHAR(32) NULL,
+    consecutive_failures INT UNSIGNED NOT NULL DEFAULT 0,
+    last_status VARCHAR(30) NULL,
+    last_message VARCHAR(500) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_scheduled_tasks_due (is_active, next_run_at),
+    INDEX idx_scheduled_tasks_lock (locked_until)
+);
+
+CREATE TABLE IF NOT EXISTS scheduled_task_runs (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    task_code VARCHAR(120) NOT NULL,
+    status VARCHAR(30) NOT NULL,
+    started_at DATETIME NOT NULL,
+    finished_at DATETIME NULL,
+    duration_ms INT UNSIGNED NULL,
+    message VARCHAR(500) NULL,
+    metadata JSON NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_scheduled_task_runs_task (task_code, started_at),
+    INDEX idx_scheduled_task_runs_status (status),
+    CONSTRAINT fk_scheduled_task_runs_task FOREIGN KEY (task_code) REFERENCES scheduled_tasks(code)
+);
+
 INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('viewer');

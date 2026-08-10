@@ -1,5 +1,5 @@
 <?php
-$title = 'Configuracao Compras';
+$title = 'Configuração Compras';
 ob_start();
 
 $renderSimple = static function (string $title, string $kind, array $items): void {
@@ -49,8 +49,8 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
         <span class="page-hero-icon bi bi-sliders"></span>
         <div>
             <span class="badge">Administrador</span>
-            <h1>Configuracao compras</h1>
-            <p class="muted">Gerencie os cadastros usados nas listas de mercado, casa, familia e veiculos.</p>
+            <h1>Configuração compras</h1>
+            <p class="muted">Gerencie os cadastros usados nas listas de mercado, casa, família e veículos.</p>
         </div>
     </div>
 
@@ -69,13 +69,13 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
 
 <section class="grid">
     <?php $renderSimple('Sessoes do mercado', 'market_sections', $marketSections); ?>
-    <?php $renderSimple('Comodos', 'rooms', $rooms); ?>
+    <?php $renderSimple('Cômodos', 'rooms', $rooms); ?>
     <?php $renderSimple('Para quem', 'people', $people); ?>
-    <?php $renderSimple('Areas do veiculo', 'vehicle_areas', $vehicleAreas); ?>
+    <?php $renderSimple('Áreas do veículo', 'vehicle_areas', $vehicleAreas); ?>
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-car-front"></span>Veiculos</h2>
+    <h2 class="section-title"><span class="bi bi-car-front"></span>Veículos</h2>
     <form method="post" action="/admin/shopping-settings/vehicles" class="form-grid">
         <label>
             Nome
@@ -111,7 +111,7 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
             <input type="text" name="plate">
         </label>
         <div class="form-actions">
-            <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar veiculo</button>
+            <button type="submit"><span class="bi bi-plus-circle"></span>Adicionar veículo</button>
         </div>
     </form>
 
@@ -163,7 +163,7 @@ $renderSimple = static function (string $title, string $kind, array $items): voi
                         Placa
                         <input type="text" name="plate" value="<?= htmlspecialchars($vehicle['plate'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                     </label>
-                    <button type="submit"><span class="bi bi-check2-circle"></span>Salvar veiculo</button>
+                    <button type="submit"><span class="bi bi-check2-circle"></span>Salvar veículo</button>
                 </form>
                 <form method="post" action="/admin/shopping-settings/vehicles/toggle">
                     <input type="hidden" name="id" value="<?= (int) $vehicle['id'] ?>">

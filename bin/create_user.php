@@ -44,14 +44,14 @@ if ($name === '' || $email === '' || $role === '' || $password === '') {
 }
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    fwrite(STDERR, "E-mail invalido.\n");
+    fwrite(STDERR, "E-mail inválido.\n");
     exit(1);
 }
 
 try {
     $roleEnum = Role::from($role);
 } catch (ValueError) {
-    fwrite(STDERR, "Perfil invalido. Use admin, editor ou viewer.\n");
+    fwrite(STDERR, "Perfil inválido. Use admin, editor ou viewer.\n");
     exit(1);
 }
 
@@ -62,7 +62,7 @@ $roleStatement->execute(['name' => $roleEnum->value]);
 $roleId = $roleStatement->fetchColumn();
 
 if ($roleId === false) {
-    fwrite(STDERR, "Perfil {$roleEnum->value} nao encontrado. Rode php bin/install_database.php primeiro.\n");
+    fwrite(STDERR, "Perfil {$roleEnum->value} não encontrado. Rode php bin/install_database.php primeiro.\n");
     exit(1);
 }
 
@@ -84,4 +84,4 @@ $statement->execute([
     'password_hash' => password_hash($password, PASSWORD_DEFAULT),
 ]);
 
-echo "Usuario {$email} preparado com perfil {$roleEnum->value}.\n";
+echo "Usuário {$email} preparado com perfil {$roleEnum->value}.\n";

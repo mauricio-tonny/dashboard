@@ -7,14 +7,14 @@ $labels = [
     'login_failed' => 'Falha de login',
     'logout' => 'Logout',
     'session_timeout' => 'Logout por inatividade',
-    'user_created' => 'Usuario criado',
-    'user_updated' => 'Usuario atualizado',
-    'user_blocked' => 'Usuario bloqueado',
-    'user_unblocked' => 'Usuario desbloqueado',
+    'user_created' => 'Usuário criado',
+    'user_updated' => 'Usuário atualizado',
+    'user_blocked' => 'Usuário bloqueado',
+    'user_unblocked' => 'Usuário desbloqueado',
     'shopping_market_list_saved' => 'Lista de mercado preparada',
     'shopping_market_list_finished' => 'Lista de mercado finalizada',
     'shopping_market_list_reopened' => 'Lista de mercado reaberta',
-    'shopping_market_list_deleted' => 'Lista de mercado excluida',
+    'shopping_market_list_deleted' => 'Lista de mercado excluída',
     'shopping_market_item_created' => 'Item de mercado criado',
     'shopping_market_item_updated' => 'Item de mercado atualizado',
     'shopping_market_item_checked' => 'Item de mercado marcado',
@@ -29,12 +29,13 @@ $labels = [
     'shopping_wish_item_purchased' => 'Item de compras comprado',
     'shopping_wish_item_reopened' => 'Item de compras reaberto',
     'shopping_wish_item_deleted' => 'Item de compras removido',
-    'shopping_setting_saved' => 'Configuracao de compras salva',
-    'shopping_setting_enabled' => 'Configuracao de compras reativada',
-    'shopping_setting_disabled' => 'Configuracao de compras desativada',
-    'shopping_vehicle_saved' => 'Veiculo salvo',
-    'shopping_vehicle_enabled' => 'Veiculo reativado',
-    'shopping_vehicle_disabled' => 'Veiculo desativado',
+    'shopping_setting_saved' => 'Configuração de compras salva',
+    'shopping_setting_enabled' => 'Configuração de compras reativada',
+    'shopping_setting_disabled' => 'Configuração de compras desativada',
+    'shopping_vehicle_saved' => 'Veículo salvo',
+    'shopping_vehicle_enabled' => 'Veículo reativado',
+    'shopping_vehicle_disabled' => 'Veículo desativado',
+    'discord_webhook_tested' => 'Teste de webhook do Discord',
     'contact_created' => 'Contato criado',
     'contact_updated' => 'Contato atualizado',
     'contact_enabled' => 'Contato reativado',
@@ -47,7 +48,7 @@ $labels = [
         <div>
             <span class="badge">Administrador</span>
             <h1>Logs de auditoria</h1>
-            <p class="muted">Acompanhe acessos e acoes importantes realizadas no sistema.</p>
+            <p class="muted">Acompanhe acessos e ações importantes realizadas no sistema.</p>
         </div>
     </div>
 </section>
@@ -60,7 +61,7 @@ $labels = [
                 <tr>
                     <th>Data</th>
                     <th>Acao</th>
-                    <th>Usuario</th>
+                    <th>Usuário</th>
                     <th>Origem</th>
                     <th>Detalhes</th>
                 </tr>
@@ -72,7 +73,7 @@ $labels = [
                         <td><?= htmlspecialchars((string) $log['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= htmlspecialchars($labels[$log['action']] ?? $log['action'], ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
-                            <?= htmlspecialchars($log['user_name'] ?? 'Sistema/nao identificado', ENT_QUOTES, 'UTF-8') ?><br>
+                            <?= htmlspecialchars($log['user_name'] ?? 'Sistema/não identificado', ENT_QUOTES, 'UTF-8') ?><br>
                             <span class="muted"><?= htmlspecialchars($log['user_email'] ?? '-', ENT_QUOTES, 'UTF-8') ?></span>
                         </td>
                         <td><?= htmlspecialchars($log['entity_type'], ENT_QUOTES, 'UTF-8') ?></td>

@@ -54,16 +54,16 @@ final class ShoppingSettingsController extends Controller
         $allowed = ['market_sections', 'rooms', 'people', 'vehicle_areas'];
 
         if (!in_array($kind, $allowed, true) || $name === '') {
-            $this->flash('error', 'Cadastro invalido.');
+            $this->flash('error', 'Cadastro inválido.');
             return Response::redirect('/admin/shopping-settings');
         }
 
         try {
             $savedId = $this->app->make(ShoppingRepository::class)->saveSimpleOption($kind, $id, $name);
             $this->audit('shopping_setting_saved', 'shopping_' . $kind, $savedId, ['name' => $name]);
-            $this->flash('success', 'Configuracao salva.');
+            $this->flash('success', 'Configuração salva.');
         } catch (PDOException) {
-            $this->flash('error', 'Nao foi possivel salvar. Verifique se o nome ja existe.');
+            $this->flash('error', 'Não foi possível salvar. Verifique se o nome já existe.');
         }
 
         return Response::redirect('/admin/shopping-settings');
@@ -111,16 +111,16 @@ final class ShoppingSettingsController extends Controller
         ];
 
         if ($data['name'] === '') {
-            $this->flash('error', 'Informe o nome do veiculo.');
+            $this->flash('error', 'Informe o nome do veículo.');
             return Response::redirect('/admin/shopping-settings');
         }
 
         try {
             $savedId = $this->app->make(ShoppingRepository::class)->saveVehicle($id, $data);
             $this->audit('shopping_vehicle_saved', 'shopping_vehicle', $savedId, ['name' => $data['name']]);
-            $this->flash('success', 'Veiculo salvo.');
+            $this->flash('success', 'Veículo salvo.');
         } catch (PDOException) {
-            $this->flash('error', 'Nao foi possivel salvar o veiculo. Verifique se o nome ja existe.');
+            $this->flash('error', 'Não foi possível salvar o veículo. Verifique se o nome já existe.');
         }
 
         return Response::redirect('/admin/shopping-settings');
@@ -140,7 +140,7 @@ final class ShoppingSettingsController extends Controller
         if ($id > 0) {
             $this->app->make(ShoppingRepository::class)->setVehicleActive($id, $active);
             $this->audit($active ? 'shopping_vehicle_enabled' : 'shopping_vehicle_disabled', 'shopping_vehicle', $id);
-            $this->flash('success', $active ? 'Veiculo reativado.' : 'Veiculo desativado.');
+            $this->flash('success', $active ? 'Veículo reativado.' : 'Veículo desativado.');
         }
 
         return Response::redirect('/admin/shopping-settings');

@@ -17,7 +17,7 @@ final class AccessKeyParser
         }
 
         if (!$this->hasValidCheckDigit($key)) {
-            throw new InvalidArgumentException('Digito verificador da chave de acesso invalido.');
+            throw new InvalidArgumentException('Dígito verificador da chave de acesso inválido.');
         }
 
         $data = [

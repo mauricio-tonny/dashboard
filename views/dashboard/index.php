@@ -33,7 +33,7 @@ ob_start();
         <span class="badge"><?= htmlspecialchars($user->role->label(), ENT_QUOTES, 'UTF-8') ?></span>
         <h1>Ola, <?= htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8') ?></h1>
         <p class="muted">
-            Hoje e dia <?= htmlspecialchars($todayLabel, ENT_QUOTES, 'UTF-8') ?>. Abaixo esta um resumo das suas proximas despesas e dos itens mapeados para compra.
+            Hoje e dia <?= htmlspecialchars($todayLabel, ENT_QUOTES, 'UTF-8') ?>. Abaixo está um resumo das suas proximas despesas e dos itens mapeados para compra.
         </p>
     </div>
 </section>
@@ -43,12 +43,12 @@ ob_start();
         <span class="metric-icon bi bi-calendar2-week"></span>
         <small>Contas a pagar</small>
         <strong><?= $formatMoney($upcoming['next_month_estimated_expenses']) ?></strong>
-        <p class="muted">Proximo mes. Caso nao exista baixa no mes atual/anterior, este card seguira aparecendo como alerta.</p>
+        <p class="muted">Próximo mês. Caso não exista baixa no mês atual/anterior, este card seguirá aparecendo como alerta.</p>
     </article>
 
     <article class="metric-card">
         <span class="metric-icon bi bi-basket2"></span>
-        <small>Mercado proximo mes</small>
+        <small>Mercado próximo mês</small>
         <strong><?= $marketChecked ?>/<?= $marketTotal ?> itens</strong>
         <p class="muted"><?= $marketProgress ?>% da lista marcada. Total: <?= htmlspecialchars($marketSummary['total_amount'] === null ? '-' : $formatMoney($marketSummary['total_amount']), ENT_QUOTES, 'UTF-8') ?></p>
     </article>
@@ -57,7 +57,7 @@ ob_start();
         <span class="metric-icon bi bi-house-heart"></span>
         <small>Para casa</small>
         <strong><?= count($pendingHomeItems) ?> pendentes</strong>
-        <p class="muted">Ultimos 10 itens ainda nao confirmados.</p>
+        <p class="muted">Ultimos 10 itens ainda não confirmados.</p>
         <div class="mini-list metric-mini-list">
             <?php foreach ($pendingHomeItems as $item): ?>
                 <div class="mini-list-item mini-list-item-compact">
@@ -82,7 +82,7 @@ ob_start();
 
     <article class="card">
         <h2>Despesas anual</h2>
-        <p class="muted">Indicador mensal em barras. Os valores reais entram quando concluirmos a integracao financeira.</p>
+        <p class="muted">Indicador mensal em barras. Os valores reais entram quando concluirmos a integração financeira.</p>
         <div class="bar-chart">
             <?php foreach ($annualExpenses as $item): ?>
                 <?php $height = max(8, round(((float) $item['amount'] / $maxExpense) * 140)); ?>

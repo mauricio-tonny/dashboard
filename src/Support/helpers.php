@@ -14,7 +14,7 @@ function view(string $template, array $data = []): string
     $file = base_path('views/' . $template . '.php');
 
     if (!is_file($file)) {
-        throw new RuntimeException("View {$template} nao encontrada.");
+        throw new RuntimeException("View {$template} não encontrada.");
     }
 
     extract($data, EXTR_SKIP);

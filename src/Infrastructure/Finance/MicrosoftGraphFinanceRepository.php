@@ -22,7 +22,7 @@ final class MicrosoftGraphFinanceRepository implements FinanceRepository
 
     public function createEntry(array $entry, string $createdBy): void
     {
-        throw new RuntimeException('Integracao com Microsoft Graph ainda nao implementada.');
+        throw new RuntimeException('Integração com Microsoft Graph ainda não implementada.');
     }
 
     public function monthlySummary(DateTimeImmutable $reference): array

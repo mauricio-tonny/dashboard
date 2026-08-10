@@ -87,7 +87,7 @@ final class ContactController extends Controller
         $data['type'] = $data['is_vendor'] === 1 ? 'vendor' : 'client';
 
         if (($data['is_vendor'] === 0 && $data['is_client'] === 0) || $data['first_name'] === '' || $data['city'] === '' || !in_array($data['state'], $this->states(), true)) {
-            $this->app->make(Session::class)->flash('error', 'Preencha nome, classificacao, cidade e UF corretamente.');
+            $this->app->make(Session::class)->flash('error', 'Preencha nome, classificação, cidade e UF corretamente.');
             return Response::redirect('/contacts');
         }
 
@@ -100,7 +100,7 @@ final class ContactController extends Controller
             ]);
             $this->app->make(Session::class)->flash('success', $id === null ? 'Contato criado.' : 'Contato atualizado.');
         } catch (PDOException) {
-            $this->app->make(Session::class)->flash('error', 'Nao foi possivel salvar o contato.');
+            $this->app->make(Session::class)->flash('error', 'Não foi possível salvar o contato.');
         }
 
         return Response::redirect('/contacts');

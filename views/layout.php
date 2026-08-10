@@ -1448,8 +1448,8 @@
                             <a class="nav-subitem <?= $isActive('/shopping') ?>" href="/shopping"><span class="bi bi-grid"></span>Visao geral</a>
                             <a class="nav-subitem <?= $isActivePrefix('/shopping/market') ?>" href="/shopping/market"><span class="bi bi-basket2"></span>Mercado</a>
                             <a class="nav-subitem <?= $isActive('/shopping/home') ?>" href="/shopping/home"><span class="bi bi-house-heart"></span>Para casa</a>
-                            <a class="nav-subitem <?= $isActive('/shopping/family') ?>" href="/shopping/family"><span class="bi bi-people"></span>Para a familia</a>
-                            <a class="nav-subitem <?= $isActive('/shopping/vehicle') ?>" href="/shopping/vehicle"><span class="bi bi-car-front"></span>Para o veiculo</a>
+                            <a class="nav-subitem <?= $isActive('/shopping/family') ?>" href="/shopping/family"><span class="bi bi-people"></span>Para a família</a>
+                            <a class="nav-subitem <?= $isActive('/shopping/vehicle') ?>" href="/shopping/vehicle"><span class="bi bi-car-front"></span>Para o veículo</a>
                         </div>
                     <?php endif; ?>
                     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CONTACTS)): ?>
@@ -1459,7 +1459,7 @@
                     <?php endif; ?>
                     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_REPORT)): ?>
                         <div class="nav-group">
-                            <div class="nav-group-title">Relatorios</div>
+                            <div class="nav-group-title">Relatórios</div>
                             <a class="nav-subitem <?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-grid"></span>Visao geral</a>
                             <a class="nav-subitem <?= $isActive('/reports/market') ?>" href="/reports/market"><span class="bi bi-basket2"></span>Mercado</a>
                         </div>
@@ -1468,7 +1468,7 @@
                         <div class="nav-group">
                             <div class="nav-group-title">Sistema</div>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_USERS)): ?>
-                                <a class="nav-subitem <?= $isActive('/admin/users') ?>" href="/admin/users"><span class="bi bi-people"></span>Usuarios</a>
+                                <a class="nav-subitem <?= $isActive('/admin/users') ?>" href="/admin/users"><span class="bi bi-people"></span>Usuários</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
                                 <a class="nav-subitem <?= $isActive('/admin/audit-logs') ?>" href="/admin/audit-logs"><span class="bi bi-journal-text"></span>Logs</a>
@@ -1477,7 +1477,7 @@
                                 <a class="nav-subitem <?= $isActive('/system/backup') ?>" href="/system/backup"><span class="bi bi-cloud-arrow-down"></span>Backup</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SPREADSHEET_URL)): ?>
-                                <a class="nav-subitem <?= $isActive('/system/sync') ?>" href="/system/sync"><span class="bi bi-clock-history"></span>Tempo de sincronizacao</a>
+                                <a class="nav-subitem <?= $isActive('/system/sync') ?>" href="/system/sync"><span class="bi bi-clock-history"></span>Tempo de sincronização</a>
                                 <a class="nav-subitem <?= $isActive('/system/categories') ?>" href="/system/categories"><span class="bi bi-tags"></span>Categoria (DR)</a>
                                 <a class="nav-subitem <?= $isActive('/system/spreadsheet') ?>" href="/system/spreadsheet"><span class="bi bi-file-earmark-spreadsheet"></span>Gerenciar planilha</a>
                             <?php endif; ?>
@@ -1485,7 +1485,7 @@
                                 <a class="nav-subitem <?= $isActive('/system/discord') ?>" href="/system/discord"><span class="bi bi-discord"></span>Discord</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING_SETTINGS)): ?>
-                                <a class="nav-subitem <?= $isActive('/admin/shopping-settings') ?>" href="/admin/shopping-settings"><span class="bi bi-sliders"></span>Configuracao compras</a>
+                                <a class="nav-subitem <?= $isActive('/admin/shopping-settings') ?>" href="/admin/shopping-settings"><span class="bi bi-sliders"></span>Configuração compras</a>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>

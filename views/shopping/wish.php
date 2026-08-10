@@ -17,12 +17,12 @@ $purchasedItemsByVehicle = [];
 
 if ($type === 'vehicle') {
     foreach ($pendingItems as $item) {
-        $vehicleName = (string) ($item['vehicle_name'] ?? 'Sem veiculo');
+        $vehicleName = (string) ($item['vehicle_name'] ?? 'Sem veículo');
         $pendingItemsByVehicle[$vehicleName][] = $item;
     }
 
     foreach ($purchasedItems as $item) {
-        $vehicleName = (string) ($item['vehicle_name'] ?? 'Sem veiculo');
+        $vehicleName = (string) ($item['vehicle_name'] ?? 'Sem veículo');
         $purchasedItemsByVehicle[$vehicleName][] = $item;
     }
 }
@@ -60,7 +60,7 @@ $renderForm = static function (
         </label>
         <?php if ($type === 'vehicle'): ?>
             <label>
-                Area
+                Área
                 <select name="vehicle_area_id" required>
                     <option value="">Selecione</option>
                     <?php foreach ($vehicleAreas as $area): ?>
@@ -177,7 +177,7 @@ $renderItem = static function (array $item) use (
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                             <input type="hidden" name="type" value="vehicle">
                             <input type="hidden" name="purchased" value="1">
-                            <p class="muted">Informe quando o item foi comprado para manter o historico correto.</p>
+                            <p class="muted">Informe quando o item foi comprado para manter o histórico correto.</p>
                             <label>
                                 Data da compra
                                 <input type="date" name="purchased_at" value="<?= htmlspecialchars($todayInput, ENT_QUOTES, 'UTF-8') ?>" required>
@@ -203,7 +203,7 @@ ob_start();
         <div>
             <span class="badge">Compras</span>
             <h1><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8') ?></h1>
-            <p class="muted">Lista separada para manter o modulo de compras mais organizado e facil de usar.</p>
+            <p class="muted">Lista separada para manter o módulo de compras mais organizado e facil de usar.</p>
         </div>
     </div>
 </section>

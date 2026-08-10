@@ -20,7 +20,7 @@ final class MarketInvoiceXmlParser
         libxml_use_internal_errors($previous);
 
         if (!$loaded) {
-            throw new RuntimeException('XML invalido ou ilegivel.');
+            throw new RuntimeException('XML inválido ou ilegível.');
         }
 
         $xpath = new DOMXPath($document);

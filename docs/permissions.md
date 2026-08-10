@@ -1,27 +1,27 @@
-# Permissoes
+# Permissões
 
 ## Perfis
 
-O sistema trabalha com tres perfis principais:
+O sistema trabalha com três perfis principais:
 
 - `viewer`: Visualizador
 - `editor`: Editor
 - `admin`: Administrador
 
-As permissoes foram modeladas de forma granular para permitir, no futuro, excecoes por usuario sem precisar criar muitos perfis novos.
+As permissões foram modeladas de forma granular para permitir, no futuro, excecoes por usuário sem precisar criar muitos perfis novos.
 
 ## Visualizador
 
 Pode:
 
 - Acessar o sistema.
-- Ver o valor total de despesas do mes atual.
+- Ver o valor total de despesas do mês atual.
 - Ver totais estimados dos proximos meses.
-- Ver relatorio por DR/categoria.
+- Ver relatório por DR/categoria.
 - Acessar e usar listas de compras.
 - Visualizar fornecedores e clientes.
 
-Nao pode:
+Não pode:
 
 - Lancar despesa.
 - Lancar credito.
@@ -30,38 +30,38 @@ Nao pode:
 
 ## Editor
 
-Pode fazer tudo que o Visualizador faz e tambem:
+Pode fazer tudo que o Visualizador faz e também:
 
 - Lancar debitos.
 - Lancar creditos.
 - Visualizar despesas individuais.
 - Visualizar creditos separadamente e seus totalizadores.
 - Confirmar pagamento de despesas.
-- Visualizar relatorio mensal.
-- Visualizar relatorio anual.
-- Visualizar relatorio por periodo.
+- Visualizar relatório mensal.
+- Visualizar relatório anual.
+- Visualizar relatório por período.
 - Acessar e usar listas de compras.
 - Criar, editar, desativar e reativar fornecedores e clientes.
 
 ## Administrador
 
-Pode fazer tudo que Editor e Visualizador fazem e tambem:
+Pode fazer tudo que Editor e Visualizador fazem e também:
 
-- Criar usuarios.
-- Editar usuarios.
-- Bloquear usuarios.
-- Excluir usuarios. Nesta fase, por seguranca e auditoria, a exclusao foi implementada como bloqueio/desativacao.
-- Vincular usuario a perfil ou permissao especifica.
+- Criar usuários.
+- Editar usuários.
+- Bloquear usuários.
+- Excluir usuários. Nesta fase, por segurança e auditoria, a exclusão foi implementada como bloqueio/desativação.
+- Vincular usuário a perfil ou permissão especifica.
 - Acionar rotina de backup manualmente.
-- Habilitar ou desabilitar notificacao do Discord.
+- Habilitar ou desabilitar notificação do Discord.
 - Inserir ou alterar webhook do Discord.
 - Inserir, editar ou excluir URL da planilha.
 - Visualizar logs de auditoria pelo painel administrativo.
-- Gerenciar configuracoes do modulo de compras.
+- Gerenciar configurações do módulo de compras.
 
-Alteracoes de perfil ou permissao de usuario devem exigir confirmacao de senha do administrador.
+Alterações de perfil ou permissão de usuário devem exigir confirmação de senha do administrador.
 
-## Permissoes Tecnicas
+## Permissões Tecnicas
 
 - `view_dashboard`
 - `view_expense_totals`

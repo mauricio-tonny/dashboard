@@ -41,7 +41,7 @@ $schemaFile = dirname(__DIR__) . '/database/schema.sql';
 $schema = file_get_contents($schemaFile);
 
 if ($schema === false) {
-    fwrite(STDERR, "Nao foi possivel ler database/schema.sql.\n");
+    fwrite(STDERR, "Não foi possível ler database/schema.sql.\n");
     exit(1);
 }
 
@@ -93,6 +93,37 @@ try {
         updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )');
     $pdo->exec('INSERT IGNORE INTO discord_notification_settings (id) VALUES (1)');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS scheduled_tasks (
+        code VARCHAR(120) PRIMARY KEY,
+        name VARCHAR(160) NOT NULL,
+        interval_minutes INT UNSIGNED NOT NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        last_run_at DATETIME NULL,
+        next_run_at DATETIME NOT NULL,
+        locked_until DATETIME NULL,
+        lock_token CHAR(32) NULL,
+        consecutive_failures INT UNSIGNED NOT NULL DEFAULT 0,
+        last_status VARCHAR(30) NULL,
+        last_message VARCHAR(500) NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_scheduled_tasks_due (is_active, next_run_at),
+        INDEX idx_scheduled_tasks_lock (locked_until)
+    )');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS scheduled_task_runs (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        task_code VARCHAR(120) NOT NULL,
+        status VARCHAR(30) NOT NULL,
+        started_at DATETIME NOT NULL,
+        finished_at DATETIME NULL,
+        duration_ms INT UNSIGNED NULL,
+        message VARCHAR(500) NULL,
+        metadata JSON NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_scheduled_task_runs_task (task_code, started_at),
+        INDEX idx_scheduled_task_runs_status (status),
+        CONSTRAINT fk_scheduled_task_runs_task FOREIGN KEY (task_code) REFERENCES scheduled_tasks(code)
+    )');
     $pdo->exec("UPDATE contacts SET is_vendor = 1 WHERE type = 'vendor' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("UPDATE contacts SET is_client = 1 WHERE type = 'client' AND is_vendor = 0 AND is_client = 0");
 
@@ -197,9 +228,9 @@ try {
 
     echo "Banco preparado com sucesso.\n";
     echo "Tabelas encontradas: " . implode(', ', $tables) . "\n";
-    echo "Permissoes cadastradas: {$permissionCount}\n";
-    echo "Vinculos perfil/permissao: {$rolePermissionCount}\n";
-    echo "Logs removidos por retencao ({$auditRetentionDays} dias): {$pruneStatement->rowCount()}\n";
+    echo "Permissões cadastradas: {$permissionCount}\n";
+    echo "Vinculos perfil/permissão: {$rolePermissionCount}\n";
+    echo "Logs removidos por retenção ({$auditRetentionDays} dias): {$pruneStatement->rowCount()}\n";
 } catch (Throwable $exception) {
     fwrite(STDERR, "Erro ao preparar banco: {$exception->getMessage()}\n");
     exit(1);

@@ -30,13 +30,13 @@ final class MarketInvoicePdfParser
     private function extractText(string $file): string
     {
         if (!is_file($file)) {
-            throw new RuntimeException('PDF nao encontrado.');
+            throw new RuntimeException('PDF não encontrado.');
         }
 
         $output = tempnam(sys_get_temp_dir(), 'market_pdf_');
 
         if ($output === false) {
-            throw new RuntimeException('Nao foi possivel criar arquivo temporario para leitura do PDF.');
+            throw new RuntimeException('Não foi possível criar arquivo temporário para leitura do PDF.');
         }
 
         $command = 'pdftotext -layout -enc UTF-8 ' . escapeshellarg($file) . ' ' . escapeshellarg($output) . ' 2>&1';
@@ -44,14 +44,14 @@ final class MarketInvoicePdfParser
 
         if ($code !== 0 || !is_file($output)) {
             @unlink($output);
-            throw new RuntimeException('Nao foi possivel ler o PDF com pdftotext.');
+            throw new RuntimeException('Não foi possível ler o PDF com pdftotext.');
         }
 
         $text = file_get_contents($output);
         @unlink($output);
 
         if ($text === false || trim($text) === '') {
-            throw new RuntimeException('PDF sem texto extraivel.');
+            throw new RuntimeException('PDF sem texto extraível.');
         }
 
         return str_replace("\r\n", "\n", $text);

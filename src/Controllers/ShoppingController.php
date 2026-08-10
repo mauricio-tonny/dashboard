@@ -104,12 +104,12 @@ final class ShoppingController extends Controller
 
     public function home(Request $request): Response
     {
-        return $this->wishPage('home', 'Para casa', 'Comodo', 'room_id', 'rooms', true);
+        return $this->wishPage('home', 'Para casa', 'Cômodo', 'room_id', 'rooms', true);
     }
 
     public function family(Request $request): Response
     {
-        return $this->wishPage('family', 'Para a familia', 'Para quem', 'person_id', 'people');
+        return $this->wishPage('family', 'Para a família', 'Para quem', 'person_id', 'people');
     }
 
     public function vehicle(Request $request): Response
@@ -126,9 +126,9 @@ final class ShoppingController extends Controller
             'user' => $auth->user(),
             'success' => $this->app->make(Session::class)->pullFlash('success'),
             'error' => $this->app->make(Session::class)->pullFlash('error'),
-            'title' => 'Para o veiculo',
+            'title' => 'Para o veículo',
             'type' => 'vehicle',
-            'optionLabel' => 'Para qual veiculo',
+            'optionLabel' => 'Para qual veículo',
             'optionField' => 'vehicle_id',
             'options' => $repository->vehicles(true),
             'items' => $repository->wishItems('vehicle'),
@@ -169,12 +169,12 @@ final class ShoppingController extends Controller
         $data = $this->marketItemPayload($request);
 
         if ($this->marketListIsFinished($listId)) {
-            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            $this->flash('error', 'Esta lista já foi finalizada. Somente um administrador pode reabrir antes de alterar.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
         if ($listId <= 0 || $data === null) {
-            $this->flash('error', 'Informe nome, sessao e quantidade.');
+            $this->flash('error', 'Informe nome, sessão e quantidade.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -198,7 +198,7 @@ final class ShoppingController extends Controller
         $data = $this->marketItemPayload($request);
 
         if ($this->marketListIsFinished($listId)) {
-            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            $this->flash('error', 'Esta lista já foi finalizada. Somente um administrador pode reabrir antes de alterar.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -222,7 +222,7 @@ final class ShoppingController extends Controller
         $listId = (int) $request->input('list_id');
 
         if ($this->marketListIsFinished($listId)) {
-            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            $this->flash('error', 'Esta lista já foi finalizada. Somente um administrador pode reabrir antes de alterar.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -245,7 +245,7 @@ final class ShoppingController extends Controller
         $listId = (int) $request->input('list_id');
 
         if ($this->marketListIsFinished($listId)) {
-            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de alterar.');
+            $this->flash('error', 'Esta lista já foi finalizada. Somente um administrador pode reabrir antes de alterar.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -267,7 +267,7 @@ final class ShoppingController extends Controller
         $purchaseDate = trim((string) $request->input('purchase_date'));
 
         if ($this->marketListIsFinished($id)) {
-            $this->flash('error', 'Esta lista ja esta finalizada.');
+            $this->flash('error', 'Esta lista já está finalizada.');
             return Response::redirect('/shopping/market?market_list_id=' . $id);
         }
 
@@ -281,7 +281,7 @@ final class ShoppingController extends Controller
         $amount = $this->money((string) $request->input('total_amount'));
 
         if ($repository->marketItemsCount($id) === 0) {
-            $this->flash('error', 'Nao e possivel finalizar uma lista de mercado sem itens.');
+            $this->flash('error', 'Não é possível finalizar uma lista de mercado sem itens.');
             return Response::redirect('/shopping/market?market_list_id=' . $id);
         }
 
@@ -360,7 +360,7 @@ final class ShoppingController extends Controller
             'invoices' => $summary['invoices'],
             'files' => count($summary['files']),
         ]);
-        $this->flash('success', 'Lista de mercado excluida com itens e notas vinculadas.');
+        $this->flash('success', 'Lista de mercado excluída com itens e notas vinculadas.');
 
         return Response::redirect('/shopping/market');
     }
@@ -377,7 +377,7 @@ final class ShoppingController extends Controller
         $file = $_FILES['invoice'] ?? null;
 
         if ($this->marketListIsFinished($listId)) {
-            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de anexar notas.');
+            $this->flash('error', 'Esta lista já foi finalizada. Somente um administrador pode reabrir antes de anexar notas.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -391,7 +391,7 @@ final class ShoppingController extends Controller
         $allowedExtensions = ['pdf', 'xml', 'jpg', 'jpeg', 'png'];
 
         if (!in_array($extension, $allowedExtensions, true) || (int) $file['size'] > 5 * 1024 * 1024) {
-            $this->flash('error', 'Arquivo invalido. Use PDF, XML, JPG ou PNG com ate 5MB.');
+            $this->flash('error', 'Arquivo inválido. Use PDF, XML, JPG ou PNG com até 5MB.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -404,7 +404,7 @@ final class ShoppingController extends Controller
         @chmod($directory, 0775);
 
         if (!is_writable($directory)) {
-            $this->flash('error', 'A pasta de notas nao esta gravavel pelo servidor.');
+            $this->flash('error', 'A pasta de notas não está gravável pelo servidor.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -412,7 +412,7 @@ final class ShoppingController extends Controller
         $target = $directory . '/' . $storedName;
 
         if (!move_uploaded_file((string) $file['tmp_name'], $target)) {
-            $this->flash('error', 'Nao foi possivel salvar o arquivo enviado.');
+            $this->flash('error', 'Não foi possível salvar o arquivo enviado.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -455,7 +455,7 @@ final class ShoppingController extends Controller
                     'source' => $extension,
                     'error' => $exception->getMessage(),
                 ]);
-                $this->flash('error', 'Nota anexada, mas nao foi possivel importar o ' . mb_strtoupper($extension) . ': ' . $exception->getMessage());
+                $this->flash('error', 'Nota anexada, mas não foi possível importar o ' . mb_strtoupper($extension) . ': ' . $exception->getMessage());
             }
 
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
@@ -477,13 +477,13 @@ final class ShoppingController extends Controller
         $id = (int) $request->input('id');
 
         if ($id <= 0) {
-            return new Response('Arquivo nao encontrado.', 404);
+            return new Response('Arquivo não encontrado.', 404);
         }
 
         $invoice = $this->app->make(ShoppingRepository::class)->marketInvoice($id);
 
         if ($invoice === null || ($invoice['source_type'] ?? 'file') !== 'file') {
-            return new Response('Arquivo nao encontrado.', 404);
+            return new Response('Arquivo não encontrado.', 404);
         }
 
         $storedName = trim((string) ($invoice['stored_name'] ?? ''));
@@ -520,7 +520,7 @@ final class ShoppingController extends Controller
         $listId = (int) $request->input('list_id');
 
         if ($this->marketListIsFinished($listId)) {
-            $this->flash('error', 'Esta lista ja foi finalizada. Somente um administrador pode reabrir antes de anexar notas.');
+            $this->flash('error', 'Esta lista já foi finalizada. Somente um administrador pode reabrir antes de anexar notas.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 
@@ -533,7 +533,7 @@ final class ShoppingController extends Controller
             $data = (new AccessKeyParser())->parse((string) $request->input('access_key'));
             $id = $this->app->make(ShoppingRepository::class)->addMarketInvoiceAccessKey($listId, $data, $auth->user()?->id);
             $this->audit('shopping_market_invoice_access_key_saved', 'shopping_market_invoice', $id, $data);
-            $this->flash('success', 'Chave de acesso salva. Use o link de consulta publica para conferir a NFC-e; o XML completo depende de disponibilizacao do emissor ou certificado digital.');
+            $this->flash('success', 'Chave de acesso salva. Use o link de consulta pública para conferir a NFC-e; o XML completo depende de disponibilização do emissor ou certificado digital.');
         } catch (\Throwable $exception) {
             $this->flash('error', $exception->getMessage());
         }
@@ -598,7 +598,7 @@ final class ShoppingController extends Controller
         $purchasedAt = trim((string) $request->input('purchased_at'));
 
         if ($purchased && $type === 'vehicle' && $purchasedAt === '') {
-            $this->flash('error', 'Informe a data da compra para baixar o item do veiculo.');
+            $this->flash('error', 'Informe a data da compra para baixar o item do veículo.');
             return Response::redirect($this->wishRedirect($type));
         }
 

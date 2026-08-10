@@ -15,7 +15,7 @@ final class App
     public function make(string $abstract): mixed
     {
         if (!array_key_exists($abstract, $this->container)) {
-            throw new RuntimeException("Dependencia {$abstract} nao encontrada.");
+            throw new RuntimeException("Dependencia {$abstract} não encontrada.");
         }
 
         return $this->container[$abstract];

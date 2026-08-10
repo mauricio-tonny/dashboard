@@ -16,7 +16,7 @@ ob_start();
     <div class="placeholder-illustration">
         <span class="bi bi-tools"></span>
         <strong>Em desenho funcional</strong>
-        <small>Esta area ja esta posicionada no menu para manter a UX organizada enquanto definimos as regras.</small>
+        <small>Esta area já está posicionada no menu para manter a UX organizada enquanto definimos as regras.</small>
     </div>
 </section>
 <?php

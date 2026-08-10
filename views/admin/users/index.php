@@ -1,5 +1,5 @@
 <?php
-$title = 'Usuarios';
+$title = 'Usuários';
 $renderUserForm = static function (array $roles, ?array $managedUser = null): void {
     $isEdit = $managedUser !== null;
     $action = $isEdit ? '/admin/users/update' : '/admin/users';
@@ -27,7 +27,7 @@ $renderUserForm = static function (array $roles, ?array $managedUser = null): vo
             </select>
         </label>
         <label>
-            <?= $isEdit ? 'Nova senha opcional' : 'Senha temporaria' ?>
+            <?= $isEdit ? 'Nova senha opcional' : 'Senha temporária' ?>
             <input type="password" name="password" <?= $isEdit ? 'placeholder="Deixe vazio para manter"' : 'required' ?>>
         </label>
         <label>
@@ -38,7 +38,7 @@ $renderUserForm = static function (array $roles, ?array $managedUser = null): vo
             <button type="button" class="inline-button button-light" data-bs-dismiss="modal">Cancelar</button>
             <button type="submit">
                 <span class="bi <?= $isEdit ? 'bi-check2-circle' : 'bi-person-plus' ?>"></span>
-                <?= $isEdit ? 'Salvar alteracoes' : 'Criar usuario' ?>
+                <?= $isEdit ? 'Salvar alterações' : 'Criar usuário' ?>
             </button>
         </div>
     </form>
@@ -51,14 +51,14 @@ ob_start();
         <span class="page-hero-icon bi bi-people"></span>
         <div>
             <span class="badge">Administrador</span>
-            <h1>Usuarios do sistema</h1>
-            <p class="muted">Consulte usuarios e abra criacao ou edicao em modal para reduzir ruido visual.</p>
+            <h1>Usuários do sistema</h1>
+            <p class="muted">Consulte usuários e abra criação ou edição em modal para reduzir ruído visual.</p>
         </div>
     </div>
 
     <div class="page-hero-actions">
         <button class="inline-button" type="button" data-bs-toggle="modal" data-bs-target="#createUserModal">
-            <span class="bi bi-person-plus"></span>Criar usuario
+            <span class="bi bi-person-plus"></span>Criar usuário
         </button>
         <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
             <a href="/admin/audit-logs"><button class="inline-button" type="button">Logs de auditoria</button></a>
@@ -75,16 +75,16 @@ ob_start();
 <?php endif; ?>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-person-badge"></span>Usuarios cadastrados</h2>
+    <h2 class="section-title"><span class="bi bi-person-badge"></span>Usuários cadastrados</h2>
     <div class="responsive-table">
         <table>
             <thead>
                 <tr>
-                    <th>Usuario</th>
+                    <th>Usuário</th>
                     <th>Perfil</th>
                     <th>Status</th>
                     <th>Ultimo login</th>
-                    <th>Acoes</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -123,7 +123,7 @@ ob_start();
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title h5"><span class="bi bi-person-plus"></span>Criar usuario</h2>
+                <h2 class="modal-title h5"><span class="bi bi-person-plus"></span>Criar usuário</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
@@ -155,7 +155,7 @@ ob_start();
                     <div class="modal-header">
                         <h2 class="modal-title h5">
                             <span class="bi <?= ((int) $managedUser['is_active']) === 1 ? 'bi-lock' : 'bi-unlock' ?>"></span>
-                            <?= ((int) $managedUser['is_active']) === 1 ? 'Bloquear usuario' : 'Desbloquear usuario' ?>
+                            <?= ((int) $managedUser['is_active']) === 1 ? 'Bloquear usuário' : 'Desbloquear usuário' ?>
                         </h2>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                     </div>

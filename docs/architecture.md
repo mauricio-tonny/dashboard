@@ -16,38 +16,38 @@ Usar a planilha como origem inicial dos dados, importar o conteudo para MariaDB 
 ## Fluxo Principal
 
 1. O sistema baixa a planilha a partir de um link compartilhado.
-2. O importador salva uma copia temporaria.
+2. O importador salva uma copia temporária.
 3. O parser le a aba `BASE`.
 4. O parser percorre as abas mensais validas.
 5. Os dados sao normalizados e gravados no banco com `upsert`.
 6. O dashboard consulta apenas o banco.
-7. Um `cron` executa sincronizacoes periodicas.
+7. Um `cron` executa sincronizacoes periódicas.
 
 ## Fases do Projeto
 
 ### Fase 1
 
-- Estrutura inicial da aplicacao.
-- Autenticacao e papeis.
+- Estrutura inicial da aplicação.
+- Autenticação e papeis.
 - Banco preparado.
-- Importacao em modo leitura.
+- Importação em modo leitura.
 
 ### Fase 2
 
 - Dashboard inicial.
-- Relatorios mensais.
-- Contas previstas para o proximo mes.
+- Relatórios mensais.
+- Contas previstas para o próximo mês.
 
 ### Fase 3
 
-- Cadastro de novos lancamentos pelo sistema.
+- Cadastro de novos lançamentos pelo sistema.
 - Auditoria detalhada.
-- Sincronizacao mais inteligente.
+- Sincronização mais inteligente.
 
 ### Fase 4
 
 - Banco como fonte principal.
-- Planilha usada apenas como legado, validacao ou backup.
+- Planilha usada apenas como legado, validação ou backup.
 
 ## Modelagem Conceitual
 
@@ -55,30 +55,30 @@ Usar a planilha como origem inicial dos dados, importar o conteudo para MariaDB 
 - `roles`: perfis de acesso.
 - `vendors`: fornecedores.
 - `categories`: categorias financeiras.
-- `entries`: lancamentos financeiros consolidados.
+- `entries`: lançamentos financeiros consolidados.
 - `entry_sources`: rastreio da origem de cada registro importado.
-- `import_runs`: execucoes de sincronizacao.
-- `audit_logs`: alteracoes sensiveis dentro do sistema.
+- `import_runs`: execuções de sincronização.
+- `audit_logs`: alterações sensíveis dentro do sistema.
 
 ## Regras Importantes
 
 - Nunca consultar a planilha diretamente para montar telas.
 - Toda consulta de dashboard deve sair do banco.
-- Toda importacao precisa gerar log de execucao.
+- Toda importação precisa gerar log de execução.
 - Toda escrita manual no sistema deve ser auditada.
-- O parser precisa ignorar abas anuais de relatorio no inicio.
+- O parser precisa ignorar abas anuais de relatório no inicio.
 
-## Seguranca
+## Segurança
 
-- Nao publicar a planilha em area publica do servidor.
+- Não publicar a planilha em área pública do servidor.
 - Validar MIME, tamanho e extensao do arquivo importado.
-- Limitar usuarios por papel.
-- Proteger sessoes e credenciais via variaveis de ambiente.
-- Usar `robots.txt` e cabecalhos `X-Robots-Tag`, lembrando que isso nao substitui autenticacao.
+- Limitar usuários por papel.
+- Proteger sessoes e credenciais via variáveis de ambiente.
+- Usar `robots.txt` e cabeçalhos `X-Robots-Tag`, lembrando que isso não substitui autenticação.
 
 ## Sobre o Visual
 
-Vamos trabalhar com Bootstrap e um tema baseado em variaveis CSS inspirado na Oficina do DEV:
+Vamos trabalhar com Bootstrap e um tema baseado em variáveis CSS inspirado na Oficina do DEV:
 
 - base clara para leitura de dashboard
 - preto/azul muito escuro para identidade tecnica

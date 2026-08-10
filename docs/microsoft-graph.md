@@ -1,14 +1,14 @@
-# Integracao com Microsoft Graph
+# Integração com Microsoft Graph
 
 ## Objetivo
 
-Usar o Microsoft Graph para acessar com seguranca a planilha financeira hospedada no OneDrive, evitando dependencia de link publico compartilhado.
+Usar o Microsoft Graph para acessar com segurança a planilha financeira hospedada no OneDrive, evitando dependencia de link publico compartilhado.
 
 ## Estrategia Recomendada
 
-1. Registrar uma aplicacao no portal Azure.
-2. Configurar autenticacao OAuth 2.0.
-3. Autorizar a aplicacao a acessar apenas o drive e o arquivo necessarios.
+1. Registrar uma aplicação no portal Azure.
+2. Configurar autenticação OAuth 2.0.
+3. Autorizar a aplicação a acessar apenas o drive e o arquivo necessarios.
 4. Buscar o arquivo Excel no OneDrive pelo `driveId` e `itemId`.
 5. Baixar o `.xlsx` temporariamente para processamento com PHP.
 6. Processar a aba `BASE` e as abas mensais.
@@ -24,8 +24,8 @@ Usar o Microsoft Graph para acessar com seguranca a planilha financeira hospedad
 ## Modelagem Inicial das Abas
 
 - `BASE`: cadastro de fornecedores, categorias, indicadores e listas auxiliares.
-- Abas mensais: principal fonte de lancamentos.
-- Abas anuais de relatorio: inicialmente ignoradas pelo parser principal.
+- Abas mensais: principal fonte de lançamentos.
+- Abas anuais de relatório: inicialmente ignoradas pelo parser principal.
 
 ## Regras do Parser
 
@@ -37,32 +37,32 @@ Usar o Microsoft Graph para acessar com seguranca a planilha financeira hospedad
 
 ### Abas mensais
 
-- Detectar pelo padrao de nomenclatura adotado por voce.
-- Mapear colunas para um formato unico de lancamento.
+- Detectar pelo padrão de nomenclatura adotado por você.
+- Mapear colunas para um formato único de lancamento.
 - Diferenciar valores previstos, pagos, receitas e despesas conforme seu modelo real.
 
 ## Escrita Segura
 
-Nao recomendo escrita imediata direto no arquivo remoto sem esses controles:
+Não recomendo escrita imediata direto no arquivo remoto sem esses controles:
 
-- Backup antes de cada alteracao.
+- Backup antes de cada alteração.
 - Registro de quem alterou, quando alterou e o que alterou.
-- Validacao para impedir gravacao em abas fora do padrao.
-- Controle para evitar conflito com edicao manual simultanea.
+- Validação para impedir gravação em abas fora do padrão.
+- Controle para evitar conflito com edição manual simultanea.
 
 ## Sequencia de Implementacao
 
-1. Integracao com login Microsoft e obtenção de token.
+1. Integração com login Microsoft e obtenção de token.
 2. Leitura do arquivo no OneDrive.
-3. Download temporario do `.xlsx`.
+3. Download temporário do `.xlsx`.
 4. Parser da aba `BASE`.
 5. Parser de uma aba mensal piloto.
 6. Dashboard somente leitura.
-7. Escrita controlada de novos lancamentos.
+7. Escrita controlada de novos lançamentos.
 
 ## Dados que Precisaremos Confirmar
 
-- Padrao exato do nome das abas mensais.
+- Padrão exato do nome das abas mensais.
 - Nome e ordem das colunas em uma aba mensal.
 - Estrutura da aba `BASE`.
-- Se existem formulas que nao podem ser quebradas ao regravar o arquivo.
+- Se existem fórmulas que não podem ser quebradas ao regravar o arquivo.

@@ -49,7 +49,7 @@ final class ReportController extends Controller
 
         return Response::view('reports/index', [
             'user' => $auth->user(),
-            'title' => 'Relatorios',
+            'title' => 'Relatórios',
             'startDate' => $startDate,
             'endDate' => $endDate,
             'marketRows' => $marketRows,

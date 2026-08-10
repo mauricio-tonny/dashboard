@@ -5,7 +5,7 @@
 - Mantidos os arquivos PDF/XML das notas importadas apos processamento bem-sucedido.
 - Adicionada rota segura para download dos arquivos de notas anexadas.
 - Adicionado botao de download na lista de NFC-e/NF-e anexadas quando houver arquivo fisico disponivel.
-- Atualizada a documentacao do modulo de compras para refletir a preservacao dos arquivos importados.
+- Atualizada a documentacao do módulo de compras para refletir a preservacao dos arquivos importados.
 
 **Proximas Implementacoes:**
 - Focar na integracao com a planilha compartilhada.
