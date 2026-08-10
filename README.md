@@ -1,32 +1,32 @@
 # Dashboard Financeiro Pessoal
 
-Aplicação PHP 8.3 para registrar movimentacoes financeiras, importar dados de uma planilha Excel hospedada no OneDrive e gerar relatórios, graficos e estimativas com base no histórico auditado desde 2015.
+Aplicação PHP 8.3 para registrar movimentações financeiras, importar dados de uma planilha Excel e gerar relatórios, gráficos e estimativas com base no histórico auditado desde 2015.
 
 ## Objetivos
 
 - Autenticação com login e senha.
 - Controle de acesso por perfil.
 - Inclusão e edição de lançamentos no mês atual e meses futuros.
-- Leitura da planilha Excel como fonte de dados principal.
+- Leitura da planilha Excel como fonte de dados principal durante a fase de migração.
 - Relatórios, indicadores e estimativas financeiras.
-- Base segura para uso domestico e portfolio.
+- Base segura para uso doméstico e portfólio.
 
 ## Arquitetura Inicial
 
 - `public/`: ponto de entrada HTTP.
 - `src/Core`: infraestrutura básica como roteamento, sessão, resposta e autenticação.
 - `src/Controllers`: controladores web.
-- `src/Domain`: regras de negocio.
+- `src/Domain`: regras de negócio.
 - `src/Infrastructure`: acesso a dados, incluindo adaptadores para Excel.
-- `src/Support`: funcoes utilitarias.
-- `database/`: schema inicial MariaDB e futuras migracoes.
-- `storage/`: arquivos de aplicação, logs e dados locais.
+- `src/Support`: funções utilitárias.
+- `database/`: schema MariaDB e futuras migrações.
+- `storage/`: arquivos da aplicação, logs e dados locais.
 
 ## Perfis de Acesso
 
 - `admin`: gerencia usuários, configurações e acesso total.
 - `editor`: pode inserir e editar lançamentos autorizados.
-- `viewer`: apenas consulta painéis, relatórios e previsoes.
+- `viewer`: apenas consulta painéis, relatórios e previsões.
 
 ## Segurança Planejada
 
@@ -35,31 +35,25 @@ Aplicação PHP 8.3 para registrar movimentacoes financeiras, importar dados de 
 - Middleware de autenticação e autorização.
 - Validação centralizada de entrada.
 - Configuração fora do código via variáveis de ambiente.
-- Planilha armazenada fora do diretorio publico.
+- Planilha armazenada fora do diretório público.
 - Logs de auditoria para alterações sensíveis.
 
 ## Integração com Excel e Banco
 
-A estrategia principal passa a ser uma arquitetura hibrida:
+A estratégia principal é uma arquitetura híbrida:
 
-1. Ler a planilha compartilhada no OneDrive.
+1. Obter a planilha por arquivo local controlado ou link compartilhado configurado no servidor.
 2. Importar os dados para MariaDB.
 3. Usar o banco como fonte principal do dashboard.
-4. Manter uma rotina de sincronização via `cron`.
+4. Manter rotinas de sincronização pelo scheduler interno acionado por um único CRON.
 
-A base inicial já separa a aplicação por interfaces para permitir três etapas:
-
-1. Captura do arquivo compartilhado.
-2. Processamento do `.xlsx`.
-3. Persistencia relacional para consultas, auditoria e evolucao futura.
-
-Para producao, a melhor opção tende a ser:
+Para produção, a melhor opção tende a ser:
 
 - Banco MariaDB isolado da camada web.
-- Importacoes controladas, com trilha de auditoria e logs de sincronização.
-- Backups automaticos da planilha e do banco.
+- Importações controladas, com trilha de auditoria e logs de sincronização.
+- Backups automáticos da planilha e do banco.
 - Sessão, autenticação e autorização tratadas na aplicação.
-- Evolucao gradual até o banco virar a fonte principal.
+- Evolução gradual até o banco virar a fonte principal.
 
 ## Rodando Localmente
 
@@ -85,26 +79,45 @@ Para criar ou atualizar um usuário:
 php bin/create_user.php --name="Nome" --email=email@dominio.com --role=viewer --password="senha-temporária"
 ```
 
-## Proximos Passos Recomendados
+## Configurando o CRON
+
+Em ambiente de produção ou migração de servidor, configure apenas um CRON do sistema operacional para acionar o scheduler interno:
+
+```bash
+* * * * * cd /var/www/dashboard.oficinadodev.com.br/html && php bin/schedule_run.php >> storage/logs/scheduler.log 2>&1
+```
+
+Esse comando roda a cada minuto, mas cada rotina decide internamente quando deve executar, respeitando frequência, lock e status no banco.
+
+Após configurar ou migrar o servidor, valide com:
+
+```bash
+php bin/schedule_run.php
+tail -n 50 storage/logs/scheduler.log
+```
+
+Detalhes completos: [docs/scheduler.md](docs/scheduler.md).
+
+## Próximos Passos Recomendados
 
 1. Definir o layout exato da planilha atual.
-2. Escolher se a escrita será direta no `.xlsx` ou via sincronização.
+2. Escolher o fluxo de sincronização da planilha: arquivo local controlado, upload manual ou link compartilhado.
 3. Adicionar `composer`, cliente HTTP e `phpoffice/phpspreadsheet`.
 4. Criar o importador da planilha compartilhada.
 5. Criar o parser da aba `BASE` e das abas mensais.
-6. Implementar persistencia real em MariaDB.
-7. Implementar sincronização por `cron`.
+6. Implementar persistência real em MariaDB.
+7. Criar tasks do scheduler para leitura e envio de dados da planilha.
 8. Criar o primeiro dashboard com resumo mensal, contas a pagar e previsão do próximo mês.
 
-## Documentacao de Integração
+## Documentação de Integração
 
-- Visao geral da arquitetura hibrida: [docs/architecture.md](D:/GITHUB/mauricio-tonny/dashboard/docs/architecture.md)
-- Fluxo previsto para OneDrive e Microsoft Graph: [docs/microsoft-graph.md](D:/GITHUB/mauricio-tonny/dashboard/docs/microsoft-graph.md)
-- Configuração sugerida do NGINX: [docs/nginx.md](D:/GITHUB/mauricio-tonny/dashboard/docs/nginx.md)
-- Matriz de perfis e permissões: [docs/permissions.md](D:/GITHUB/mauricio-tonny/dashboard/docs/permissions.md)
-- Logs de auditoria: [docs/audit-logs.md](D:/GITHUB/mauricio-tonny/dashboard/docs/audit-logs.md)
-- Gestao de usuários: [docs/admin-users.md](D:/GITHUB/mauricio-tonny/dashboard/docs/admin-users.md)
-- Módulo de compras: [docs/shopping.md](D:/GITHUB/mauricio-tonny/dashboard/docs/shopping.md)
-- Scheduler e CRON único: [docs/scheduler.md](D:/GITHUB/mauricio-tonny/dashboard/docs/scheduler.md)
-- Interface e navegacao: [docs/interface-navigation.md](D:/GITHUB/mauricio-tonny/dashboard/docs/interface-navigation.md)
-- Schema inicial do banco: [database/schema.sql](D:/GITHUB/mauricio-tonny/dashboard/database/schema.sql)
+- Visão geral da arquitetura híbrida: [docs/architecture.md](docs/architecture.md)
+- Estratégia de integração com a planilha: [docs/spreadsheet-integration.md](docs/spreadsheet-integration.md)
+- Configuração sugerida do NGINX: [docs/nginx.md](docs/nginx.md)
+- Matriz de perfis e permissões: [docs/permissions.md](docs/permissions.md)
+- Logs de auditoria: [docs/audit-logs.md](docs/audit-logs.md)
+- Gestão de usuários: [docs/admin-users.md](docs/admin-users.md)
+- Módulo de compras: [docs/shopping.md](docs/shopping.md)
+- Scheduler e CRON único: [docs/scheduler.md](docs/scheduler.md)
+- Interface e navegação: [docs/interface-navigation.md](docs/interface-navigation.md)
+- Schema inicial do banco: [database/schema.sql](database/schema.sql)
