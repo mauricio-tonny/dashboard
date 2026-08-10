@@ -22,10 +22,23 @@ Para o cenário atual, a prioridade é uma integração mais simples e portátil
 
 ## Variáveis Envolvidas
 
+- `APP_KEY`: chave usada para criptografar o link salvo no banco.
 - `EXCEL_FILE`: caminho local da planilha no servidor.
 - `SHARED_EXCEL_URL`: link compartilhado para baixar a planilha, quando essa estratégia for usada.
 - `IMPORT_TEMP_DIR`: diretório temporário usado durante a importação.
 - `IMPORT_TIMEZONE`: fuso usado para datas de importação e logs.
+
+## Configuração no Painel
+
+A tela `/system/spreadsheet` permite salvar o link compartilhado da planilha. O valor é criptografado antes de ser persistido no banco e aparece apenas mascarado na interface.
+
+Antes de salvar o link, configure `APP_KEY` no `.env`:
+
+```bash
+php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+```
+
+O link salvo deve ter permissão de leitura. Para a primeira fase, o sistema apenas valida acesso e prepara o caminho para importação, sem alterar a planilha original.
 
 ## Regras do Parser
 

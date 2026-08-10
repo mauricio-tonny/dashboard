@@ -46,11 +46,6 @@ final class NavigationPageController extends Controller
         return $this->placeholder('Discord', 'Sistema', 'Área reservada para habilitar notificações e cadastrar webhook.', Permission::MANAGE_DISCORD_NOTIFICATIONS);
     }
 
-    public function systemSpreadsheet(Request $request): Response
-    {
-        return $this->placeholder('Gerenciar planilha', 'Sistema', 'Área reservada para cadastrar, editar ou remover a URL da planilha.', Permission::MANAGE_SPREADSHEET_URL);
-    }
-
     private function placeholder(string $title, string $section, string $description, Permission $permission): Response
     {
         $auth = $this->app->make(AuthService::class);

@@ -73,6 +73,14 @@ Depois de preencher o `.env` no servidor:
 php bin/install_database.php
 ```
 
+Para gerar a chave usada na criptografia de segredos, como o link da planilha:
+
+```bash
+php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+```
+
+Salve o valor gerado em `APP_KEY` no `.env`.
+
 Para criar ou atualizar um usuário:
 
 ```bash

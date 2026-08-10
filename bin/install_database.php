@@ -93,6 +93,14 @@ try {
         updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )');
     $pdo->exec('INSERT IGNORE INTO discord_notification_settings (id) VALUES (1)');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS spreadsheet_settings (
+        id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+        encrypted_url TEXT NULL,
+        url_hash CHAR(64) NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )');
+    $pdo->exec('INSERT IGNORE INTO spreadsheet_settings (id) VALUES (1)');
     $pdo->exec('CREATE TABLE IF NOT EXISTS scheduled_tasks (
         code VARCHAR(120) PRIMARY KEY,
         name VARCHAR(160) NOT NULL,

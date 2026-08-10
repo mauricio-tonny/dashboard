@@ -13,6 +13,7 @@ use App\Controllers\NavigationPageController;
 use App\Controllers\ReportController;
 use App\Controllers\ShoppingController;
 use App\Controllers\System\DiscordController;
+use App\Controllers\System\SpreadsheetController;
 use App\Core\App;
 use App\Core\Database;
 use App\Core\Request;
@@ -27,6 +28,8 @@ use App\Domain\Finance\FinanceService;
 use App\Domain\Shopping\ShoppingRepository;
 use App\Domain\System\DiscordNotificationRepository;
 use App\Domain\System\DiscordNotifier;
+use App\Domain\System\SpreadsheetLinkTester;
+use App\Domain\System\SpreadsheetSettingsRepository;
 use App\Infrastructure\Auth\DatabaseUserRepository;
 use App\Infrastructure\Finance\ExcelFinanceRepository;
 use App\Support\Env;
@@ -62,6 +65,8 @@ $auditLogger = new AuditLogger($database);
 $shoppingRepository = new ShoppingRepository($database);
 $discordNotificationRepository = new DiscordNotificationRepository($database);
 $discordNotifier = new DiscordNotifier($discordNotificationRepository);
+$spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
+$spreadsheetLinkTester = new SpreadsheetLinkTester();
 $contactRepository = new ContactRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
@@ -79,6 +84,8 @@ $app = new App([
     ShoppingRepository::class => $shoppingRepository,
     DiscordNotificationRepository::class => $discordNotificationRepository,
     DiscordNotifier::class => $discordNotifier,
+    SpreadsheetSettingsRepository::class => $spreadsheetSettingsRepository,
+    SpreadsheetLinkTester::class => $spreadsheetLinkTester,
     ContactRepository::class => $contactRepository,
     FinanceService::class => $financeService,
 ]);
@@ -138,7 +145,10 @@ $router->get('/system/categories', [NavigationPageController::class, 'systemCate
 $router->get('/system/discord', [DiscordController::class, 'index']);
 $router->post('/system/discord', [DiscordController::class, 'save']);
 $router->post('/system/discord/test', [DiscordController::class, 'test']);
-$router->get('/system/spreadsheet', [NavigationPageController::class, 'systemSpreadsheet']);
+$router->get('/system/spreadsheet', [SpreadsheetController::class, 'index']);
+$router->post('/system/spreadsheet', [SpreadsheetController::class, 'save']);
+$router->post('/system/spreadsheet/test', [SpreadsheetController::class, 'test']);
+$router->post('/system/spreadsheet/remove', [SpreadsheetController::class, 'remove']);
 
 $router->get('/entries/create', [EntryController::class, 'create']);
 $router->post('/entries', [EntryController::class, 'store']);
