@@ -89,6 +89,11 @@ try {
     ensureColumn($pdo, 'shopping_market_items', 'amount', 'ALTER TABLE shopping_market_items ADD COLUMN amount DECIMAL(14,2) NULL AFTER unit_amount');
     ensureColumn($pdo, 'shopping_market_items', 'subtotal_amount', 'ALTER TABLE shopping_market_items ADD COLUMN subtotal_amount DECIMAL(14,2) NULL AFTER amount');
     ensureIndex($pdo, 'shopping_market_items', 'idx_market_items_section', 'CREATE INDEX idx_market_items_section ON shopping_market_items (section_id)');
+    ensureColumn($pdo, 'entries', 'modality', 'ALTER TABLE entries ADD COLUMN modality VARCHAR(40) NULL AFTER status');
+    ensureColumn($pdo, 'entries', 'legacy_reference', 'ALTER TABLE entries ADD COLUMN legacy_reference VARCHAR(120) NULL AFTER modality');
+    ensureColumn($pdo, 'entries', 'installment_current', 'ALTER TABLE entries ADD COLUMN installment_current SMALLINT UNSIGNED NULL AFTER legacy_reference');
+    ensureColumn($pdo, 'entries', 'installment_total', 'ALTER TABLE entries ADD COLUMN installment_total SMALLINT UNSIGNED NULL AFTER installment_current');
+    ensureColumn($pdo, 'entries', 'is_last_installment', 'ALTER TABLE entries ADD COLUMN is_last_installment TINYINT(1) NOT NULL DEFAULT 0 AFTER installment_total');
     $pdo->exec('CREATE TABLE IF NOT EXISTS discord_notification_settings (
         id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
         is_enabled TINYINT(1) NOT NULL DEFAULT 0,

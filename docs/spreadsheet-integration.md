@@ -118,6 +118,22 @@ php bin/analyze_spreadsheet_normalization.php
 
 Esse comando não grava no banco. Ele apenas resume fornecedores/categorias reconhecidos, pendências, parcelas detectadas e cores usadas historicamente para diferenciar cartões.
 
+## Importação Para o Banco
+
+O primeiro importador real deve ser executado inicialmente em modo diagnóstico:
+
+```bash
+php bin/import_spreadsheet.php --dry-run
+```
+
+Para gravar no banco:
+
+```bash
+php bin/import_spreadsheet.php --apply
+```
+
+A importação alimenta `vendors`, `categories`, `entries`, `entry_sources` e `import_runs`. Cada lançamento usa `source_key` no formato `spreadsheet:{aba}:row:{linha}` para evitar duplicidade e `source_hash` para detectar alterações futuras.
+
 ## Escrita Segura
 
 A escrita de volta na planilha só deve ser implementada com estes cuidados:
