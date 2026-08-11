@@ -110,6 +110,14 @@ Para inspecionar uma aba específica:
 php bin/inspect_spreadsheet.php --sheet="AGO- 23"
 ```
 
+Para analisar cruzamentos com a aba `BASE`, aliases, parcelas e pendências de normalização:
+
+```bash
+php bin/analyze_spreadsheet_normalization.php
+```
+
+Esse comando não grava no banco. Ele apenas resume fornecedores/categorias reconhecidos, pendências, parcelas detectadas e cores usadas historicamente para diferenciar cartões.
+
 ## Escrita Segura
 
 A escrita de volta na planilha só deve ser implementada com estes cuidados:
