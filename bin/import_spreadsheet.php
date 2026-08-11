@@ -385,6 +385,24 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
         return ['status' => 'rule', 'value' => 'MARCIO (PAI)', 'reason' => 'explicit_alias'];
     }
 
+    $vendorAliases = [
+        'CAIXA ECONOMICA' => ['C E F', 'C.E.F.'],
+        'CAIXA' => ['C E F', 'C.E.F.'],
+        'DEP CAIXA' => ['C E F', 'C.E.F.'],
+        'MAYCON' => ['MAYCON IRMAO', 'MAYCON (IRMÃO)'],
+        'BV FINANC' => ['BV FINANCEIRA', 'BV FINANCEIRA'],
+        'PREFEITURA' => ['PREF CP', 'PREF. CP'],
+        'PREFEITURA MUNICIP' => ['PREF CP', 'PREF. CP'],
+        'DETRAN' => ['DETRAN PR', 'DETRAN PR'],
+        'YOUSE' => ['YOUSE SEGURO', 'YOUSE (SEGURO)'],
+        'DORIVAL' => ['DORIVAL ACAD', 'DORIVAL ACAD.'],
+    ];
+
+    if (isset($vendorAliases[$normalized])) {
+        [$vendorKey, $fallback] = $vendorAliases[$normalized];
+        return ['status' => 'rule', 'value' => lookupBaseValue($base['vendors'], $vendorKey, $fallback), 'reason' => 'explicit_alias'];
+    }
+
     if (isCardVendor($rawVendor) && $reference < new DateTimeImmutable('2023-03-01')) {
         $period = cardPeriod($reference);
         $color = rowColor($worksheet, $row);
@@ -422,6 +440,11 @@ function normalizeCategory(string $rawCategory, string $description, array $base
         return ['status' => 'exact', 'value' => $base['categories'][$normalized], 'reason' => 'base'];
     }
 
+    $descriptionRule = normalizeCategoryByDescription($normalizedDescription, $base);
+    if ($descriptionRule !== null) {
+        return $descriptionRule;
+    }
+
     if (str_contains($normalizedDescription, 'BANCO ACORDO')) {
         return ['status' => 'rule', 'value' => lookupBaseValue($base['categories'], 'DESP EMPRESA', 'DESP. EMPRESA'), 'reason' => 'description_rule'];
     }
@@ -431,6 +454,37 @@ function normalizeCategory(string $rawCategory, string $description, array $base
     }
 
     return ['status' => 'pending', 'value' => $rawCategory, 'reason' => 'legacy_reference_or_no_match'];
+}
+
+function normalizeCategoryByDescription(string $normalizedDescription, array $base): ?array
+{
+    $rules = [
+        [['SUP CIDADE CANCAO', 'SUP CANCAO', 'BOX ATACADISTA'], 'MERCADO', 'MERCADO'],
+        [['SPOTIFY'], 'STREAMING', 'STREAMING'],
+        [['PADOKA', 'IFOOD', 'LANCHE'], 'ALIMENTACAO', 'ALIMENTAÇÃO'],
+        [['AUTO POSTO', 'GASOLINA', 'ETANOL', 'ALCOOL', 'COMBUSTIVEL'], 'COMBUSTIVEL', 'COMBUSTÍVEL'],
+        [['YOUSE SEGURO', 'SEGURO CARRO', 'SEGURO MOTO'], 'SEGURO VEICULAR', 'SEGURO VEICULAR'],
+        [['CLASSICS BARBEARIA', 'BARBEARIA'], 'CUIDADOS PESSOAIS', 'CUIDADOS PESSOAIS'],
+        [['FARMACIA', 'DENTISTA', 'SAUDE'], 'SAUDE', 'SAÚDE'],
+        [['CREDITO CELULAR', 'PLANO TIM', 'PLANO CLARO'], 'TELEFONIA', 'TELEFONIA'],
+        [['INTERNET BRASILNET', 'INTERNET VISAONET'], 'INTERNET', 'INTERNET'],
+        [['IPVA'], 'IPVA', 'IPVA'],
+        [['POS GRADUACAO', 'UNIFIL', 'FACULDADE', 'INGLES'], 'APRENDIZADO', 'APRENDIZADO'],
+        [['FIES'], 'FINANC ESTUDANTIL', 'FINANC. ESTUDANTIL'],
+        [['PREVIDENCIA', 'APOSENT'], 'APOSENTADORIA', 'APOSENTADORIA'],
+        [['ALUGUEL'], 'ALUGUEL', 'ALUGUEL'],
+        [['CARRO 48'], 'FINANC VEICULAR', 'FINANC. VEICULAR'],
+    ];
+
+    foreach ($rules as [$needles, $categoryKey, $fallback]) {
+        foreach ($needles as $needle) {
+            if (str_contains($normalizedDescription, $needle)) {
+                return ['status' => 'rule', 'value' => lookupBaseValue($base['categories'], $categoryKey, $fallback), 'reason' => 'description_rule'];
+            }
+        }
+    }
+
+    return null;
 }
 
 function lookupBaseValue(array $items, string $normalizedKey, string $fallback): string

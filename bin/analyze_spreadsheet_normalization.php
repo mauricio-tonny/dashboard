@@ -35,9 +35,12 @@ Env::load(dirname(__DIR__) . '/.env');
 $options = getopt('', [
     'file::',
     'limit::',
+    'focus-category::',
+    'print-base',
 ]);
 $file = (string) ($options['file'] ?? ($_ENV['EXCEL_FILE'] ?? ''));
 $limit = max(1, (int) ($options['limit'] ?? 20));
+$focusCategory = isset($options['focus-category']) ? normalizeText((string) $options['focus-category']) : '';
 
 if ($file === '' || !is_file($file)) {
     fwrite(STDERR, "Planilha não encontrada. Configure EXCEL_FILE ou use --file=/caminho/arquivo.xlsx.\n");
@@ -46,6 +49,13 @@ if ($file === '' || !is_file($file)) {
 
 $spreadsheet = IOFactory::load($file);
 $base = readBase($spreadsheet->getSheetByName('BASE'));
+
+if (isset($options['print-base'])) {
+    printBaseItems('Fornecedores oficiais', $base['vendors']);
+    printBaseItems('Categorias oficiais', $base['categories']);
+    exit(0);
+}
+
 $referenceMonth = new DateTimeImmutable('first day of this month 00:00:00');
 $stats = [
     'entries' => 0,
@@ -64,6 +74,7 @@ $pendingVendors = [];
 $pendingCategories = [];
 $cardColors = [];
 $lastInstallments = [];
+$focusedCategories = [];
 
 foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
     $classification = classifySheet($worksheet->getTitle());
@@ -92,6 +103,10 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         $vendor = normalizeVendor($rawVendor, $classification['reference'], $worksheet, $row, $base);
         $category = normalizeCategory($rawCategory, $description, $base);
         $installment = parseInstallment($description, $modality);
+
+        if ($focusCategory !== '' && normalizeText($rawCategory) === $focusCategory) {
+            addFocusedCategory($focusedCategories, $rawCategory, $description, $rawVendor, (float) $amount, $worksheet->getTitle(), $row);
+        }
 
         $stats['vendor_' . $vendor['status']]++;
         $stats['category_' . $category['status']]++;
@@ -157,6 +172,7 @@ echo "- Parcelas detectadas por texto/modalidade: {$stats['installments']}\n";
 echo "- Últimas parcelas detectadas: {$stats['last_installments']}\n\n";
 printPending('Fornecedores pendentes', $pendingVendors, $limit);
 printPending('Categorias/REF pendentes', $pendingCategories, $limit);
+printFocusedCategories($focusCategory, $focusedCategories, $limit);
 printCardColors($cardColors, $limit);
 printSamples('Amostras de últimas parcelas', $lastInstallments);
 
@@ -208,22 +224,47 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
         return ['status' => 'rule', 'value' => 'MARCIO (PAI)', 'reason' => 'explicit_alias'];
     }
 
-    if (isCardVendor($rawVendor)) {
+    $vendorAliases = [
+        'CAIXA ECONOMICA' => ['C E F', 'C.E.F.'],
+        'CAIXA' => ['C E F', 'C.E.F.'],
+        'DEP CAIXA' => ['C E F', 'C.E.F.'],
+        'MAYCON' => ['MAYCON IRMAO', 'MAYCON (IRMÃO)'],
+        'BV FINANC' => ['BV FINANCEIRA', 'BV FINANCEIRA'],
+        'PREFEITURA' => ['PREF CP', 'PREF. CP'],
+        'PREFEITURA MUNICIP' => ['PREF CP', 'PREF. CP'],
+        'DETRAN' => ['DETRAN PR', 'DETRAN PR'],
+        'YOUSE' => ['YOUSE SEGURO', 'YOUSE (SEGURO)'],
+        'DORIVAL' => ['DORIVAL ACAD', 'DORIVAL ACAD.'],
+    ];
+
+    if (isset($vendorAliases[$normalized])) {
+        [$vendorKey, $fallback] = $vendorAliases[$normalized];
+        return ['status' => 'rule', 'value' => lookupBaseValue($base['vendors'], $vendorKey, $fallback), 'reason' => 'explicit_alias'];
+    }
+
+    if (isCardVendor($rawVendor) && $reference < new DateTimeImmutable('2023-03-01')) {
         $period = cardPeriod($reference);
+        $color = rowColor($worksheet, $row);
 
         if ($period === '2015-03_to_2018-12') {
             return ['status' => 'rule', 'value' => 'RIACHUELO', 'reason' => 'card_period'];
         }
 
+        if (in_array($color, ['FF9933FF', 'FF7030A0'], true)) {
+            return ['status' => 'rule', 'value' => 'NUBANK', 'reason' => 'card_color'];
+        }
+
+        if ($color === 'FFF8CBAD') {
+            return ['status' => 'rule', 'value' => 'RIACHUELO', 'reason' => 'card_color'];
+        }
+
+        if (in_array($color, ['FFBFBFBF', 'FFA6A6A6', 'FFD9D9D9'], true)) {
+            return ['status' => 'rule', 'value' => 'C6 BANK', 'reason' => 'card_color'];
+        }
+
         if ($period === '2020-09_to_2022-05') {
             return ['status' => 'rule', 'value' => 'NUBANK', 'reason' => 'card_period_default'];
         }
-
-        return [
-            'status' => 'pending',
-            'value' => $rawVendor,
-            'reason' => 'card_color_needed:' . rowColor($worksheet, $row),
-        ];
     }
 
     return ['status' => 'pending', 'value' => $rawVendor, 'reason' => 'no_match'];
@@ -238,7 +279,12 @@ function normalizeCategory(string $rawCategory, string $description, array $base
         return ['status' => 'exact', 'value' => $base['categories'][$normalized], 'reason' => 'base'];
     }
 
-    if (str_contains($normalizedDescription, 'BANCO - ACORDO')) {
+    $descriptionRule = normalizeCategoryByDescription($normalizedDescription, $base);
+    if ($descriptionRule !== null) {
+        return $descriptionRule;
+    }
+
+    if (str_contains($normalizedDescription, 'BANCO ACORDO')) {
         return ['status' => 'rule', 'value' => 'DESP. EMPRESA', 'reason' => 'description_rule'];
     }
 
@@ -247,6 +293,42 @@ function normalizeCategory(string $rawCategory, string $description, array $base
     }
 
     return ['status' => 'pending', 'value' => $rawCategory, 'reason' => 'legacy_reference_or_no_match'];
+}
+
+function normalizeCategoryByDescription(string $normalizedDescription, array $base): ?array
+{
+    $rules = [
+        [['SUP CIDADE CANCAO', 'SUP CANCAO', 'BOX ATACADISTA'], 'MERCADO', 'MERCADO'],
+        [['SPOTIFY'], 'STREAMING', 'STREAMING'],
+        [['PADOKA', 'IFOOD', 'LANCHE'], 'ALIMENTACAO', 'ALIMENTAÇÃO'],
+        [['AUTO POSTO', 'GASOLINA', 'ETANOL', 'ALCOOL', 'COMBUSTIVEL'], 'COMBUSTIVEL', 'COMBUSTÍVEL'],
+        [['YOUSE SEGURO', 'SEGURO CARRO', 'SEGURO MOTO'], 'SEGURO VEICULAR', 'SEGURO VEICULAR'],
+        [['CLASSICS BARBEARIA', 'BARBEARIA'], 'CUIDADOS PESSOAIS', 'CUIDADOS PESSOAIS'],
+        [['FARMACIA', 'DENTISTA', 'SAUDE'], 'SAUDE', 'SAÚDE'],
+        [['CREDITO CELULAR', 'PLANO TIM', 'PLANO CLARO'], 'TELEFONIA', 'TELEFONIA'],
+        [['INTERNET BRASILNET', 'INTERNET VISAONET'], 'INTERNET', 'INTERNET'],
+        [['IPVA'], 'IPVA', 'IPVA'],
+        [['POS GRADUACAO', 'UNIFIL', 'FACULDADE', 'INGLES'], 'APRENDIZADO', 'APRENDIZADO'],
+        [['FIES'], 'FINANC ESTUDANTIL', 'FINANC. ESTUDANTIL'],
+        [['PREVIDENCIA', 'APOSENT'], 'APOSENTADORIA', 'APOSENTADORIA'],
+        [['ALUGUEL'], 'ALUGUEL', 'ALUGUEL'],
+        [['CARRO 48'], 'FINANC VEICULAR', 'FINANC. VEICULAR'],
+    ];
+
+    foreach ($rules as [$needles, $categoryKey, $fallback]) {
+        foreach ($needles as $needle) {
+            if (str_contains($normalizedDescription, $needle)) {
+                return ['status' => 'rule', 'value' => lookupBaseValue($base['categories'], $categoryKey, $fallback), 'reason' => 'description_rule'];
+            }
+        }
+    }
+
+    return null;
+}
+
+function lookupBaseValue(array $items, string $normalizedKey, string $fallback): string
+{
+    return $items[normalizeText($normalizedKey)] ?? $fallback;
 }
 
 function parseInstallment(string $description, string $modality): ?array
@@ -291,6 +373,51 @@ function addPending(array &$items, string $raw, string $sheet, int $row, string 
     }
 }
 
+function addFocusedCategory(array &$items, string $rawCategory, string $description, string $rawVendor, float $amount, string $sheet, int $row): void
+{
+    $key = normalizeDescriptionGroup($description);
+    $items[$key]['description_group'] = $key;
+    $items[$key]['raw_category'] = $rawCategory;
+    $items[$key]['count'] = ($items[$key]['count'] ?? 0) + 1;
+    $items[$key]['total_amount'] = ($items[$key]['total_amount'] ?? 0.0) + $amount;
+
+    if (!isset($items[$key]['samples'])) {
+        $items[$key]['samples'] = [[
+            'sheet' => $sheet,
+            'row' => $row,
+            'description' => $description,
+            'raw_vendor' => $rawVendor,
+            'amount' => $amount,
+        ]];
+    }
+}
+
+function printFocusedCategories(string $focusCategory, array $items, int $limit): void
+{
+    if ($focusCategory === '') {
+        return;
+    }
+
+    uasort($items, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
+    echo "Foco categoria/REF: {$focusCategory}\n";
+
+    foreach (array_slice($items, 0, $limit) as $item) {
+        $item['total_amount'] = round((float) $item['total_amount'], 2);
+        echo '- ' . json_encode($item, JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    echo "\n";
+}
+
+function normalizeDescriptionGroup(string $description): string
+{
+    $value = normalizeText($description);
+    $value = preg_replace('/\b\d{1,3}\s+\/\s+\d{1,3}\b/', 'PARCELA', $value) ?? $value;
+    $value = preg_replace('/\b\d{1,2}\s+DE\s+\d{1,2}\b/', 'PARCELA', $value) ?? $value;
+
+    return trim(preg_replace('/\s+/', ' ', $value) ?? $value);
+}
+
 function printPending(string $title, array $items, int $limit): void
 {
     uasort($items, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
@@ -298,6 +425,17 @@ function printPending(string $title, array $items, int $limit): void
 
     foreach (array_slice($items, 0, $limit) as $item) {
         echo '- ' . json_encode($item, JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    echo "\n";
+}
+
+function printBaseItems(string $title, array $items): void
+{
+    echo "{$title}\n";
+
+    foreach ($items as $item) {
+        echo "- {$item}\n";
     }
 
     echo "\n";
