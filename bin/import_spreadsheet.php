@@ -389,6 +389,7 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
         'CAIXA ECONOMICA' => ['C E F', 'C.E.F.'],
         'CAIXA' => ['C E F', 'C.E.F.'],
         'DEP CAIXA' => ['C E F', 'C.E.F.'],
+        'ENVELOPE S BANCO' => ['C E F', 'C.E.F.'],
         'MAYCON' => ['MAYCON IRMAO', 'MAYCON (IRMÃO)'],
         'BV FINANC' => ['BV FINANCEIRA', 'BV FINANCEIRA'],
         'PREFEITURA' => ['PREF CP', 'PREF. CP'],
@@ -396,6 +397,19 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
         'DETRAN' => ['DETRAN PR', 'DETRAN PR'],
         'YOUSE' => ['YOUSE SEGURO', 'YOUSE (SEGURO)'],
         'DORIVAL' => ['DORIVAL ACAD', 'DORIVAL ACAD.'],
+        'INTER' => ['BANCO INTER', 'BANCO INTER'],
+        'UTFPR' => ['UTFPR', 'UTFPR'],
+        'DENTISTA' => ['STAR CLIN', 'STAR CLIN'],
+        'SPOTIFY' => ['SPOTIFY', 'SPOTIFY'],
+        'BUSAO' => ['ASSOCIACAO ESTUDANTIL', 'ASSOCIACAO ESTUDANTIL'],
+        'FABRETTI' => ['FABRETTI ADV', 'FABRETTI ADV'],
+        'SITE DA COMPRA' => ['SITE DA COMPRA', 'SITE DA COMPRA'],
+        'MEGA FITNESS' => ['ACADEMIA MEGA', 'ACADEMIA MEGA'],
+        'UNIFIL' => ['UNIFIL', 'UNIFIL'],
+        'NU INVEST' => ['NUBANK', 'NUBANK'],
+        'GOV PR' => ['GOV ESTADUAL', 'GOV. ESTADUAL'],
+        'REGINA' => ['REGINA BABA', 'REGINA (BABÁ)'],
+        'CARTAO RIAC' => ['RIACHUELO', 'RIACHUELO'],
     ];
 
     if (isset($vendorAliases[$normalized])) {
@@ -630,7 +644,10 @@ function cardPeriod(DateTimeImmutable $reference): string
 
 function isCardVendor(string $vendor): bool
 {
-    return in_array(normalizeText($vendor), ['CARTAO', 'CARTAO DE CREDITO', 'CARTAO CREDITO'], true);
+    $normalized = normalizeText($vendor);
+
+    return in_array($normalized, ['CARTAO', 'CARTAO DE CREDITO', 'CARTAO CREDITO', 'CARTAI'], true)
+        || preg_match('/^CARTAO\s+\d+\s+\d+$/', $normalized) === 1;
 }
 
 function rowColor(Worksheet $worksheet, int $row): string

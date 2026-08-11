@@ -36,12 +36,14 @@ $options = getopt('', [
     'file::',
     'limit::',
     'focus-category::',
+    'focus-vendor::',
     'focus-pending',
     'print-base',
 ]);
 $file = (string) ($options['file'] ?? ($_ENV['EXCEL_FILE'] ?? ''));
 $limit = max(1, (int) ($options['limit'] ?? 20));
 $focusCategory = isset($options['focus-category']) ? normalizeText((string) $options['focus-category']) : '';
+$focusVendor = isset($options['focus-vendor']) ? normalizeText((string) $options['focus-vendor']) : '';
 $focusPending = isset($options['focus-pending']);
 
 if ($file === '' || !is_file($file)) {
@@ -77,6 +79,7 @@ $pendingCategories = [];
 $cardColors = [];
 $lastInstallments = [];
 $focusedCategories = [];
+$focusedVendors = [];
 
 foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
     $classification = classifySheet($worksheet->getTitle());
@@ -108,6 +111,10 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
 
         if ($focusCategory !== '' && normalizeText($rawCategory) === $focusCategory && (!$focusPending || $category['status'] === 'pending')) {
             addFocusedCategory($focusedCategories, $rawCategory, $description, $rawVendor, (float) $amount, $worksheet->getTitle(), $row);
+        }
+
+        if ($focusVendor !== '' && normalizeText($rawVendor) === $focusVendor && (!$focusPending || $vendor['status'] === 'pending')) {
+            addFocusedVendor($focusedVendors, $rawVendor, $description, $rawCategory, (float) $amount, $worksheet->getTitle(), $row);
         }
 
         $stats['vendor_' . $vendor['status']]++;
@@ -174,6 +181,7 @@ echo "- Parcelas detectadas por texto/modalidade: {$stats['installments']}\n";
 echo "- Últimas parcelas detectadas: {$stats['last_installments']}\n\n";
 printPending('Fornecedores pendentes', $pendingVendors, $limit);
 printPending('Categorias/REF pendentes', $pendingCategories, $limit);
+printFocusedVendors($focusVendor, $focusedVendors, $limit);
 printFocusedCategories($focusCategory, $focusedCategories, $limit);
 printCardColors($cardColors, $limit);
 printSamples('Amostras de últimas parcelas', $lastInstallments);
@@ -230,6 +238,7 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
         'CAIXA ECONOMICA' => ['C E F', 'C.E.F.'],
         'CAIXA' => ['C E F', 'C.E.F.'],
         'DEP CAIXA' => ['C E F', 'C.E.F.'],
+        'ENVELOPE S BANCO' => ['C E F', 'C.E.F.'],
         'MAYCON' => ['MAYCON IRMAO', 'MAYCON (IRMÃO)'],
         'BV FINANC' => ['BV FINANCEIRA', 'BV FINANCEIRA'],
         'PREFEITURA' => ['PREF CP', 'PREF. CP'],
@@ -237,6 +246,19 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
         'DETRAN' => ['DETRAN PR', 'DETRAN PR'],
         'YOUSE' => ['YOUSE SEGURO', 'YOUSE (SEGURO)'],
         'DORIVAL' => ['DORIVAL ACAD', 'DORIVAL ACAD.'],
+        'INTER' => ['BANCO INTER', 'BANCO INTER'],
+        'UTFPR' => ['UTFPR', 'UTFPR'],
+        'DENTISTA' => ['STAR CLIN', 'STAR CLIN'],
+        'SPOTIFY' => ['SPOTIFY', 'SPOTIFY'],
+        'BUSAO' => ['ASSOCIACAO ESTUDANTIL', 'ASSOCIACAO ESTUDANTIL'],
+        'FABRETTI' => ['FABRETTI ADV', 'FABRETTI ADV'],
+        'SITE DA COMPRA' => ['SITE DA COMPRA', 'SITE DA COMPRA'],
+        'MEGA FITNESS' => ['ACADEMIA MEGA', 'ACADEMIA MEGA'],
+        'UNIFIL' => ['UNIFIL', 'UNIFIL'],
+        'NU INVEST' => ['NUBANK', 'NUBANK'],
+        'GOV PR' => ['GOV ESTADUAL', 'GOV. ESTADUAL'],
+        'REGINA' => ['REGINA BABA', 'REGINA (BABÁ)'],
+        'CARTAO RIAC' => ['RIACHUELO', 'RIACHUELO'],
     ];
 
     if (isset($vendorAliases[$normalized])) {
@@ -464,6 +486,42 @@ function addFocusedCategory(array &$items, string $rawCategory, string $descript
     }
 }
 
+function addFocusedVendor(array &$items, string $rawVendor, string $description, string $rawCategory, float $amount, string $sheet, int $row): void
+{
+    $key = normalizeDescriptionGroup($description);
+    $items[$key]['description_group'] = $key;
+    $items[$key]['raw_vendor'] = $rawVendor;
+    $items[$key]['count'] = ($items[$key]['count'] ?? 0) + 1;
+    $items[$key]['total_amount'] = ($items[$key]['total_amount'] ?? 0.0) + $amount;
+
+    if (!isset($items[$key]['samples'])) {
+        $items[$key]['samples'] = [[
+            'sheet' => $sheet,
+            'row' => $row,
+            'description' => $description,
+            'raw_category' => $rawCategory,
+            'amount' => $amount,
+        ]];
+    }
+}
+
+function printFocusedVendors(string $focusVendor, array $items, int $limit): void
+{
+    if ($focusVendor === '') {
+        return;
+    }
+
+    uasort($items, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
+    echo "Foco fornecedor: {$focusVendor}\n";
+
+    foreach (array_slice($items, 0, $limit) as $item) {
+        $item['total_amount'] = round((float) $item['total_amount'], 2);
+        echo '- ' . json_encode($item, JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    echo "\n";
+}
+
 function printFocusedCategories(string $focusCategory, array $items, int $limit): void
 {
     if ($focusCategory === '') {
@@ -556,7 +614,10 @@ function cardPeriod(DateTimeImmutable $reference): string
 
 function isCardVendor(string $vendor): bool
 {
-    return in_array(normalizeText($vendor), ['CARTAO', 'CARTAO DE CREDITO', 'CARTAO CREDITO'], true);
+    $normalized = normalizeText($vendor);
+
+    return in_array($normalized, ['CARTAO', 'CARTAO DE CREDITO', 'CARTAO CREDITO', 'CARTAI'], true)
+        || preg_match('/^CARTAO\s+\d+\s+\d+$/', $normalized) === 1;
 }
 
 function rowColor(Worksheet $worksheet, int $row): string
