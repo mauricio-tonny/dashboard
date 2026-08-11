@@ -119,6 +119,46 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-
 
 O arquivo `scripts/spreadsheet-sync.local.ps1` não deve ser versionado, pois contém caminhos locais da máquina.
 
+### Reinstalação Após Formatar o Windows
+
+Se o computador for formatado ou trocado, refaça estes passos:
+
+1. Instale e sincronize o OneDrive com a mesma conta da planilha.
+2. Clone o repositório do dashboard novamente.
+3. Confirme que a chave SSH usada para acessar o servidor existe em `C:\Users\Mauricio\.ssh\codex_dashboard_ed25519`.
+4. Teste o SSH:
+
+```powershell
+ssh -i $HOME\.ssh\codex_dashboard_ed25519 -p 57778 magento@ftp.oficinadodev.com.br "echo connected"
+```
+
+5. Copie a configuração local:
+
+```powershell
+Copy-Item scripts\spreadsheet-sync.example.ps1 scripts\spreadsheet-sync.local.ps1
+notepad scripts\spreadsheet-sync.local.ps1
+```
+
+6. Ajuste `LocalPath` para o caminho real da planilha dentro do OneDrive. No ambiente atual, o caminho usado é:
+
+```powershell
+C:\Users\Mauricio\OneDrive\DOCUMENTOS\FINANCEIRO\ORCAMENTO MENSAL - MAURICIO.xlsx
+```
+
+7. Rode uma sincronização manual forçada:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\sync-spreadsheet.ps1 -Force
+```
+
+8. Instale a tarefa agendada:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-sync-task.ps1 -IntervalMinutes 30
+```
+
+A tarefa criada se chama `Dashboard Spreadsheet Sync` e envia a planilha ao servidor a cada 30 minutos, mas só faz upload quando o hash do arquivo muda.
+
 ## Próximos Passos Recomendados
 
 1. Definir o layout exato da planilha atual.
