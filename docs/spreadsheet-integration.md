@@ -77,9 +77,38 @@ O link salvo deve ter permissão de leitura. Para a primeira fase, o sistema ape
 
 - A aba `BASE` deve alimentar cadastros auxiliares como fornecedores, clientes e categorias.
 - As abas mensais devem ser convertidas para um formato único de lançamentos.
+- Abas mensais seguem o padrão `MES- AA`, como `MAR- 15`, `ABR- 15` e `AGO- 23`.
+- De `MAR- 15` até `FEV- 23`, o layout mensal esperado é `A=DESCRICAO`, `B=REPASSE A`, `C=VALOR`, `D=REF.`.
+- De `MAR- 23` até `JUL- 23`, o layout mensal esperado é `A=DESCRICAO`, `B=FORNECEDOR`, `C=VALOR`, `D=CATEGORIA`.
+- A partir de `AGO- 23`, o layout mensal esperado é `A=DESCRICAO`, `B=OBS.`, `C=FORNECEDOR`, `D=VALOR`, `E=CATEGORIA`.
+- Em meses mais recentes, a planilha pode incluir `MODALIDADE` antes de `CATEGORIA`; por isso o parser deve priorizar detecção por cabeçalho em vez de posição fixa.
+- As células `F2/G2` e `F3/G3` representam recebidos/salário.
+- A célula `G10` representa o total de despesas da aba mensal.
 - Abas anuais de relatório devem ser ignoradas pelo parser principal.
+- A aba `KARINA` deve ser ignorada por enquanto e tratada como melhoria futura para controle de empréstimo/extrato.
 - Fórmulas da planilha não devem ser quebradas durante etapas de leitura ou escrita.
 - Toda importação precisa gerar histórico suficiente para auditoria e diagnóstico.
+- Até os meses anteriores ao mês atual, os lançamentos importados podem ser tratados como pagos por regra.
+
+## Diagnóstico Inicial
+
+Antes de gravar qualquer dado no banco, use o inspetor para validar estrutura, cabeçalhos, totais e primeiras linhas úteis:
+
+```bash
+php bin/inspect_spreadsheet.php
+```
+
+Para reduzir a amostra:
+
+```bash
+php bin/inspect_spreadsheet.php --limit=2
+```
+
+Para inspecionar uma aba específica:
+
+```bash
+php bin/inspect_spreadsheet.php --sheet="AGO- 23"
+```
 
 ## Escrita Segura
 
