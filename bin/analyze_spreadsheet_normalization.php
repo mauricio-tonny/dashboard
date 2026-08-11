@@ -36,11 +36,13 @@ $options = getopt('', [
     'file::',
     'limit::',
     'focus-category::',
+    'focus-pending',
     'print-base',
 ]);
 $file = (string) ($options['file'] ?? ($_ENV['EXCEL_FILE'] ?? ''));
 $limit = max(1, (int) ($options['limit'] ?? 20));
 $focusCategory = isset($options['focus-category']) ? normalizeText((string) $options['focus-category']) : '';
+$focusPending = isset($options['focus-pending']);
 
 if ($file === '' || !is_file($file)) {
     fwrite(STDERR, "Planilha não encontrada. Configure EXCEL_FILE ou use --file=/caminho/arquivo.xlsx.\n");
@@ -104,7 +106,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         $category = normalizeCategory($rawCategory, $description, $base);
         $installment = parseInstallment($description, $modality);
 
-        if ($focusCategory !== '' && normalizeText($rawCategory) === $focusCategory) {
+        if ($focusCategory !== '' && normalizeText($rawCategory) === $focusCategory && (!$focusPending || $category['status'] === 'pending')) {
             addFocusedCategory($focusedCategories, $rawCategory, $description, $rawVendor, (float) $amount, $worksheet->getTitle(), $row);
         }
 
