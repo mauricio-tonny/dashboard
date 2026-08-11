@@ -2,6 +2,7 @@ param(
     [string] $TaskName = 'Dashboard Spreadsheet Sync',
     [string] $ScriptPath = "$PSScriptRoot\sync-spreadsheet.ps1",
     [string] $ConfigPath = "$PSScriptRoot\spreadsheet-sync.local.ps1",
+    [string] $HiddenRunnerPath = "$PSScriptRoot\run-spreadsheet-sync-hidden.vbs",
     [int] $IntervalMinutes = 30
 )
 
@@ -15,10 +16,14 @@ if (-not (Test-Path -LiteralPath $ConfigPath)) {
     throw "Configuração local não encontrada: $ConfigPath"
 }
 
-$taskCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`" -ConfigPath `"$ConfigPath`""
+if (-not (Test-Path -LiteralPath $HiddenRunnerPath)) {
+    throw "Executor oculto não encontrado: $HiddenRunnerPath"
+}
+
+$taskCommand = "`"$env:WINDIR\System32\wscript.exe`" `"$HiddenRunnerPath`""
 
 try {
-    $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`" -ConfigPath `"$ConfigPath`""
+    $action = New-ScheduledTaskAction -Execute "$env:WINDIR\System32\wscript.exe" -Argument "`"$HiddenRunnerPath`""
     $triggerAtLogon = New-ScheduledTaskTrigger -AtLogOn
     $triggerRecurring = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
         -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes) `
