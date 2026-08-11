@@ -390,6 +390,17 @@ function normalizeVendor(string $rawVendor, string $description, DateTimeImmutab
         return ['status' => 'rule', 'value' => 'AUTO POSTO JB', 'reason' => 'description_vendor_rule'];
     }
 
+    if ($normalized === 'NOTA') {
+        $notaVendor = vendorByNotaDescription($normalizedDescription, $base);
+        if ($notaVendor !== null) {
+            return $notaVendor;
+        }
+    }
+
+    if (preg_match('/^BANCO ACORD[AO]\s+\d+\s+36$/', $normalized) === 1) {
+        return ['status' => 'rule', 'value' => 'SANTANDER', 'reason' => 'vendor_pattern'];
+    }
+
     if ($normalized === 'TRANSF' && str_contains($normalizedDescription, 'MAYCON')) {
         return ['status' => 'rule', 'value' => lookupBaseValue($base['vendors'], 'MAYCON IRMAO', 'MAYCON (IRMÃO)'), 'reason' => 'description_vendor_rule'];
     }
@@ -503,6 +514,24 @@ function isFuelDescription(string $normalizedDescription): bool
     }
 
     return false;
+}
+
+function vendorByNotaDescription(string $normalizedDescription, array $base): ?array
+{
+    $rules = [
+        'ALUGUEL TERNO ANIVERSARIO DA KENGA' => ['BELLE TRAJE ATELIE', 'BELLE TRAJE ATELIE'],
+        'PERNAMBUCANAS' => ['PERNAMBUCANAS', 'PERNAMBUCANAS'],
+        'METADE OLEO GOL QUADRAD' => ['MARCIO PAI', 'MARCIO (PAI)'],
+        'PALHETA GOL QUADRADO' => ['MARCIO PAI', 'MARCIO (PAI)'],
+    ];
+
+    foreach ($rules as $needle => [$vendorKey, $fallback]) {
+        if (str_contains($normalizedDescription, $needle)) {
+            return ['status' => 'rule', 'value' => lookupBaseValue($base['vendors'], $vendorKey, $fallback), 'reason' => 'description_vendor_rule'];
+        }
+    }
+
+    return null;
 }
 
 function normalizeCategory(string $rawCategory, string $description, array $base): array
