@@ -97,7 +97,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         $rawCategory = asText(cellValue($worksheet, $columns['category'] . $row));
         $observation = isset($columns['observation']) ? asText(cellValue($worksheet, $columns['observation'] . $row)) : '';
         $modality = isset($columns['modality']) ? asText(cellValue($worksheet, $columns['modality'] . $row)) : '';
-        $vendor = normalizeVendor($rawVendor, $classification['reference'], $worksheet, $row, $base);
+        $vendor = normalizeVendor($rawVendor, $description, $classification['reference'], $worksheet, $row, $base);
         $category = normalizeCategory($rawCategory, $description, $base);
         $installment = parseInstallment($description, $modality);
         $sourceKey = 'spreadsheet:' . $worksheet->getTitle() . ':row:' . $row;
@@ -369,9 +369,10 @@ function readBaseColumn(Worksheet $worksheet, string $column): array
     return $items;
 }
 
-function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksheet $worksheet, int $row, array $base): array
+function normalizeVendor(string $rawVendor, string $description, DateTimeImmutable $reference, Worksheet $worksheet, int $row, array $base): array
 {
     $normalized = normalizeText($rawVendor);
+    $normalizedDescription = normalizeText($description);
 
     if ($normalized === '') {
         return ['status' => 'pending', 'value' => '', 'reason' => 'empty'];
@@ -383,6 +384,18 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
 
     if ($normalized === 'MARCIO') {
         return ['status' => 'rule', 'value' => 'MARCIO (PAI)', 'reason' => 'explicit_alias'];
+    }
+
+    if ($normalized === 'NOTA' && isFuelDescription($normalizedDescription)) {
+        return ['status' => 'rule', 'value' => 'AUTO POSTO JB', 'reason' => 'description_vendor_rule'];
+    }
+
+    if ($normalized === 'TRANSF' && str_contains($normalizedDescription, 'MAYCON')) {
+        return ['status' => 'rule', 'value' => lookupBaseValue($base['vendors'], 'MAYCON IRMAO', 'MAYCON (IRMÃO)'), 'reason' => 'description_vendor_rule'];
+    }
+
+    if ($normalized === 'MAURICIO' && str_contains($normalizedDescription, 'GETNET')) {
+        return ['status' => 'rule', 'value' => 'GETNET', 'reason' => 'description_vendor_rule'];
     }
 
     $vendorAliases = [
@@ -437,12 +450,27 @@ function normalizeVendor(string $rawVendor, DateTimeImmutable $reference, Worksh
             return ['status' => 'rule', 'value' => 'C6 BANK', 'reason' => 'card_color'];
         }
 
+        if (in_array($color, ['FFF4B183', 'FFFFC000', 'FFFFE699', 'FFFFF2CC'], true)) {
+            return ['status' => 'rule', 'value' => 'BANCO INTER', 'reason' => 'card_color'];
+        }
+
         if ($period === '2020-09_to_2022-05') {
             return ['status' => 'rule', 'value' => 'NUBANK', 'reason' => 'card_period_default'];
         }
     }
 
     return ['status' => 'pending', 'value' => $rawVendor, 'reason' => 'no_match'];
+}
+
+function isFuelDescription(string $normalizedDescription): bool
+{
+    foreach (['COMBUSTIVEL', 'GASOLINA', 'ETANOL', 'ALCOOL'] as $needle) {
+        if (str_contains($normalizedDescription, $needle)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function normalizeCategory(string $rawCategory, string $description, array $base): array
