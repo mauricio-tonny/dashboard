@@ -36,6 +36,11 @@ use App\Support\Env;
 
 require_once dirname(__DIR__) . '/src/Support/helpers.php';
 
+$vendorAutoload = dirname(__DIR__) . '/vendor/autoload.php';
+if (is_file($vendorAutoload)) {
+    require_once $vendorAutoload;
+}
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';
     $baseDir = dirname(__DIR__) . '/src/';

@@ -60,6 +60,12 @@ Para produção, a melhor opção tende a ser:
 Com PHP 8.2+ instalado:
 
 ```bash
+composer install
+```
+
+Depois execute:
+
+```bash
 php -S localhost:8000 -t public
 ```
 
@@ -163,12 +169,11 @@ A tarefa criada se chama `Dashboard Spreadsheet Sync` e envia a planilha ao serv
 
 1. Definir o layout exato da planilha atual.
 2. Escolher o fluxo de sincronização da planilha: arquivo local controlado, upload manual ou link compartilhado.
-3. Adicionar `composer`, cliente HTTP e `phpoffice/phpspreadsheet`.
-4. Criar o importador da planilha compartilhada.
-5. Criar o parser da aba `BASE` e das abas mensais.
-6. Implementar persistência real em MariaDB.
-7. Criar tasks do scheduler para leitura e envio de dados da planilha.
-8. Criar o primeiro dashboard com resumo mensal, contas a pagar e previsão do próximo mês.
+3. Criar o importador da planilha sincronizada usando `phpoffice/phpspreadsheet`.
+4. Criar o parser da aba `BASE` e das abas mensais.
+5. Implementar persistência real em MariaDB.
+6. Criar tasks do scheduler para leitura e envio de dados da planilha.
+7. Criar o primeiro dashboard com resumo mensal, contas a pagar e previsão do próximo mês.
 
 ## Documentação de Integração
 

@@ -28,6 +28,18 @@ Para o cenário atual, a prioridade é uma integração mais simples e portátil
 - `IMPORT_TEMP_DIR`: diretório temporário usado durante a importação.
 - `IMPORT_TIMEZONE`: fuso usado para datas de importação e logs.
 
+## Dependências
+
+A leitura do `.xlsx` depende do Composer e do pacote `phpoffice/phpspreadsheet`.
+
+Depois de clonar ou migrar o projeto, instale as dependências com:
+
+```bash
+composer install
+```
+
+O diretório `vendor/` não deve ser versionado, mas precisa existir no servidor para o importador da planilha funcionar.
+
 ## Sincronização Pelo Windows
 
 Como o link público do OneDrive pode entregar uma página intermediária em vez do `.xlsx`, o caminho mais previsível é usar o computador Windows como ponte segura:
