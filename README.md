@@ -106,6 +106,19 @@ tail -n 50 storage/logs/scheduler.log
 
 Detalhes completos: [docs/scheduler.md](docs/scheduler.md).
 
+## Sincronizando a Planilha pelo Windows
+
+Quando a planilha original estiver no OneDrive do Windows, use os scripts em `scripts/` para enviar uma cópia atualizada ao servidor:
+
+```powershell
+Copy-Item scripts\spreadsheet-sync.example.ps1 scripts\spreadsheet-sync.local.ps1
+notepad scripts\spreadsheet-sync.local.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\sync-spreadsheet.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-sync-task.ps1
+```
+
+O arquivo `scripts/spreadsheet-sync.local.ps1` não deve ser versionado, pois contém caminhos locais da máquina.
+
 ## Próximos Passos Recomendados
 
 1. Definir o layout exato da planilha atual.

@@ -7,7 +7,7 @@ Usar a planilha financeira como fonte inicial dos dados, importar seu conteúdo 
 ## Caminho Recomendado
 
 1. Manter a planilha fora da área pública do servidor.
-2. Obter o arquivo por upload controlado, arquivo local configurado em `EXCEL_FILE` ou link compartilhado configurado em `SHARED_EXCEL_URL`.
+2. Sincronizar o arquivo original do OneDrive local do Windows para o servidor via `scp`.
 3. Salvar uma cópia temporária em `IMPORT_TEMP_DIR`.
 4. Processar o `.xlsx` com uma biblioteca própria para planilhas.
 5. Importar fornecedores, clientes, categorias, lançamentos e status para tabelas relacionais.
@@ -27,6 +27,27 @@ Para o cenário atual, a prioridade é uma integração mais simples e portátil
 - `SHARED_EXCEL_URL`: link compartilhado para baixar a planilha, quando essa estratégia for usada.
 - `IMPORT_TEMP_DIR`: diretório temporário usado durante a importação.
 - `IMPORT_TIMEZONE`: fuso usado para datas de importação e logs.
+
+## Sincronização Pelo Windows
+
+Como o link público do OneDrive pode entregar uma página intermediária em vez do `.xlsx`, o caminho mais previsível é usar o computador Windows como ponte segura:
+
+1. O aplicativo do OneDrive mantém a planilha original sincronizada localmente.
+2. A tarefa agendada do Windows roda `scripts/sync-spreadsheet.ps1`.
+3. O script calcula o hash local e só envia o arquivo quando houver alteração.
+4. O envio é feito via `scp` para `storage/private/spreadsheets/financeiro.xlsx`.
+5. O dashboard usa `EXCEL_FILE` para ler sempre a última cópia recebida.
+
+Para configurar:
+
+```powershell
+Copy-Item scripts\spreadsheet-sync.example.ps1 scripts\spreadsheet-sync.local.ps1
+notepad scripts\spreadsheet-sync.local.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\sync-spreadsheet.ps1 -Force
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-sync-task.ps1
+```
+
+O arquivo `scripts/spreadsheet-sync.local.ps1` fica fora do Git. Ele guarda caminhos específicos da máquina, chave SSH, porta e destino remoto.
 
 ## Configuração no Painel
 

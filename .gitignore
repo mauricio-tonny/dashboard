@@ -4,5 +4,9 @@
 /storage/*.json
 /storage/cache/*
 /storage/sessions/*
+/storage/private/*
 /public/assets/brand/logo.png
 /tmp/
+/scripts/spreadsheet-sync.local.ps1
+/scripts/spreadsheet-sync.log
+/scripts/spreadsheet-sync.state.json
