@@ -54,7 +54,12 @@ A task executa internamente:
 php bin/import_spreadsheet.php --apply
 ```
 
-O importador e idempotente: os lancamentos usam `source_system = spreadsheet` e `source_key` baseado em aba/linha da planilha, entao novas execucoes atualizam os registros em vez de duplicar.
+O importador e idempotente: os lancamentos usam `source_system = spreadsheet` e `source_key` baseado em aba/linha da planilha. Novas execucoes gravam somente lancamentos novos ou alterados; quando a planilha esta igual, a execucao fica registrada em `import_runs`, mas nao duplica o historico em `entry_sources`.
+
+As notificacoes do Discord para essa rotina ficam em `/system/discord` e podem ser habilitadas separadamente para:
+
+- importacao com lancamentos novos/alterados;
+- importacao sem alteracoes na planilha.
 
 ## Compatibilidade
 

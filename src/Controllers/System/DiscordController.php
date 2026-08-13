@@ -43,6 +43,8 @@ final class DiscordController extends Controller
         $enabled = (string) $request->input('is_enabled') === '1';
         $webhookUrl = trim((string) $request->input('webhook_url'));
         $notifyMarketListCreated = (string) $request->input('notify_market_list_created') === '1';
+        $notifySpreadsheetImportChanged = (string) $request->input('notify_spreadsheet_import_changed') === '1';
+        $notifySpreadsheetImportUnchanged = (string) $request->input('notify_spreadsheet_import_unchanged') === '1';
 
         if ($enabled && $webhookUrl === '') {
             $this->flash('error', 'Informe o webhook do Discord para ativar as notificações.');
@@ -57,11 +59,15 @@ final class DiscordController extends Controller
         $this->app->make(DiscordNotificationRepository::class)->save(
             $enabled,
             $webhookUrl === '' ? null : $webhookUrl,
-            $notifyMarketListCreated
+            $notifyMarketListCreated,
+            $notifySpreadsheetImportChanged,
+            $notifySpreadsheetImportUnchanged
         );
         $this->app->make(AuditLogger::class)->log('discord_settings_updated', 'discord_settings', 1, $auth->user(), [
             'enabled' => $enabled,
             'notify_market_list_created' => $notifyMarketListCreated,
+            'notify_spreadsheet_import_changed' => $notifySpreadsheetImportChanged,
+            'notify_spreadsheet_import_unchanged' => $notifySpreadsheetImportUnchanged,
         ]);
         $this->flash('success', 'Configurações do Discord salvas.');
 

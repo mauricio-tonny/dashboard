@@ -99,9 +99,13 @@ try {
         is_enabled TINYINT(1) NOT NULL DEFAULT 0,
         webhook_url VARCHAR(500) NULL,
         notify_market_list_created TINYINT(1) NOT NULL DEFAULT 0,
+        notify_spreadsheet_import_changed TINYINT(1) NOT NULL DEFAULT 0,
+        notify_spreadsheet_import_unchanged TINYINT(1) NOT NULL DEFAULT 0,
         created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )');
+    ensureColumn($pdo, 'discord_notification_settings', 'notify_spreadsheet_import_changed', 'ALTER TABLE discord_notification_settings ADD COLUMN notify_spreadsheet_import_changed TINYINT(1) NOT NULL DEFAULT 0 AFTER notify_market_list_created');
+    ensureColumn($pdo, 'discord_notification_settings', 'notify_spreadsheet_import_unchanged', 'ALTER TABLE discord_notification_settings ADD COLUMN notify_spreadsheet_import_unchanged TINYINT(1) NOT NULL DEFAULT 0 AFTER notify_spreadsheet_import_changed');
     $pdo->exec('INSERT IGNORE INTO discord_notification_settings (id) VALUES (1)');
     $pdo->exec('CREATE TABLE IF NOT EXISTS spreadsheet_settings (
         id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,

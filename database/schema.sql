@@ -299,6 +299,8 @@ CREATE TABLE IF NOT EXISTS discord_notification_settings (
     is_enabled TINYINT(1) NOT NULL DEFAULT 0,
     webhook_url VARCHAR(500) NULL,
     notify_market_list_created TINYINT(1) NOT NULL DEFAULT 0,
+    notify_spreadsheet_import_changed TINYINT(1) NOT NULL DEFAULT 0,
+    notify_spreadsheet_import_unchanged TINYINT(1) NOT NULL DEFAULT 0,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

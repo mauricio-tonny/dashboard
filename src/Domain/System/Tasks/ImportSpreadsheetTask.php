@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\System\Tasks;
 
+use App\Domain\System\DiscordNotifier;
 use App\Domain\System\ScheduledTask;
 use App\Domain\System\ScheduledTaskResult;
 
@@ -11,7 +12,8 @@ final class ImportSpreadsheetTask implements ScheduledTask
 {
     public function __construct(
         private string $projectRoot,
-        private int $intervalMinutes
+        private int $intervalMinutes,
+        private DiscordNotifier $discordNotifier
     ) {
     }
 
@@ -61,7 +63,25 @@ final class ImportSpreadsheetTask implements ScheduledTask
             return ScheduledTaskResult::failure('Falha ao importar a planilha pelo scheduler.', $metadata);
         }
 
+        $processedEntries = $this->extractOutputInt($output, 'Lancamentos processados');
+        $newEntries = $this->extractOutputInt($output, 'Lancamentos novos');
+        $changedEntries = $this->extractOutputInt($output, 'Lancamentos alterados');
         $importedEntries = $this->extractImportedEntries($output);
+        $metadata['entries_processed'] = $processedEntries;
+        $metadata['entries_new'] = $newEntries;
+        $metadata['entries_changed'] = $changedEntries;
+        $metadata['entries_persisted'] = $importedEntries;
+
+        if (($importedEntries ?? 0) > 0) {
+            $this->discordNotifier->spreadsheetImportChanged(
+                $processedEntries ?? $importedEntries,
+                $newEntries ?? 0,
+                $changedEntries ?? 0
+            );
+        } else {
+            $this->discordNotifier->spreadsheetImportUnchanged($processedEntries ?? 0);
+        }
+
         $message = $importedEntries === null
             ? 'Planilha importada pelo scheduler.'
             : "Planilha importada pelo scheduler: {$importedEntries} lancamentos gravados/atualizados.";
@@ -71,7 +91,14 @@ final class ImportSpreadsheetTask implements ScheduledTask
 
     private function extractImportedEntries(string $output): ?int
     {
-        if (preg_match('/Lancamentos gravados\/atualizados:\s*(\d+)/u', $this->normalizeAscii($output), $matches) !== 1) {
+        return $this->extractOutputInt($output, 'Lancamentos gravados/atualizados');
+    }
+
+    private function extractOutputInt(string $output, string $label): ?int
+    {
+        $pattern = '/^' . preg_quote($label, '/') . ':\s*(\d+)/mi';
+
+        if (preg_match($pattern, $this->normalizeAscii($output), $matches) !== 1) {
             return null;
         }
 

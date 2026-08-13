@@ -164,3 +164,9 @@ A escrita de volta na planilha só deve ser implementada com estes cuidados:
 5. Criar o parser de uma aba mensal piloto.
 6. Persistir os dados normalizados em MariaDB.
 7. Agendar consulta e envio pelo scheduler interno.
+
+## Importacao Incremental e Discord
+
+Em execucoes repetidas, somente lancamentos novos ou alterados sao gravados novamente em `entries` e `entry_sources`. Quando a planilha esta igual, a execucao fica registrada em `import_runs`, mas nao duplica o historico tecnico de origem.
+
+No painel `/system/discord`, e possivel habilitar notificacoes separadas para importacoes com alteracoes e para importacoes sem alteracoes.

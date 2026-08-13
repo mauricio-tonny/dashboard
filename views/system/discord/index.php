@@ -2,6 +2,8 @@
 $title = 'Discord';
 $enabled = ((int) ($settings['is_enabled'] ?? 0)) === 1;
 $notifyMarketListCreated = ((int) ($settings['notify_market_list_created'] ?? 0)) === 1;
+$notifySpreadsheetImportChanged = ((int) ($settings['notify_spreadsheet_import_changed'] ?? 0)) === 1;
+$notifySpreadsheetImportUnchanged = ((int) ($settings['notify_spreadsheet_import_unchanged'] ?? 0)) === 1;
 ob_start();
 ?>
 <section class="page-hero">
@@ -42,6 +44,14 @@ ob_start();
             <label class="checkbox-card">
                 <input type="checkbox" name="notify_market_list_created" value="1" <?= $notifyMarketListCreated ? 'checked' : '' ?>>
                 <span>Notificar quando criar lista do mercado</span>
+            </label>
+            <label class="checkbox-card">
+                <input type="checkbox" name="notify_spreadsheet_import_changed" value="1" <?= $notifySpreadsheetImportChanged ? 'checked' : '' ?>>
+                <span>Notificar quando a importacao automatica da planilha gravar ou atualizar lancamentos</span>
+            </label>
+            <label class="checkbox-card">
+                <input type="checkbox" name="notify_spreadsheet_import_unchanged" value="1" <?= $notifySpreadsheetImportUnchanged ? 'checked' : '' ?>>
+                <span>Notificar quando a importacao automatica da planilha rodar sem alteracoes</span>
             </label>
             <p class="muted">Novos eventos serão adicionados aqui conforme o sistema ganhar novas automações.</p>
         </div>

@@ -68,6 +68,9 @@ $stats = [
     'vendor_pending' => 0,
     'category_pending' => 0,
     'last_installments' => 0,
+    'entries_new' => 0,
+    'entries_changed' => 0,
+    'entries_unchanged' => 0,
 ];
 $pendingVendors = [];
 $pendingCategories = [];
@@ -231,8 +234,24 @@ try {
     $entryIdStatement = $pdo->prepare(
         'SELECT id FROM entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
     );
+    $entryHashStatement = $pdo->prepare(
+        'SELECT source_hash FROM entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
+    );
+    $persistedEntries = 0;
 
     foreach ($rows as $row) {
+        $entryHashStatement->execute(['source_key' => $row['source_key']]);
+        $existingHash = $entryHashStatement->fetchColumn();
+
+        if ($existingHash === false) {
+            $stats['entries_new']++;
+        } elseif ((string) $existingHash !== $row['source_hash']) {
+            $stats['entries_changed']++;
+        } else {
+            $stats['entries_unchanged']++;
+            continue;
+        }
+
         $vendorId = $row['vendor_name'] === null ? null : ($vendorIds[normalizeText($row['vendor_name'])] ?? null);
         $categoryId = $row['category_name'] === null ? null : ($categoryIds[normalizeText($row['category_name'])] ?? null);
         $entryStatement->execute([
@@ -261,14 +280,19 @@ try {
             'worksheet_row' => $row['worksheet_row'],
             'raw_payload' => json_encode($row['raw_payload'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
         ]);
+        $persistedEntries++;
     }
 
-    finishImportRun($pdo, $importRunId, 'success', count($rows), $importedCategories, $importedVendors, $stats);
+    finishImportRun($pdo, $importRunId, 'success', $persistedEntries, $importedCategories, $importedVendors, $stats);
     $pdo->commit();
 
     echo "Importação concluída.\n";
     echo "Import run ID: {$importRunId}\n";
-    echo "Lançamentos gravados/atualizados: " . count($rows) . "\n";
+    echo "Lancamentos processados: " . count($rows) . "\n";
+    echo "Lancamentos novos: {$stats['entries_new']}\n";
+    echo "Lancamentos alterados: {$stats['entries_changed']}\n";
+    echo "Lancamentos inalterados: {$stats['entries_unchanged']}\n";
+    echo "Lancamentos gravados/atualizados: {$persistedEntries}\n";
 } catch (Throwable $exception) {
     $pdo->rollBack();
     fwrite(STDERR, "Erro ao importar: {$exception->getMessage()}\n");

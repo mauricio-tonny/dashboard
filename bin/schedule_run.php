@@ -46,7 +46,7 @@ $tasks = [
 
 if (filter_var($_ENV['SPREADSHEET_IMPORT_SCHEDULE_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
     $intervalMinutes = max(5, (int) ($_ENV['SPREADSHEET_IMPORT_INTERVAL_MINUTES'] ?? 30));
-    $tasks['spreadsheet.import'] = new ImportSpreadsheetTask(dirname(__DIR__), $intervalMinutes);
+    $tasks['spreadsheet.import'] = new ImportSpreadsheetTask(dirname(__DIR__), $intervalMinutes, $discordNotifier);
 }
 
 $scheduler = new Scheduler(new SchedulerRepository($database), $tasks);
