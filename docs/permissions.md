@@ -1,27 +1,46 @@
-# Permissões
+# Permissoes
 
 ## Perfis
 
-O sistema trabalha com três perfis principais:
+O sistema trabalha com quatro perfis principais:
 
+- `validator`: Validador
 - `viewer`: Visualizador
 - `editor`: Editor
 - `admin`: Administrador
 
-As permissões foram modeladas de forma granular para permitir, no futuro, excecoes por usuário sem precisar criar muitos perfis novos.
+As permissoes foram modeladas de forma granular para permitir, no futuro, excecoes por usuario sem precisar criar muitos perfis novos.
+
+## Validador
+
+Pode:
+
+- Acessar o sistema.
+- Visualizar dashboard, financeiro, relatorios, compras e contatos em modo consulta.
+- Acessar telas de leitura fora da area Sistema, incluindo A pagar, A receber e relatorios.
+- Validar layout, navegacao, listas e graficos.
+
+Nao pode:
+
+- Criar, editar, excluir, importar, anexar ou confirmar dados.
+- Incluir itens em listas.
+- Gerenciar contatos, usuarios, configuracoes, Discord, planilha ou backups.
+- Visualizar valores monetarios reais. Campos financeiros sao exibidos como `R$ 0,00`.
+
+Observacao: os graficos podem manter a experiencia visual para validacao de UX, mas os valores monetarios exibidos permanecem mascarados.
 
 ## Visualizador
 
 Pode:
 
 - Acessar o sistema.
-- Ver o valor total de despesas do mês atual.
+- Ver o valor total de despesas do mes atual.
 - Ver totais estimados dos proximos meses.
-- Ver relatório por DR/categoria.
+- Ver relatorio por DR/categoria.
 - Acessar e usar listas de compras.
 - Visualizar fornecedores e clientes.
 
-Não pode:
+Nao pode:
 
 - Lancar despesa.
 - Lancar credito.
@@ -30,38 +49,38 @@ Não pode:
 
 ## Editor
 
-Pode fazer tudo que o Visualizador faz e também:
+Pode fazer tudo que o Visualizador faz e tambem:
 
 - Lancar debitos.
 - Lancar creditos.
 - Visualizar despesas individuais.
 - Visualizar creditos separadamente e seus totalizadores.
 - Confirmar pagamento de despesas.
-- Visualizar relatório mensal.
-- Visualizar relatório anual.
-- Visualizar relatório por período.
+- Visualizar relatorio mensal.
+- Visualizar relatorio anual.
+- Visualizar relatorio por periodo.
 - Acessar e usar listas de compras.
 - Criar, editar, desativar e reativar fornecedores e clientes.
 
 ## Administrador
 
-Pode fazer tudo que Editor e Visualizador fazem e também:
+Pode fazer tudo que Editor e Visualizador fazem e tambem:
 
-- Criar usuários.
-- Editar usuários.
-- Bloquear usuários.
-- Excluir usuários. Nesta fase, por segurança e auditoria, a exclusão foi implementada como bloqueio/desativação.
-- Vincular usuário a perfil ou permissão especifica.
+- Criar usuarios.
+- Editar usuarios.
+- Bloquear usuarios.
+- Excluir usuarios. Nesta fase, por seguranca e auditoria, a exclusao foi implementada como bloqueio/desativacao.
+- Vincular usuario a perfil ou permissao especifica.
 - Acionar rotina de backup manualmente.
-- Habilitar ou desabilitar notificação do Discord.
+- Habilitar ou desabilitar notificacao do Discord.
 - Inserir ou alterar webhook do Discord.
 - Inserir, editar ou excluir URL da planilha.
 - Visualizar logs de auditoria pelo painel administrativo.
-- Gerenciar configurações do módulo de compras.
+- Gerenciar configuracoes do modulo de compras.
 
-Alterações de perfil ou permissão de usuário devem exigir confirmação de senha do administrador.
+Alteracoes de perfil ou permissao de usuario devem exigir confirmacao de senha do administrador.
 
-## Permissões Tecnicas
+## Permissoes Tecnicas
 
 - `view_dashboard`
 - `view_expense_totals`

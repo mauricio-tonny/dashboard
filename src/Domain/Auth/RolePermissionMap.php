@@ -17,6 +17,19 @@ final class RolePermissionMap
     public static function permissionsFor(Role $role): array
     {
         return match ($role) {
+            Role::VALIDATOR => [
+                Permission::VIEW_DASHBOARD,
+                Permission::VIEW_EXPENSE_TOTALS,
+                Permission::VIEW_FUTURE_EXPENSE_TOTALS,
+                Permission::VIEW_CATEGORY_REPORT,
+                Permission::VIEW_INDIVIDUAL_EXPENSES,
+                Permission::VIEW_INCOME_TOTALS,
+                Permission::VIEW_MONTHLY_REPORT,
+                Permission::VIEW_ANNUAL_REPORT,
+                Permission::VIEW_PERIOD_REPORT,
+                Permission::VIEW_SHOPPING,
+                Permission::VIEW_CONTACTS,
+            ],
             Role::VIEWER => [
                 Permission::VIEW_DASHBOARD,
                 Permission::VIEW_EXPENSE_TOTALS,

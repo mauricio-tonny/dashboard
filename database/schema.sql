@@ -346,4 +346,4 @@ CREATE TABLE IF NOT EXISTS scheduled_task_runs (
     CONSTRAINT fk_scheduled_task_runs_task FOREIGN KEY (task_code) REFERENCES scheduled_tasks(code)
 );
 
-INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('viewer');
+INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('validator'), ('viewer');

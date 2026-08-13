@@ -1,6 +1,6 @@
 <?php
-$formatMoney = static fn ($value): string => $value === null ? '-' : 'R$ ' . number_format((float) $value, 2, ',', '.');
-$formatMoneyInput = static fn ($value): string => $value === null || $value === '' ? '' : 'R$ ' . number_format((float) $value, 2, ',', '.');
+$formatMoney = static fn ($value): string => format_money_for_user($value, $user ?? null);
+$formatMoneyInput = static fn ($value): string => $value === null || $value === '' ? '' : format_money_for_user($value, $user ?? null);
 $formatDate = static function (?string $value): string {
     if ($value === null || trim($value) === '') {
         return '-';
@@ -11,6 +11,7 @@ $formatDate = static function (?string $value): string {
 $todayInput = (new DateTimeImmutable('now'))->format('Y-m-d');
 $pendingItems = array_values(array_filter($items, static fn (array $item): bool => ((int) $item['is_purchased']) === 0));
 $purchasedItems = array_values(array_filter($items, static fn (array $item): bool => ((int) $item['is_purchased']) === 1));
+$canManageShopping = $user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING);
 $itemsByVehicle = [];
 $pendingItemsByVehicle = [];
 $purchasedItemsByVehicle = [];
@@ -102,6 +103,7 @@ $renderItem = static function (array $item) use (
     $vehicleAreas,
     $hasPriority,
     $renderForm,
+    $canManageShopping,
     $todayInput
 ): void {
     $isPurchased = ((int) $item['is_purchased']) === 1;
@@ -123,6 +125,7 @@ $renderItem = static function (array $item) use (
                 <?php endif; ?>
             </small>
         </div>
+        <?php if ($canManageShopping): ?>
         <div class="actions shopping-item-actions">
             <button class="inline-button" type="button" data-bs-toggle="modal" data-bs-target="#editWishItemModal<?= (int) $item['id'] ?>">
                 <span class="bi bi-pencil-square"></span>Editar
@@ -148,8 +151,10 @@ $renderItem = static function (array $item) use (
                 <button class="inline-button button-danger" type="submit"><span class="bi bi-trash3"></span>Remover</button>
             </form>
         </div>
+        <?php endif; ?>
     </div>
 
+    <?php if ($canManageShopping): ?>
     <div class="modal fade" id="editWishItemModal<?= (int) $item['id'] ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
@@ -163,8 +168,9 @@ $renderItem = static function (array $item) use (
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
-    <?php if ($type === 'vehicle' && !$isPurchased): ?>
+    <?php if ($canManageShopping && $type === 'vehicle' && !$isPurchased): ?>
         <div class="modal fade" id="purchaseWishItemModal<?= (int) $item['id'] ?>" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -216,10 +222,12 @@ ob_start();
     <div class="notice notice-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<section class="card section-card shopping-panel wish-create-panel">
-    <h2 class="section-title"><span class="bi bi-plus-circle"></span>Novo item</h2>
-    <?php $renderForm('/shopping/wish-items', $type, $optionLabel, $optionField, $options, $vehicleAreas, $hasPriority); ?>
-</section>
+<?php if ($canManageShopping): ?>
+    <section class="card section-card shopping-panel wish-create-panel">
+        <h2 class="section-title"><span class="bi bi-plus-circle"></span>Novo item</h2>
+        <?php $renderForm('/shopping/wish-items', $type, $optionLabel, $optionField, $options, $vehicleAreas, $hasPriority); ?>
+    </section>
+<?php endif; ?>
 
 <section class="card section-card shopping-items-panel">
     <h2 class="section-title"><span class="bi bi-hourglass-split"></span>Itens pendentes</h2>

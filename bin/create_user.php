@@ -44,7 +44,7 @@ $role = trim((string) ($options['role'] ?? ''));
 $password = (string) ($options['password'] ?? '');
 
 if ($name === '' || $email === '' || $role === '' || $password === '') {
-    fwrite(STDERR, "Uso: php bin/create_user.php --name=\"Nome\" --email=email@dominio.com --role=admin|editor|viewer --password=senha\n");
+    fwrite(STDERR, "Uso: php bin/create_user.php --name=\"Nome\" --email=email@dominio.com --role=admin|editor|validator|viewer --password=senha\n");
     exit(1);
 }
 

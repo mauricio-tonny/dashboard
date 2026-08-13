@@ -1,7 +1,8 @@
 <?php
 $title = 'Dashboard';
+$maskFinancialValues = financial_values_are_masked($user ?? null);
 $maxExpense = max(array_map(static fn (array $item): float => (float) $item['amount'], $annualExpenses)) ?: 1;
-$formatMoney = static fn ($value): string => 'R$ ' . number_format((float) $value, 2, ',', '.');
+$formatMoney = static fn ($value): string => format_money_for_user($value, $user ?? null);
 $marketTotal = (int) ($marketSummary['item_count'] ?? 0);
 $marketChecked = (int) ($marketSummary['checked_count'] ?? 0);
 $marketProgress = $marketTotal > 0 ? round(($marketChecked / $marketTotal) * 100) : 0;

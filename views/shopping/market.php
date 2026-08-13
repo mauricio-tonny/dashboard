@@ -1,6 +1,6 @@
 <?php
 $title = 'Mercado';
-$formatMoney = static fn ($value): string => $value === null ? '-' : 'R$ ' . number_format((float) $value, 2, ',', '.');
+$formatMoney = static fn ($value): string => format_money_for_user($value, $user ?? null);
 $formatDecimal = static fn ($value): string => rtrim(rtrim(number_format((float) $value, 3, ',', ''), '0'), ',');
 $monthLabel = static function (?string $date): string {
     if ($date === null || $date === '') {
@@ -11,6 +11,7 @@ $monthLabel = static function (?string $date): string {
 };
 $initial = static fn (string $name): string => mb_strtoupper(mb_substr(trim($name), 0, 1)) ?: '?';
 $selectedListId = $selectedMarketList === null ? 0 : (int) $selectedMarketList['id'];
+$canManageShopping = $user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING);
 $formatAccessKey = static function (?string $key): string {
     $digits = preg_replace('/\D+/', '', (string) $key) ?? '';
 
@@ -97,6 +98,7 @@ ob_start();
             <a href="/shopping/market/history"><button class="inline-button <?= $isMarketHistory ? '' : 'button-light' ?>" type="button"><span class="bi bi-clock-history"></span>Meses anteriores</button></a>
         </div>
     </div>
+    <?php if ($canManageShopping): ?>
     <form method="post" action="/shopping/market/lists" class="inline-form align-end-form">
         <label>
             Mês da lista
@@ -104,6 +106,7 @@ ob_start();
         </label>
         <button class="inline-button" type="submit"><span class="bi bi-calendar-plus"></span>Criar/selecionar lista</button>
     </form>
+    <?php endif; ?>
 </section>
 
 <section class="grid">
@@ -135,7 +138,7 @@ ob_start();
                     . Desconto: <?= htmlspecialchars($formatMoney($discountAmount), ENT_QUOTES, 'UTF-8') ?>
                 <?php endif; ?>
             </p>
-            <?php if ($isFinished): ?>
+            <?php if ($isFinished || !$canManageShopping): ?>
                 <div class="notice notice-success market-lock-notice">
                     <strong>Lista finalizada.</strong> Esta lista está travada para evitar alterações acidentais. Somente um administrador pode remover a finalizacao.
                 </div>
@@ -193,7 +196,7 @@ ob_start();
                                 </div>
                                 <div class="market-item-actions-row">
                                     <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
-                                    <?php if ($isFinished): ?>
+                                    <?php if ($isFinished || !$canManageShopping): ?>
                                         <span class="check-button is-static-check">
                                             <span class="bi <?= ((int) $item['is_checked']) === 1 ? 'bi-check2' : 'bi-lock' ?>"></span>
                                             <?= ((int) $item['is_checked']) === 1 ? 'Confirmado' : 'Pendente' ?>
@@ -264,7 +267,7 @@ ob_start();
                                 </div>
                                 <div class="market-item-actions-row">
                                     <div class="item-photo"><?= htmlspecialchars($initial($item['name']), ENT_QUOTES, 'UTF-8') ?></div>
-                                    <?php if ($isFinished): ?>
+                                    <?php if ($isFinished || !$canManageShopping): ?>
                                         <span class="check-button is-static-check">
                                             <span class="bi bi-check2"></span>
                                             Confirmado
@@ -306,7 +309,7 @@ ob_start();
                 </div>
             </div>
 
-            <?php if (!$isFinished): ?>
+            <?php if (!$isFinished && $canManageShopping): ?>
                 <form method="post" action="/shopping/market/lists/finish" class="inline-form total-form finish-form">
                     <input type="hidden" name="list_id" value="<?= $selectedListId ?>">
                     <label>
@@ -355,7 +358,7 @@ ob_start();
             XML e PDF da consulta pública importam itens automaticamente; imagem fica como anexo; chave de acesso salva os metadados.
             Os arquivos enviados ficam armazenados para consulta e download depois.
         </p>
-        <?php if ($isFinished): ?>
+        <?php if ($isFinished || !$canManageShopping): ?>
             <div class="notice notice-success market-lock-notice">
                 <strong>Anexos bloqueados.</strong> Remova a finalizacao da lista para anexar novas notas ou chaves de acesso.
             </div>

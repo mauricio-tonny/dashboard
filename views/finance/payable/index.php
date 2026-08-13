@@ -1,6 +1,6 @@
 <?php
 $title = 'A pagar';
-$formatMoney = static fn (float $value): string => 'R$&nbsp;' . number_format($value, 2, ',', '.');
+$formatMoney = static fn (float $value): string => format_money_for_user($value, $user ?? null, true);
 $formatDate = static fn (string $value): string => (new DateTimeImmutable($value))->format('d/m/Y');
 $maxCategoryAmount = $categorySummary === [] ? 0.0 : max(array_map(static fn (array $row): float => (float) $row['total_amount'], $categorySummary));
 $selectedCategoryCount = count($categoryIds);

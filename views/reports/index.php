@@ -1,6 +1,6 @@
 <?php
 $title = 'Relatórios';
-$formatMoney = static fn ($value): string => 'R$ ' . number_format((float) $value, 2, ',', '.');
+$formatMoney = static fn ($value): string => format_money_for_user($value, $user ?? null);
 $amounts = array_map(static fn (array $row): float => (float) $row['total_amount'], $marketRows);
 $maxAmount = $amounts === [] ? 1.0 : max($amounts);
 $periodLabel = (new DateTimeImmutable($startDate))->format('d/m/Y') . ' até ' . (new DateTimeImmutable($endDate))->format('d/m/Y');

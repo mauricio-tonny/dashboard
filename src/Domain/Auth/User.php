@@ -25,6 +25,11 @@ final class User
         return RolePermissionMap::grants($this->role, $permission);
     }
 
+    public function masksFinancialValues(): bool
+    {
+        return $this->role === Role::VALIDATOR;
+    }
+
     public function hasRole(Role ...$roles): bool
     {
         foreach ($roles as $role) {
