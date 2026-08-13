@@ -134,6 +134,17 @@ php bin/import_spreadsheet.php --apply
 
 A importação alimenta `vendors`, `categories`, `entries`, `entry_sources` e `import_runs`. Cada lançamento usa `source_key` no formato `spreadsheet:{aba}:row:{linha}` para evitar duplicidade e `source_hash` para detectar alterações futuras.
 
+## Importacao Automatica
+
+Depois da primeira validacao manual, a importacao pode ser executada automaticamente pelo scheduler interno. No `.env` do servidor:
+
+```env
+SPREADSHEET_IMPORT_SCHEDULE_ENABLED=true
+SPREADSHEET_IMPORT_INTERVAL_MINUTES=30
+```
+
+Com isso, o CRON unico (`php bin/schedule_run.php`) passa a rodar `spreadsheet.import` no intervalo configurado.
+
 ## Escrita Segura
 
 A escrita de volta na planilha só deve ser implementada com estes cuidados:

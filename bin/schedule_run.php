@@ -9,6 +9,7 @@ use App\Domain\System\DiscordNotifier;
 use App\Domain\System\Scheduler;
 use App\Domain\System\SchedulerRepository;
 use App\Domain\System\Tasks\EnsureNextMarketListTask;
+use App\Domain\System\Tasks\ImportSpreadsheetTask;
 use App\Support\Env;
 
 require_once dirname(__DIR__) . '/src/Support/helpers.php';
@@ -42,6 +43,11 @@ $discordNotifier = new DiscordNotifier(new DiscordNotificationRepository($databa
 $tasks = [
     'market.ensure_next_list' => new EnsureNextMarketListTask($shoppingRepository, $discordNotifier),
 ];
+
+if (filter_var($_ENV['SPREADSHEET_IMPORT_SCHEDULE_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
+    $intervalMinutes = max(5, (int) ($_ENV['SPREADSHEET_IMPORT_INTERVAL_MINUTES'] ?? 30));
+    $tasks['spreadsheet.import'] = new ImportSpreadsheetTask(dirname(__DIR__), $intervalMinutes);
+}
 
 $scheduler = new Scheduler(new SchedulerRepository($database), $tasks);
 $results = $scheduler->runDue(new DateTimeImmutable());

@@ -37,6 +37,25 @@ tail -n 50 storage/logs/scheduler.log
 
 - `market.ensure_next_list`: garante a lista de mercado do próximo mês uma vez ao dia e reaproveita a notificação do Discord quando uma lista nova é criada.
 
+## Importacao da Planilha
+
+- `spreadsheet.import`: importa a planilha financeira sincronizada para o banco, quando `SPREADSHEET_IMPORT_SCHEDULE_ENABLED=true`.
+
+Para habilitar a importacao automatica pelo CRON interno, configure no `.env`:
+
+```env
+SPREADSHEET_IMPORT_SCHEDULE_ENABLED=true
+SPREADSHEET_IMPORT_INTERVAL_MINUTES=30
+```
+
+A task executa internamente:
+
+```bash
+php bin/import_spreadsheet.php --apply
+```
+
+O importador e idempotente: os lancamentos usam `source_system = spreadsheet` e `source_key` baseado em aba/linha da planilha, entao novas execucoes atualizam os registros em vez de duplicar.
+
 ## Compatibilidade
 
 O comando antigo `php bin/ensure_next_market_list.php` continua disponível, mas agora reaproveita a mesma task usada pelo scheduler.
