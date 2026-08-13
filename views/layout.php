@@ -882,6 +882,73 @@
         .checkbox-card input {
             width: auto;
         }
+        .discord-card {
+            max-width: 860px;
+        }
+        .discord-settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .discord-toggle-card {
+            align-items: center;
+            background: linear-gradient(135deg, #eef7fb, #f8fbfd);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            gap: 14px;
+            margin: 0;
+            padding: 16px;
+        }
+        .discord-toggle-card input {
+            height: 1px;
+            opacity: 0;
+            position: absolute;
+            width: 1px;
+        }
+        .discord-toggle-card small {
+            color: var(--muted);
+            display: block;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .discord-toggle-switch {
+            background: #d6e1ea;
+            border-radius: 999px;
+            box-shadow: inset 0 0 0 1px rgba(15, 55, 80, 0.08);
+            flex: 0 0 58px;
+            height: 32px;
+            position: relative;
+            transition: background 180ms ease, box-shadow 180ms ease;
+        }
+        .discord-toggle-switch::after {
+            background: #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 8px 16px rgba(15, 55, 80, 0.18);
+            content: "";
+            height: 24px;
+            left: 4px;
+            position: absolute;
+            top: 4px;
+            transition: transform 180ms ease;
+            width: 24px;
+        }
+        .discord-toggle-card input:checked + .discord-toggle-switch {
+            background: var(--accent-strong);
+            box-shadow: inset 0 0 0 1px rgba(15, 55, 80, 0.12);
+        }
+        .discord-toggle-card input:checked + .discord-toggle-switch::after {
+            transform: translateX(26px);
+        }
+        .discord-dependent-settings {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .discord-events-panel > .muted {
+            margin: 6px 0 12px;
+        }
         pre {
             background: #f8fbfd;
             border: 1px solid var(--border);

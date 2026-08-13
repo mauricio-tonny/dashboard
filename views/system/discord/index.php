@@ -12,7 +12,7 @@ ob_start();
         <div>
             <span class="badge">Sistema</span>
             <h1>Discord</h1>
-            <p class="muted">Configure notificações amigaveis para eventos importantes do dashboard.</p>
+            <p class="muted">Configure notificacoes amigaveis para eventos importantes do dashboard.</p>
         </div>
     </div>
 </section>
@@ -25,41 +25,49 @@ ob_start();
     <div class="notice notice-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-bell"></span>Configuração de notificações</h2>
-    <form method="post" action="/system/discord" class="form-grid">
-        <label>
-            Status
-            <select name="is_enabled" data-discord-enabled>
-                <option value="0" <?= !$enabled ? 'selected' : '' ?>>Desativado</option>
-                <option value="1" <?= $enabled ? 'selected' : '' ?>>Ativado</option>
-            </select>
+<section class="card section-card discord-card">
+    <h2 class="section-title"><span class="bi bi-bell"></span>Configuracao de notificacoes</h2>
+    <form method="post" action="/system/discord" class="discord-settings-form">
+        <input type="hidden" name="is_enabled" value="0">
+        <label class="discord-toggle-card">
+            <input type="checkbox" name="is_enabled" value="1" data-discord-enabled <?= $enabled ? 'checked' : '' ?>>
+            <span class="discord-toggle-switch" aria-hidden="true"></span>
+            <span>
+                <strong>Notificacoes do Discord</strong>
+                <small>Ative ou desative todos os avisos enviados pelo dashboard.</small>
+            </span>
         </label>
-        <label class="discord-webhook-field" style="<?= $enabled ? '' : 'display:none' ?>">
-            Webhook do Discord
-            <input type="url" name="webhook_url" value="<?= htmlspecialchars((string) ($settings['webhook_url'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="https://discord.com/api/webhooks/...">
-        </label>
-        <div class="soft-panel">
-            <strong>Eventos para notificar</strong>
-            <label class="checkbox-card">
-                <input type="checkbox" name="notify_market_list_created" value="1" <?= $notifyMarketListCreated ? 'checked' : '' ?>>
-                <span>Notificar quando criar lista do mercado</span>
+
+        <div class="discord-dependent-settings" data-discord-dependent style="<?= $enabled ? '' : 'display:none' ?>">
+            <label class="discord-webhook-field">
+                Webhook do Discord
+                <input type="url" name="webhook_url" value="<?= htmlspecialchars((string) ($settings['webhook_url'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="https://discord.com/api/webhooks/...">
             </label>
-            <label class="checkbox-card">
-                <input type="checkbox" name="notify_spreadsheet_import_changed" value="1" <?= $notifySpreadsheetImportChanged ? 'checked' : '' ?>>
-                <span>Notificar quando a importacao automatica da planilha gravar ou atualizar lancamentos</span>
-            </label>
-            <label class="checkbox-card">
-                <input type="checkbox" name="notify_spreadsheet_import_unchanged" value="1" <?= $notifySpreadsheetImportUnchanged ? 'checked' : '' ?>>
-                <span>Notificar quando a importacao automatica da planilha rodar sem alteracoes</span>
-            </label>
-            <p class="muted">Novos eventos serão adicionados aqui conforme o sistema ganhar novas automações.</p>
+
+            <div class="soft-panel discord-events-panel">
+                <strong>Eventos para notificar</strong>
+                <p class="muted">Escolha quais acontecimentos devem gerar mensagens no Discord.</p>
+                <label class="checkbox-card">
+                    <input type="checkbox" name="notify_market_list_created" value="1" <?= $notifyMarketListCreated ? 'checked' : '' ?>>
+                    <span>Notificar quando criar lista do mercado</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" name="notify_spreadsheet_import_changed" value="1" <?= $notifySpreadsheetImportChanged ? 'checked' : '' ?>>
+                    <span>Notificar quando a importacao automatica da planilha gravar ou atualizar lancamentos</span>
+                </label>
+                <label class="checkbox-card">
+                    <input type="checkbox" name="notify_spreadsheet_import_unchanged" value="1" <?= $notifySpreadsheetImportUnchanged ? 'checked' : '' ?>>
+                    <span>Notificar quando a importacao automatica da planilha rodar sem alteracoes</span>
+                </label>
+            </div>
         </div>
+
         <div class="form-actions">
-            <button type="submit"><span class="bi bi-save"></span>Salvar configuração</button>
+            <button type="submit"><span class="bi bi-save"></span>Salvar configuracao</button>
         </div>
     </form>
-    <form method="post" action="/system/discord/test" class="inline-form total-form">
+
+    <form method="post" action="/system/discord/test" class="inline-form total-form" data-discord-dependent style="<?= $enabled ? '' : 'display:none' ?>">
         <div>
             <strong>Teste do webhook</strong>
             <p class="muted">Envia uma mensagem simples usando o webhook salvo acima.</p>
@@ -71,25 +79,26 @@ ob_start();
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-robot"></span>Automação sugerida</h2>
-    <p class="muted">Para garantir a lista do próximo mês automaticamente, configure o cron do servidor para executar uma vez ao dia:</p>
-    <pre><code>php /var/www/dashboard.oficinadodev.com.br/html/bin/ensure_next_market_list.php</code></pre>
+    <h2 class="section-title"><span class="bi bi-robot"></span>Automacao sugerida</h2>
+    <p class="muted">O Discord e acionado pelas rotinas do scheduler interno. Para manter as automacoes ativas, o servidor deve executar:</p>
+    <pre><code>php /var/www/dashboard.oficinadodev.com.br/html/bin/schedule_run.php</code></pre>
 </section>
 
 <script>
     const discordStatus = document.querySelector('[data-discord-enabled]');
     const webhookField = document.querySelector('.discord-webhook-field input');
+    const dependentSettings = document.querySelectorAll('[data-discord-dependent]');
+
     const syncDiscordRequired = () => {
         if (!webhookField || !discordStatus) {
             return;
         }
 
-        const wrapper = webhookField.closest('.discord-webhook-field');
-        const enabled = discordStatus.value === '1';
+        const enabled = discordStatus.checked;
         webhookField.required = enabled;
-        if (wrapper) {
-            wrapper.style.display = enabled ? '' : 'none';
-        }
+        dependentSettings.forEach((item) => {
+            item.style.display = enabled ? '' : 'none';
+        });
     };
 
     discordStatus?.addEventListener('change', syncDiscordRequired);
