@@ -9,6 +9,7 @@ use App\Controllers\Admin\UserController;
 use App\Controllers\ContactController;
 use App\Controllers\DashboardController;
 use App\Controllers\EntryController;
+use App\Controllers\FinancePayableController;
 use App\Controllers\NavigationPageController;
 use App\Controllers\ReportController;
 use App\Controllers\ShoppingController;
@@ -25,6 +26,7 @@ use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AdminUserRepository;
 use App\Domain\Contacts\ContactRepository;
 use App\Domain\Finance\FinanceService;
+use App\Domain\Finance\FinanceEntryRepository;
 use App\Domain\Shopping\ShoppingRepository;
 use App\Domain\System\DiscordNotificationRepository;
 use App\Domain\System\DiscordNotifier;
@@ -73,6 +75,7 @@ $discordNotifier = new DiscordNotifier($discordNotificationRepository);
 $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $spreadsheetLinkTester = new SpreadsheetLinkTester();
 $contactRepository = new ContactRepository($database);
+$financeEntryRepository = new FinanceEntryRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
 
@@ -92,6 +95,7 @@ $app = new App([
     SpreadsheetSettingsRepository::class => $spreadsheetSettingsRepository,
     SpreadsheetLinkTester::class => $spreadsheetLinkTester,
     ContactRepository::class => $contactRepository,
+    FinanceEntryRepository::class => $financeEntryRepository,
     FinanceService::class => $financeService,
 ]);
 
@@ -140,7 +144,7 @@ $router->post('/contacts', [ContactController::class, 'store']);
 $router->post('/contacts/update', [ContactController::class, 'update']);
 $router->post('/contacts/toggle', [ContactController::class, 'toggle']);
 
-$router->get('/finance/payable', [NavigationPageController::class, 'financePayable']);
+$router->get('/finance/payable', [FinancePayableController::class, 'index']);
 $router->get('/finance/receivable', [NavigationPageController::class, 'financeReceivable']);
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/market', [ReportController::class, 'market']);

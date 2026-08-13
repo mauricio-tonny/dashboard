@@ -170,3 +170,9 @@ A escrita de volta na planilha só deve ser implementada com estes cuidados:
 Em execucoes repetidas, somente lancamentos novos ou alterados sao gravados novamente em `entries` e `entry_sources`. Quando a planilha esta igual, a execucao fica registrada em `import_runs`, mas nao duplica o historico tecnico de origem.
 
 No painel `/system/discord`, e possivel habilitar notificacoes separadas para importacoes com alteracoes e para importacoes sem alteracoes.
+
+## Status de Pagamento
+
+A partir de `JUL- 26`, a coluna `G` das abas mensais indica o pagamento. Quando o valor da celula for `OK`, o lancamento e importado como `paid`; caso contrario, fica como `open`.
+
+Para meses anteriores a `JUL- 26`, a regra historica continua valendo: meses anteriores ao mes atual sao considerados pagos e o mes atual/futuro fica aberto.

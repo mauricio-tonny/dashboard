@@ -71,6 +71,7 @@ $stats = [
     'entries_new' => 0,
     'entries_changed' => 0,
     'entries_unchanged' => 0,
+    'payment_marked_ok' => 0,
 ];
 $pendingVendors = [];
 $pendingCategories = [];
@@ -84,7 +85,6 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
 
     $columns = detectMonthlyColumns($worksheet, $classification['columns']);
     $highestRow = $worksheet->getHighestDataRow();
-    $status = $classification['reference'] < $referenceMonth ? 'paid' : 'open';
 
     for ($row = 2; $row <= $highestRow; $row++) {
         $description = asText(cellValue($worksheet, $columns['description'] . $row));
@@ -100,6 +100,8 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         $rawCategory = asText(cellValue($worksheet, $columns['category'] . $row));
         $observation = isset($columns['observation']) ? asText(cellValue($worksheet, $columns['observation'] . $row)) : '';
         $modality = isset($columns['modality']) ? asText(cellValue($worksheet, $columns['modality'] . $row)) : '';
+        $paymentMarker = isset($columns['payment_status']) ? asText(cellValue($worksheet, $columns['payment_status'] . $row)) : '';
+        $status = paymentStatus($classification['reference'], $referenceMonth, $paymentMarker);
         $vendor = normalizeVendor($rawVendor, $description, $classification['reference'], $worksheet, $row, $base);
         $category = normalizeCategory($rawCategory, $description, $base);
         $installment = parseInstallment($description, $modality);
@@ -116,6 +118,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
             'normalized_category' => $category,
             'observation' => $observation,
             'modality' => $modality,
+            'payment_marker' => $paymentMarker,
             'row_color' => rowColor($worksheet, $row),
             'installment' => $installment,
             'amount' => (float) $amount,
@@ -135,6 +138,10 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
 
         if (($installment['is_last'] ?? false) === true) {
             $stats['last_installments']++;
+        }
+
+        if ($paymentMarker !== '' && normalizeText($paymentMarker) === 'OK') {
+            $stats['payment_marked_ok']++;
         }
 
         $rows[] = [
@@ -693,16 +700,28 @@ function parseInstallment(string $description, string $modality): ?array
 {
     $normalizedModality = normalizeText($modality);
 
-    if (preg_match('/(?:^|[^0-9])(\d{1,3})\s*\/\s*(\d{1,3})(?:[^0-9]|$)/', $description, $matches) === 1) {
-        $current = (int) $matches[1];
-        $total = (int) $matches[2];
+    if (preg_match_all('/(\d{1,3})\s*\/\s*(\d{1,3})/', $description, $matches, PREG_OFFSET_CAPTURE) > 0) {
+        foreach ($matches[0] as $index => $match) {
+            [$value, $offset] = $match;
 
-        return [
-            'current' => $current,
-            'total' => $total,
-            'is_last' => $current > 0 && $current === $total,
-            'source' => 'description',
-        ];
+            if (isParenthesizedDateLikeValue($description, $offset, strlen($value))) {
+                continue;
+            }
+
+            $current = (int) $matches[1][$index][0];
+            $total = (int) $matches[2][$index][0];
+
+            if ($current <= 0 || $total <= 0 || $current > $total) {
+                continue;
+            }
+
+            return [
+                'current' => $current,
+                'total' => $total,
+                'is_last' => $current === $total,
+                'source' => 'description',
+            ];
+        }
     }
 
     if ($normalizedModality === 'ULTIMA PARC') {
@@ -715,6 +734,23 @@ function parseInstallment(string $description, string $modality): ?array
     }
 
     return null;
+}
+
+function isParenthesizedDateLikeValue(string $description, int $offset, int $length): bool
+{
+    $before = substr($description, 0, $offset);
+    $after = substr($description, $offset + $length);
+
+    return str_ends_with(rtrim($before), '(') && str_starts_with(ltrim($after), ')');
+}
+
+function paymentStatus(DateTimeImmutable $reference, DateTimeImmutable $currentMonth, string $paymentMarker): string
+{
+    if ($reference >= new DateTimeImmutable('2026-07-01')) {
+        return normalizeText($paymentMarker) === 'OK' ? 'paid' : 'open';
+    }
+
+    return $reference < $currentMonth ? 'paid' : 'open';
 }
 
 function addPending(array &$items, string $raw, string $sheet, int $row, string $description): void
@@ -811,11 +847,17 @@ function classifySheet(string $sheetName): array
         default => 'current',
     };
 
+    $columns = columnsForLayout($layout);
+
+    if ($reference >= new DateTimeImmutable('2026-07-01')) {
+        $columns['payment_status'] = 'G';
+    }
+
     return [
         'kind' => 'monthly',
         'reference' => $reference,
         'layout' => $layout,
-        'columns' => columnsForLayout($layout),
+        'columns' => $columns,
     ];
 }
 
@@ -863,6 +905,12 @@ function detectMonthlyColumns(Worksheet $worksheet, array $fallback): array
         $column = findHeaderColumn($headers, [$needle]);
 
         if ($column !== null) {
+            $columns[$field] = $column;
+        }
+    }
+
+    foreach ($fallback as $field => $column) {
+        if (!isset($columns[$field])) {
             $columns[$field] = $column;
         }
     }
