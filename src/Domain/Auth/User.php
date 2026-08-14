@@ -11,7 +11,8 @@ final class User
         public readonly string $name,
         public readonly string $email,
         public readonly string $passwordHash,
-        public readonly Role $role
+        public readonly Role $role,
+        private readonly array $permissionOverrides = []
     ) {
     }
 
@@ -22,6 +23,16 @@ final class User
 
     public function can(Permission $permission): bool
     {
+        $effect = $this->permissionOverrides[$permission->value] ?? null;
+
+        if ($effect === 'deny') {
+            return false;
+        }
+
+        if ($effect === 'allow') {
+            return true;
+        }
+
         return RolePermissionMap::grants($this->role, $permission);
     }
 

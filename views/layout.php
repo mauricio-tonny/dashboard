@@ -1251,6 +1251,80 @@
         .income-column-chart .category-column-track span {
             background: linear-gradient(180deg, #34d399, #0f9f86);
         }
+        .permission-grid {
+            display: grid;
+            gap: 14px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            margin-top: 18px;
+        }
+        .permission-card {
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: grid;
+            gap: 14px;
+            padding: 16px;
+        }
+        .permission-card strong {
+            color: var(--brand-dark);
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .permission-card p {
+            margin-bottom: 10px;
+        }
+        .permission-state {
+            background: #edf4f8;
+            border-radius: 999px;
+            color: var(--muted);
+            display: inline-flex;
+            font-size: 0.78rem;
+            font-weight: 900;
+            padding: 5px 9px;
+        }
+        .permission-state.is-allow {
+            background: #d1fae5;
+            color: #047857;
+        }
+        .permission-state.is-deny {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+        .permission-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .permission-options label {
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: 0.84rem;
+            font-weight: 800;
+            gap: 6px;
+            margin: 0;
+            padding: 7px 10px;
+        }
+        .permission-save-bar {
+            align-items: end;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: grid;
+            gap: 16px;
+            grid-template-columns: minmax(240px, 1fr) auto;
+            margin-top: 18px;
+            padding: 16px;
+        }
+        .permission-save-bar label {
+            margin-bottom: 0;
+        }
+        .permission-save-bar button {
+            margin-top: 0;
+        }
         pre {
             background: #f8fbfd;
             border: 1px solid var(--border);
@@ -1899,6 +1973,10 @@
             .finance-filter-form {
                 grid-template-columns: 1fr;
             }
+            .permission-grid,
+            .permission-save-bar {
+                grid-template-columns: 1fr;
+            }
             .month-actions .inline-button,
             .month-actions .month-nav-button {
                 justify-content: center;
@@ -1961,7 +2039,14 @@
                             <a class="<?= $isActive('/contacts') ?>" href="/contacts"><span class="bi bi-person-lines-fill"></span>Contatos</a>
                         </div>
                     <?php endif; ?>
-                    <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_REPORT)): ?>
+                    <?php if (
+                        $user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_REPORT)
+                        || $user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_CHART_REPORT)
+                        || $user->can(\App\Domain\Auth\Permission::VIEW_VENDOR_REPORT)
+                        || $user->can(\App\Domain\Auth\Permission::VIEW_PAID_VS_RECEIVED_REPORT)
+                        || $user->can(\App\Domain\Auth\Permission::VIEW_CASHFLOW_REPORT)
+                        || $user->can(\App\Domain\Auth\Permission::VIEW_MARKET_REPORT)
+                    ): ?>
                         <div class="nav-group">
                             <div class="nav-group-title">Relatórios</div>
                             <a class="nav-subitem <?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-bar-chart-line"></span>Financeiro</a>
@@ -1973,6 +2058,9 @@
                             <div class="nav-group-title">Sistema</div>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_USERS)): ?>
                                 <a class="nav-subitem <?= $isActive('/admin/users') ?>" href="/admin/users"><span class="bi bi-people"></span>Usuários</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::CHANGE_USER_ROLES)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/permissions') ?>" href="/system/permissions"><span class="bi bi-shield-lock"></span>Permissoes</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
                                 <a class="nav-subitem <?= $isActive('/admin/audit-logs') ?>" href="/admin/audit-logs"><span class="bi bi-journal-text"></span>Logs</a>

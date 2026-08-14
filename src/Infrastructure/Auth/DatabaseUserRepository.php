@@ -38,7 +38,8 @@ final class DatabaseUserRepository implements UserRepository
             $user['name'],
             $user['email'],
             $user['password_hash'],
-            Role::from($user['role'])
+            Role::from($user['role']),
+            $this->permissionOverrides((int) $user['id'])
         );
     }
 
@@ -51,5 +52,23 @@ final class DatabaseUserRepository implements UserRepository
              WHERE email = :email'
         );
         $statement->execute(['email' => $email]);
+    }
+
+    private function permissionOverrides(int $userId): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT permissions.name, user_permission_overrides.effect
+             FROM user_permission_overrides
+             INNER JOIN permissions ON permissions.id = user_permission_overrides.permission_id
+             WHERE user_permission_overrides.user_id = :user_id'
+        );
+        $statement->execute(['user_id' => $userId]);
+        $overrides = [];
+
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $overrides[(string) $row['name']] = (string) $row['effect'];
+        }
+
+        return $overrides;
     }
 }

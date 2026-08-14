@@ -28,7 +28,7 @@ final class ReportController extends Controller
 
     public function categories(Request $request): Response
     {
-        $auth = $this->authorize();
+        $auth = $this->authorize(Permission::VIEW_CATEGORY_REPORT);
 
         if ($auth instanceof Response) {
             return $auth;
@@ -44,7 +44,7 @@ final class ReportController extends Controller
 
     public function categoryChart(Request $request): Response
     {
-        $auth = $this->authorize();
+        $auth = $this->authorize(Permission::VIEW_CATEGORY_CHART_REPORT);
 
         if ($auth instanceof Response) {
             return $auth;
@@ -60,7 +60,7 @@ final class ReportController extends Controller
 
     public function vendors(Request $request): Response
     {
-        $auth = $this->authorize();
+        $auth = $this->authorize(Permission::VIEW_VENDOR_REPORT);
 
         if ($auth instanceof Response) {
             return $auth;
@@ -76,7 +76,7 @@ final class ReportController extends Controller
 
     public function paidVsReceived(Request $request): Response
     {
-        $auth = $this->authorize();
+        $auth = $this->authorize(Permission::VIEW_PAID_VS_RECEIVED_REPORT);
 
         if ($auth instanceof Response) {
             return $auth;
@@ -92,7 +92,7 @@ final class ReportController extends Controller
 
     public function cashflow(Request $request): Response
     {
-        $auth = $this->authorize();
+        $auth = $this->authorize(Permission::VIEW_CASHFLOW_REPORT);
 
         if ($auth instanceof Response) {
             return $auth;
@@ -148,7 +148,7 @@ final class ReportController extends Controller
 
     public function market(Request $request): Response
     {
-        $auth = $this->authorize();
+        $auth = $this->authorize(Permission::VIEW_MARKET_REPORT);
 
         if ($auth instanceof Response) {
             return $auth;
@@ -183,7 +183,7 @@ final class ReportController extends Controller
         ]);
     }
 
-    private function authorize(): AuthService|Response
+    private function authorize(?Permission $permission = null): AuthService|Response
     {
         $auth = $this->app->make(AuthService::class);
 
@@ -191,11 +191,47 @@ final class ReportController extends Controller
             return Response::redirect('/login');
         }
 
-        if (!$auth->user()?->can(Permission::VIEW_CATEGORY_REPORT)) {
+        $user = $auth->user();
+
+        if ($permission !== null && !$user?->can($permission)) {
+            return new Response('Acesso negado.', 403);
+        }
+
+        if ($permission === null && !$this->canViewAnyReport($user)) {
             return new Response('Acesso negado.', 403);
         }
 
         return $auth;
+    }
+
+    private function canViewAnyReport(mixed $user): bool
+    {
+        if (!is_object($user) || !method_exists($user, 'can')) {
+            return false;
+        }
+
+        foreach ($this->reportPermissions() as $permission) {
+            if ($user->can($permission)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return Permission[]
+     */
+    private function reportPermissions(): array
+    {
+        return [
+            Permission::VIEW_CATEGORY_REPORT,
+            Permission::VIEW_CATEGORY_CHART_REPORT,
+            Permission::VIEW_VENDOR_REPORT,
+            Permission::VIEW_PAID_VS_RECEIVED_REPORT,
+            Permission::VIEW_CASHFLOW_REPORT,
+            Permission::VIEW_MARKET_REPORT,
+        ];
     }
 
     private function dateInput(string $value, string $fallback): string

@@ -10,6 +10,11 @@ enum Permission: string
     case VIEW_EXPENSE_TOTALS = 'view_expense_totals';
     case VIEW_FUTURE_EXPENSE_TOTALS = 'view_future_expense_totals';
     case VIEW_CATEGORY_REPORT = 'view_category_report';
+    case VIEW_CATEGORY_CHART_REPORT = 'view_category_chart_report';
+    case VIEW_VENDOR_REPORT = 'view_vendor_report';
+    case VIEW_PAID_VS_RECEIVED_REPORT = 'view_paid_vs_received_report';
+    case VIEW_CASHFLOW_REPORT = 'view_cashflow_report';
+    case VIEW_MARKET_REPORT = 'view_market_report';
 
     case CREATE_EXPENSE = 'create_expense';
     case CREATE_INCOME = 'create_income';

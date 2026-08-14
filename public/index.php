@@ -15,6 +15,7 @@ use App\Controllers\NavigationPageController;
 use App\Controllers\ReportController;
 use App\Controllers\ShoppingController;
 use App\Controllers\System\DiscordController;
+use App\Controllers\System\PermissionController;
 use App\Controllers\System\SpreadsheetController;
 use App\Core\App;
 use App\Core\Database;
@@ -23,6 +24,7 @@ use App\Core\Router;
 use App\Core\Session;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\UserRepository;
+use App\Domain\Auth\UserPermissionRepository;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AdminUserRepository;
 use App\Domain\Contacts\ContactRepository;
@@ -77,6 +79,7 @@ $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $spreadsheetLinkTester = new SpreadsheetLinkTester();
 $contactRepository = new ContactRepository($database);
 $financeEntryRepository = new FinanceEntryRepository($database);
+$userPermissionRepository = new UserPermissionRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
 
@@ -97,6 +100,7 @@ $app = new App([
     SpreadsheetLinkTester::class => $spreadsheetLinkTester,
     ContactRepository::class => $contactRepository,
     FinanceEntryRepository::class => $financeEntryRepository,
+    UserPermissionRepository::class => $userPermissionRepository,
     FinanceService::class => $financeService,
 ]);
 
@@ -160,6 +164,8 @@ $router->get('/system/categories', [NavigationPageController::class, 'systemCate
 $router->get('/system/discord', [DiscordController::class, 'index']);
 $router->post('/system/discord', [DiscordController::class, 'save']);
 $router->post('/system/discord/test', [DiscordController::class, 'test']);
+$router->get('/system/permissions', [PermissionController::class, 'index']);
+$router->post('/system/permissions', [PermissionController::class, 'save']);
 $router->get('/system/spreadsheet', [SpreadsheetController::class, 'index']);
 $router->post('/system/spreadsheet', [SpreadsheetController::class, 'save']);
 $router->post('/system/spreadsheet/test', [SpreadsheetController::class, 'test']);
