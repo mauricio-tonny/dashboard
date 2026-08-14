@@ -8,6 +8,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\Permission;
+use App\Domain\Finance\FinanceEntryRepository;
 use App\Domain\Shopping\ShoppingRepository;
 
 final class ReportController extends Controller
@@ -23,6 +24,126 @@ final class ReportController extends Controller
         return Response::view('reports/home', [
             'user' => $auth->user(),
         ]);
+    }
+
+    public function categories(Request $request): Response
+    {
+        $auth = $this->authorize();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $context = $this->financeReportContext($request);
+
+        return Response::view('reports/categories', [
+            'user' => $auth->user(),
+            ...$context,
+        ]);
+    }
+
+    public function categoryChart(Request $request): Response
+    {
+        $auth = $this->authorize();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $context = $this->financeReportContext($request);
+
+        return Response::view('reports/category-chart', [
+            'user' => $auth->user(),
+            ...$context,
+        ]);
+    }
+
+    public function vendors(Request $request): Response
+    {
+        $auth = $this->authorize();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $context = $this->financeReportContext($request);
+
+        return Response::view('reports/vendors', [
+            'user' => $auth->user(),
+            ...$context,
+        ]);
+    }
+
+    public function paidVsReceived(Request $request): Response
+    {
+        $auth = $this->authorize();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $context = $this->financeReportContext($request);
+
+        return Response::view('reports/paid-vs-received', [
+            'user' => $auth->user(),
+            ...$context,
+        ]);
+    }
+
+    public function cashflow(Request $request): Response
+    {
+        $auth = $this->authorize();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $context = $this->financeReportContext($request);
+
+        return Response::view('reports/cashflow', [
+            'user' => $auth->user(),
+            ...$context,
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function financeReportContext(Request $request): array
+    {
+        $today = new \DateTimeImmutable('today');
+        $defaultStartMonth = $today->modify('first day of january')->format('Y-m');
+        $defaultEndMonth = $today->format('Y-m');
+        $startMonth = $this->monthInput((string) $request->input('start_month'), $defaultStartMonth);
+        $endMonth = $this->monthInput((string) $request->input('end_month'), $defaultEndMonth);
+
+        if ($startMonth > $endMonth) {
+            [$startMonth, $endMonth] = [$endMonth, $startMonth];
+        }
+
+        $startDate = (new \DateTimeImmutable($startMonth . '-01'))->format('Y-m-d');
+        $endDate = (new \DateTimeImmutable($endMonth . '-01'))->modify('last day of this month')->format('Y-m-d');
+        $categoryIds = $this->intListInput($request->input('category_ids', $request->input('category_id')));
+        $vendorIds = $this->intListInput($request->input('vendor_ids', $request->input('vendor_id')));
+        $repository = $this->app->make(FinanceEntryRepository::class);
+
+        return [
+            'startMonth' => $startMonth,
+            'endMonth' => $endMonth,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'periodLabel' => $this->monthPeriodLabel($startMonth, $endMonth),
+            'categoryIds' => $categoryIds,
+            'vendorIds' => $vendorIds,
+            'categories' => $repository->expenseCategories(),
+            'vendors' => $repository->expenseVendors(),
+            'expenseSummary' => $repository->expenseReportSummary($startDate, $endDate, $categoryIds, $vendorIds),
+            'expenseRows' => $repository->expenseReportRows($startDate, $endDate, $categoryIds, $vendorIds),
+            'categorySummary' => $repository->expensesByCategoryReport($startDate, $endDate, $categoryIds, $vendorIds),
+            'vendorSummary' => $repository->expensesByVendor($startDate, $endDate, $categoryIds, $vendorIds),
+            'paidVsReceivedRows' => $repository->paidVsReceivedByMonth($startDate, $endDate),
+            'cashflowRows' => $repository->cashflowRows($startDate, $endDate),
+        ];
     }
 
     public function market(Request $request): Response
@@ -82,5 +203,60 @@ final class ReportController extends Controller
         $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
 
         return $date instanceof \DateTimeImmutable ? $date->format('Y-m-d') : $fallback;
+    }
+
+    private function monthInput(string $value, string $fallback): string
+    {
+        $date = \DateTimeImmutable::createFromFormat('Y-m', $value);
+
+        return $date instanceof \DateTimeImmutable ? $date->format('Y-m') : $fallback;
+    }
+
+    private function intListInput(mixed $value): array
+    {
+        $values = is_array($value) ? $value : [$value];
+        $ids = [];
+
+        foreach ($values as $item) {
+            $number = (int) $item;
+
+            if ($number > 0) {
+                $ids[] = $number;
+            }
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    private function monthPeriodLabel(string $startMonth, string $endMonth): string
+    {
+        $start = new \DateTimeImmutable($startMonth . '-01');
+        $end = new \DateTimeImmutable($endMonth . '-01');
+
+        if ($startMonth === $endMonth) {
+            return $this->monthName((int) $start->format('n')) . ' de ' . $start->format('Y');
+        }
+
+        return $this->monthName((int) $start->format('n')) . '/' . $start->format('Y')
+            . ' ate '
+            . $this->monthName((int) $end->format('n')) . '/' . $end->format('Y');
+    }
+
+    private function monthName(int $month): string
+    {
+        return [
+            1 => 'Janeiro',
+            2 => 'Fevereiro',
+            3 => 'Marco',
+            4 => 'Abril',
+            5 => 'Maio',
+            6 => 'Junho',
+            7 => 'Julho',
+            8 => 'Agosto',
+            9 => 'Setembro',
+            10 => 'Outubro',
+            11 => 'Novembro',
+            12 => 'Dezembro',
+        ][$month] ?? '';
     }
 }

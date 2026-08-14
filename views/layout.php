@@ -1350,6 +1350,63 @@
         .report-bar-item small {
             color: var(--muted);
         }
+        .report-mini-bar {
+            background: #eaf3f7;
+            border-radius: 999px;
+            display: block;
+            height: 8px;
+            margin-top: 8px;
+            max-width: 220px;
+            overflow: hidden;
+        }
+        .report-mini-bar span {
+            background: linear-gradient(90deg, var(--accent), var(--brand));
+            border-radius: inherit;
+            display: block;
+            height: 100%;
+        }
+        .paired-bar-chart {
+            align-items: end;
+            display: flex;
+            gap: 18px;
+            margin: 20px 0 24px;
+            min-height: 230px;
+            overflow-x: auto;
+            padding: 20px 4px 8px;
+        }
+        .paired-bar-item {
+            display: grid;
+            gap: 7px;
+            min-width: 108px;
+            text-align: center;
+        }
+        .paired-bar-columns {
+            align-items: end;
+            display: flex;
+            gap: 8px;
+            height: 160px;
+            justify-content: center;
+        }
+        .paired-bar-columns span {
+            border-radius: 999px 999px 0 0;
+            display: block;
+            width: 28px;
+        }
+        .paired-bar-income {
+            background: linear-gradient(180deg, #2dd4bf, var(--accent));
+        }
+        .paired-bar-expense {
+            background: linear-gradient(180deg, #f59e0b, #ef4444);
+        }
+        .paired-bar-item strong {
+            color: var(--brand-dark);
+            font-size: 0.86rem;
+        }
+        .paired-bar-item small {
+            color: var(--muted);
+            display: block;
+            font-size: 0.78rem;
+        }
         .app-footer {
             color: var(--muted);
             font-size: 0.85rem;
@@ -1870,7 +1927,7 @@
                     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_REPORT)): ?>
                         <div class="nav-group">
                             <div class="nav-group-title">Relatórios</div>
-                            <a class="nav-subitem <?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-grid"></span>Visao geral</a>
+                            <a class="nav-subitem <?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-bar-chart-line"></span>Financeiro</a>
                             <a class="nav-subitem <?= $isActive('/reports/market') ?>" href="/reports/market"><span class="bi bi-basket2"></span>Mercado</a>
                         </div>
                     <?php endif; ?>

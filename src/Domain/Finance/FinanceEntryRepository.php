@@ -26,6 +26,19 @@ final class FinanceEntryRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function expenseVendors(): array
+    {
+        $statement = $this->database->connection()->query(
+            'SELECT DISTINCT vendors.id, vendors.name
+             FROM entries
+             INNER JOIN vendors ON vendors.id = entries.vendor_id
+             WHERE entries.type = "expense"
+             ORDER BY vendors.name'
+        );
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function expenseSummary(string $startDate, string $endDate, array $categoryIds): array
     {
         $filters = $this->filters($startDate, $endDate, $categoryIds);
@@ -253,6 +266,166 @@ final class FinanceEntryRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function expenseReportRows(string $startDate, string $endDate, array $categoryIds, array $vendorIds): array
+    {
+        $filters = $this->reportFilters($startDate, $endDate, $categoryIds, $vendorIds);
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                entries.id,
+                entries.entry_date,
+                entries.competence_month,
+                entries.description,
+                entries.amount,
+                entries.status,
+                entries.installment_current,
+                entries.installment_total,
+                entries.is_last_installment,
+                COALESCE(categories.name, "Sem categoria") AS category_name,
+                COALESCE(vendors.name, "Sem fornecedor") AS vendor_name
+             FROM entries
+             LEFT JOIN categories ON categories.id = entries.category_id
+             LEFT JOIN vendors ON vendors.id = entries.vendor_id
+             WHERE entries.type = "expense"
+               AND entries.entry_date BETWEEN :start_date AND :end_date
+               ' . $filters['sql'] . '
+             ORDER BY entries.entry_date ASC, category_name ASC, vendor_name ASC, entries.description ASC'
+        );
+        $statement->execute($filters['params']);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function expenseReportSummary(string $startDate, string $endDate, array $categoryIds, array $vendorIds): array
+    {
+        $filters = $this->reportFilters($startDate, $endDate, $categoryIds, $vendorIds);
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                COALESCE(SUM(entries.amount), 0) AS total_amount,
+                COALESCE(SUM(CASE WHEN entries.status = "paid" THEN entries.amount ELSE 0 END), 0) AS paid_amount,
+                COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COUNT(*) AS entries_count
+             FROM entries
+             WHERE entries.type = "expense"
+               AND entries.entry_date BETWEEN :start_date AND :end_date
+               ' . $filters['sql']
+        );
+        $statement->execute($filters['params']);
+        $row = $statement->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        return [
+            'total_amount' => (float) ($row['total_amount'] ?? 0),
+            'paid_amount' => (float) ($row['paid_amount'] ?? 0),
+            'open_amount' => (float) ($row['open_amount'] ?? 0),
+            'entries_count' => (int) ($row['entries_count'] ?? 0),
+        ];
+    }
+
+    public function expensesByVendor(string $startDate, string $endDate, array $categoryIds, array $vendorIds): array
+    {
+        $filters = $this->reportFilters($startDate, $endDate, $categoryIds, $vendorIds);
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                COALESCE(vendors.name, "Sem fornecedor") AS vendor_name,
+                COALESCE(SUM(entries.amount), 0) AS total_amount,
+                COALESCE(SUM(CASE WHEN entries.status = "paid" THEN entries.amount ELSE 0 END), 0) AS paid_amount,
+                COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COUNT(*) AS entries_count
+             FROM entries
+             LEFT JOIN vendors ON vendors.id = entries.vendor_id
+             WHERE entries.type = "expense"
+               AND entries.entry_date BETWEEN :start_date AND :end_date
+               ' . $filters['sql'] . '
+             GROUP BY COALESCE(vendors.name, "Sem fornecedor")
+             ORDER BY total_amount DESC, vendor_name ASC'
+        );
+        $statement->execute($filters['params']);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function expensesByCategoryReport(string $startDate, string $endDate, array $categoryIds, array $vendorIds): array
+    {
+        $filters = $this->reportFilters($startDate, $endDate, $categoryIds, $vendorIds);
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                COALESCE(categories.name, "Sem categoria") AS category_name,
+                COALESCE(SUM(entries.amount), 0) AS total_amount,
+                COALESCE(SUM(CASE WHEN entries.status = "paid" THEN entries.amount ELSE 0 END), 0) AS paid_amount,
+                COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COUNT(*) AS entries_count
+             FROM entries
+             LEFT JOIN categories ON categories.id = entries.category_id
+             WHERE entries.type = "expense"
+               AND entries.entry_date BETWEEN :start_date AND :end_date
+               ' . $filters['sql'] . '
+             GROUP BY COALESCE(categories.name, "Sem categoria")
+             ORDER BY total_amount DESC, category_name ASC'
+        );
+        $statement->execute($filters['params']);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+
+    public function paidVsReceivedByMonth(string $startDate, string $endDate): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                DATE_FORMAT(entry_date, "%Y-%m") AS month_key,
+                COALESCE(SUM(CASE WHEN type = "income" THEN amount ELSE 0 END), 0) AS income_amount,
+                COALESCE(SUM(CASE WHEN type = "expense" THEN amount ELSE 0 END), 0) AS expense_amount,
+                COALESCE(SUM(CASE WHEN type = "expense" AND status = "paid" THEN amount ELSE 0 END), 0) AS paid_expense_amount
+             FROM entries
+             WHERE entry_date BETWEEN :start_date AND :end_date
+             GROUP BY DATE_FORMAT(entry_date, "%Y-%m")
+             ORDER BY month_key ASC'
+        );
+        $statement->execute([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+        $rows = [];
+
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $income = (float) $row['income_amount'];
+            $expense = (float) $row['expense_amount'];
+            $rows[] = [
+                'month_key' => $row['month_key'],
+                'income_amount' => $income,
+                'expense_amount' => $expense,
+                'paid_expense_amount' => (float) $row['paid_expense_amount'],
+                'balance_amount' => $income - $expense,
+            ];
+        }
+
+        return $rows;
+    }
+
+    public function cashflowRows(string $startDate, string $endDate): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                entries.entry_date,
+                entries.type,
+                entries.description,
+                entries.amount,
+                entries.status,
+                COALESCE(categories.name, "Sem categoria") AS category_name,
+                COALESCE(vendors.name, "Sem fornecedor") AS vendor_name
+             FROM entries
+             LEFT JOIN categories ON categories.id = entries.category_id
+             LEFT JOIN vendors ON vendors.id = entries.vendor_id
+             WHERE entries.entry_date BETWEEN :start_date AND :end_date
+             ORDER BY entries.entry_date ASC, entries.type DESC, entries.description ASC, entries.id ASC'
+        );
+        $statement->execute([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     private function filters(string $startDate, string $endDate, array $categoryIds): array
     {
         $params = [
@@ -276,6 +449,30 @@ final class FinanceEntryRepository
         return [
             'join' => '',
             'categorySql' => $categorySql,
+            'params' => $params,
+        ];
+    }
+
+    private function reportFilters(string $startDate, string $endDate, array $categoryIds, array $vendorIds): array
+    {
+        $filters = $this->filters($startDate, $endDate, $categoryIds);
+        $params = $filters['params'];
+        $sql = $filters['categorySql'];
+
+        if ($vendorIds !== []) {
+            $placeholders = [];
+
+            foreach (array_values($vendorIds) as $index => $vendorId) {
+                $key = 'vendor_id_' . $index;
+                $placeholders[] = ':' . $key;
+                $params[$key] = $vendorId;
+            }
+
+            $sql .= ' AND entries.vendor_id IN (' . implode(', ', $placeholders) . ')';
+        }
+
+        return [
+            'sql' => $sql,
             'params' => $params,
         ];
     }
