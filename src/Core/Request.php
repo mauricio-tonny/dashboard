@@ -36,6 +36,16 @@ final class Request
         return $this->post[$key] ?? $this->get[$key] ?? $default;
     }
 
+    public function query(): array
+    {
+        return $this->get;
+    }
+
+    public function server(string $key, mixed $default = null): mixed
+    {
+        return $this->server[$key] ?? $default;
+    }
+
     public function only(array $keys): array
     {
         $data = [];
@@ -47,4 +57,3 @@ final class Request
         return $data;
     }
 }
-

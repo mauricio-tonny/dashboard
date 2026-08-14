@@ -25,9 +25,13 @@ final class AuditLogController extends Controller
             return new Response('Acesso negado.', 403);
         }
 
+        $logger = $this->app->make(AuditLogger::class);
+
         return Response::view('admin/audit-logs/index', [
             'user' => $auth->user(),
-            'logs' => $this->app->make(AuditLogger::class)->latest(100),
+            'logs' => $logger->latest(100),
+            'topPages' => $logger->topEvents('page_viewed'),
+            'topReports' => $logger->topEvents('report_viewed'),
         ]);
     }
 }

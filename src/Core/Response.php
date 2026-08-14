@@ -26,6 +26,11 @@ final class Response
         return new self('', 302, ['Location' => $location]);
     }
 
+    public function statusCode(): int
+    {
+        return $this->status;
+    }
+
     public function send(): void
     {
         http_response_code($this->status);

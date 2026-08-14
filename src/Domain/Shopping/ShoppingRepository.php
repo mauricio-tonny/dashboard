@@ -557,13 +557,14 @@ final class ShoppingRepository
         ]);
     }
 
-    public function toggleWishItem(int $id, bool $purchased, ?string $purchasedAt = null): void
+    public function toggleWishItem(int $id, bool $purchased, ?string $purchasedAt = null, ?float $purchasedAmount = null): void
     {
         $normalizedPurchasedAt = $purchased ? $this->normalizeDateTime($purchasedAt ?? 'now') : null;
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_wish_items
              SET is_purchased = :is_purchased,
                  purchased_at = :purchased_at,
+                 purchased_amount = :purchased_amount,
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = :id'
         );
@@ -571,6 +572,7 @@ final class ShoppingRepository
             'id' => $id,
             'is_purchased' => $purchased ? 1 : 0,
             'purchased_at' => $normalizedPurchasedAt,
+            'purchased_amount' => $purchased ? $purchasedAmount : null,
         ]);
     }
 

@@ -596,16 +596,23 @@ final class ShoppingController extends Controller
         $purchased = (string) $request->input('purchased') === '1';
         $type = (string) $request->input('type', 'home');
         $purchasedAt = trim((string) $request->input('purchased_at'));
+        $purchasedAmount = $this->money((string) $request->input('purchased_amount'));
 
-        if ($purchased && $type === 'vehicle' && $purchasedAt === '') {
-            $this->flash('error', 'Informe a data da compra para baixar o item do veículo.');
+        if ($purchased && $purchasedAt === '') {
+            $this->flash('error', 'Informe a data da compra para baixar o item.');
             return Response::redirect($this->wishRedirect($type));
         }
 
-        $this->app->make(ShoppingRepository::class)->toggleWishItem($id, $purchased, $purchasedAt === '' ? null : $purchasedAt);
+        if ($purchased && ($purchasedAmount === null || $purchasedAmount <= 0)) {
+            $this->flash('error', 'Informe o valor da compra maior que zero para baixar o item.');
+            return Response::redirect($this->wishRedirect($type));
+        }
+
+        $this->app->make(ShoppingRepository::class)->toggleWishItem($id, $purchased, $purchasedAt === '' ? null : $purchasedAt, $purchasedAmount);
         $this->audit($purchased ? 'shopping_wish_item_purchased' : 'shopping_wish_item_reopened', 'shopping_wish_item', $id, [
             'type' => $type,
             'purchased_at' => $purchasedAt ?: null,
+            'purchased_amount' => $purchased ? $purchasedAmount : null,
         ]);
 
         return Response::redirect($this->wishRedirect($type));

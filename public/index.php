@@ -175,4 +175,119 @@ $router->get('/entries/create', [EntryController::class, 'create']);
 $router->post('/entries', [EntryController::class, 'store']);
 
 $response = $router->dispatch($request);
+auditPageUsage($request, $response, $authService, $auditLogger);
 $response->send();
+
+function auditPageUsage(Request $request, \App\Core\Response $response, AuthService $authService, AuditLogger $auditLogger): void
+{
+    if ($request->method() !== 'GET') {
+        return;
+    }
+
+    $user = $authService->user();
+
+    if ($user === null) {
+        return;
+    }
+
+    $path = $request->path();
+
+    if ($path === '/login') {
+        return;
+    }
+
+    $pageLabels = [
+        '/' => 'Dashboard',
+        '/admin/audit-logs' => 'Logs de auditoria',
+        '/admin/users' => 'Usuarios',
+        '/admin/shopping-settings' => 'Configuracao de compras',
+        '/shopping' => 'Compras - visao geral',
+        '/shopping/market' => 'Compras - mercado',
+        '/shopping/market/history' => 'Compras - mercado historico',
+        '/shopping/home' => 'Compras - para casa',
+        '/shopping/family' => 'Compras - para a familia',
+        '/shopping/vehicle' => 'Compras - para veiculo',
+        '/contacts' => 'Contatos',
+        '/finance/payable' => 'Financeiro - A pagar',
+        '/finance/receivable' => 'Financeiro - A receber',
+        '/reports' => 'Relatorios - central',
+        '/reports/categories' => 'Relatorio por categoria',
+        '/reports/category-chart' => 'Relatorio grafico por categoria',
+        '/reports/vendors' => 'Relatorio por fornecedor',
+        '/reports/paid-vs-received' => 'Relatorio Pago x Recebido',
+        '/reports/cashflow' => 'Relatorio Fluxo de Caixa',
+        '/reports/market' => 'Relatorio de Mercado',
+        '/system/backup' => 'Sistema - backup',
+        '/system/sync' => 'Sistema - sincronizacao',
+        '/system/categories' => 'Sistema - categorias',
+        '/system/discord' => 'Sistema - Discord',
+        '/system/permissions' => 'Sistema - permissoes',
+        '/system/spreadsheet' => 'Sistema - planilha',
+        '/entries/create' => 'Novo lancamento',
+    ];
+
+    $label = $pageLabels[$path] ?? $path;
+    $metadata = [
+        'path' => $path,
+        'label' => $label,
+        'status_code' => $response->statusCode(),
+        'query' => sanitizedAuditQuery($request->query()),
+        'ip' => (string) $request->server('REMOTE_ADDR', ''),
+        'user_agent' => mb_substr((string) $request->server('HTTP_USER_AGENT', ''), 0, 255),
+    ];
+
+    if (str_starts_with($path, '/reports/') && $path !== '/reports/market') {
+        $auditLogger->log('report_viewed', 'report', null, $user, [
+            ...$metadata,
+            'report' => str_replace('/reports/', '', $path),
+            'filters' => reportAuditFilters($request->query()),
+        ]);
+
+        return;
+    }
+
+    if ($path === '/reports/market') {
+        $auditLogger->log('report_viewed', 'report', null, $user, [
+            ...$metadata,
+            'report' => 'market',
+            'filters' => reportAuditFilters($request->query()),
+        ]);
+
+        return;
+    }
+
+    $auditLogger->log('page_viewed', 'page', null, $user, $metadata);
+}
+
+function sanitizedAuditQuery(array $query): array
+{
+    $blockedKeys = ['password', 'admin_password', 'token', 'webhook_url', 'access_key'];
+    $sanitized = [];
+
+    foreach ($query as $key => $value) {
+        if (in_array((string) $key, $blockedKeys, true)) {
+            $sanitized[$key] = '[redacted]';
+            continue;
+        }
+
+        $sanitized[$key] = is_array($value)
+            ? array_map(static fn (mixed $item): string => mb_substr((string) $item, 0, 120), $value)
+            : mb_substr((string) $value, 0, 120);
+    }
+
+    return $sanitized;
+}
+
+function reportAuditFilters(array $query): array
+{
+    return array_intersect_key(sanitizedAuditQuery($query), array_flip([
+        'start_month',
+        'end_month',
+        'start_date',
+        'end_date',
+        'category_ids',
+        'category_id',
+        'vendor_ids',
+        'vendor_id',
+    ]));
+}

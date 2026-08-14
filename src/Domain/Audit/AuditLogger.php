@@ -55,4 +55,32 @@ final class AuditLogger
 
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function topEvents(string $action, int $days = 30, int $limit = 10): array
+    {
+        $since = (new \DateTimeImmutable('now'))
+            ->modify(sprintf('-%d days', max(1, $days)))
+            ->format('Y-m-d H:i:s');
+
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                JSON_UNQUOTE(JSON_EXTRACT(metadata, "$.label")) AS label,
+                JSON_UNQUOTE(JSON_EXTRACT(metadata, "$.path")) AS path,
+                COUNT(*) AS total,
+                COUNT(DISTINCT user_id) AS users_count,
+                MAX(created_at) AS last_seen_at
+             FROM audit_logs
+             WHERE action = :action
+               AND created_at >= :since
+             GROUP BY label, path
+             ORDER BY total DESC, last_seen_at DESC
+             LIMIT :limit'
+        );
+        $statement->bindValue('action', $action);
+        $statement->bindValue('since', $since);
+        $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

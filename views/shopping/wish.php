@@ -104,7 +104,8 @@ $renderItem = static function (array $item) use (
     $hasPriority,
     $renderForm,
     $canManageShopping,
-    $todayInput
+    $todayInput,
+    $formatMoneyInput
 ): void {
     $isPurchased = ((int) $item['is_purchased']) === 1;
     ?>
@@ -122,6 +123,9 @@ $renderItem = static function (array $item) use (
                 <?php endif; ?>
                 <?php if ($isPurchased): ?>
                     | Comprado em <?= htmlspecialchars($formatDate($item['purchased_at'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                    <?php if (($item['purchased_amount'] ?? null) !== null): ?>
+                        | Valor <?= htmlspecialchars($formatMoney($item['purchased_amount']), ENT_QUOTES, 'UTF-8') ?>
+                    <?php endif; ?>
                 <?php endif; ?>
             </small>
         </div>
@@ -130,7 +134,7 @@ $renderItem = static function (array $item) use (
             <button class="inline-button" type="button" data-bs-toggle="modal" data-bs-target="#editWishItemModal<?= (int) $item['id'] ?>">
                 <span class="bi bi-pencil-square"></span>Editar
             </button>
-            <?php if ($type === 'vehicle' && !$isPurchased): ?>
+            <?php if (!$isPurchased): ?>
                 <button class="inline-button" type="button" data-bs-toggle="modal" data-bs-target="#purchaseWishItemModal<?= (int) $item['id'] ?>">
                     <span class="bi bi-check2-square"></span>Comprado
                 </button>
@@ -170,7 +174,7 @@ $renderItem = static function (array $item) use (
     </div>
     <?php endif; ?>
 
-    <?php if ($canManageShopping && $type === 'vehicle' && !$isPurchased): ?>
+    <?php if ($canManageShopping && !$isPurchased): ?>
         <div class="modal fade" id="purchaseWishItemModal<?= (int) $item['id'] ?>" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -181,12 +185,16 @@ $renderItem = static function (array $item) use (
                         </div>
                         <div class="modal-body">
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
-                            <input type="hidden" name="type" value="vehicle">
+                            <input type="hidden" name="type" value="<?= htmlspecialchars($type, ENT_QUOTES, 'UTF-8') ?>">
                             <input type="hidden" name="purchased" value="1">
-                            <p class="muted">Informe quando o item foi comprado para manter o histórico correto.</p>
+                            <p class="muted">Informe quando e por quanto o item foi comprado para manter o historico correto.</p>
                             <label>
                                 Data da compra
                                 <input type="date" name="purchased_at" value="<?= htmlspecialchars($todayInput, ENT_QUOTES, 'UTF-8') ?>" required>
+                            </label>
+                            <label>
+                                Valor da compra
+                                <input type="text" name="purchased_amount" value="<?= htmlspecialchars($formatMoneyInput($item['estimated_amount'] ?? null), ENT_QUOTES, 'UTF-8') ?>" placeholder="R$ 0,00" inputmode="decimal" data-money-input required>
                             </label>
                         </div>
                         <div class="modal-footer">

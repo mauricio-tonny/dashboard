@@ -7,6 +7,8 @@ $labels = [
     'login_failed' => 'Falha de login',
     'logout' => 'Logout',
     'session_timeout' => 'Logout por inatividade',
+    'page_viewed' => 'Tela acessada',
+    'report_viewed' => 'Relatorio visualizado',
     'user_created' => 'Usuário criado',
     'user_updated' => 'Usuário atualizado',
     'user_blocked' => 'Usuário bloqueado',
@@ -43,6 +45,7 @@ $labels = [
     'contact_updated' => 'Contato atualizado',
     'contact_enabled' => 'Contato reativado',
     'contact_disabled' => 'Contato desativado',
+    'user_permissions_updated' => 'Permissoes do usuario atualizadas',
 ];
 ?>
 <section class="page-hero">
@@ -53,6 +56,92 @@ $labels = [
             <h1>Logs de auditoria</h1>
             <p class="muted">Acompanhe acessos e ações importantes realizadas no sistema.</p>
         </div>
+    </div>
+</section>
+
+<?php
+$totalPageViews = array_sum(array_map(static fn (array $row): int => (int) ($row['total'] ?? 0), $topPages ?? []));
+$totalReportViews = array_sum(array_map(static fn (array $row): int => (int) ($row['total'] ?? 0), $topReports ?? []));
+?>
+
+<section class="report-summary-grid">
+    <article class="card report-summary-card">
+        <small>Acessos em telas</small>
+        <strong><?= $totalPageViews ?></strong>
+        <span class="muted"><?= count($topPages ?? []) ?> tela(s) nos ultimos 30 dias</span>
+    </article>
+    <article class="card report-summary-card">
+        <small>Relatorios gerados</small>
+        <strong><?= $totalReportViews ?></strong>
+        <span class="muted"><?= count($topReports ?? []) ?> relatorio(s) nos ultimos 30 dias</span>
+    </article>
+</section>
+
+<section class="card section-card">
+    <h2 class="section-title"><span class="bi bi-graph-up"></span>Uso das telas</h2>
+    <div class="responsive-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Tela</th>
+                    <th>Acessos</th>
+                    <th>Usuarios</th>
+                    <th>Ultimo acesso</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach (($topPages ?? []) as $row): ?>
+                    <tr>
+                        <td>
+                            <strong><?= htmlspecialchars((string) ($row['label'] ?: $row['path']), ENT_QUOTES, 'UTF-8') ?></strong><br>
+                            <span class="muted"><?= htmlspecialchars((string) ($row['path'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                        </td>
+                        <td><?= (int) $row['total'] ?></td>
+                        <td><?= (int) $row['users_count'] ?></td>
+                        <td><?= htmlspecialchars((string) ($row['last_seen_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if (($topPages ?? []) === []): ?>
+                    <tr>
+                        <td colspan="4">Sem acessos registrados no periodo.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="card section-card">
+    <h2 class="section-title"><span class="bi bi-bar-chart-line"></span>Uso dos relatorios</h2>
+    <div class="responsive-table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Relatorio</th>
+                    <th>Acessos</th>
+                    <th>Usuarios</th>
+                    <th>Ultimo acesso</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach (($topReports ?? []) as $row): ?>
+                    <tr>
+                        <td>
+                            <strong><?= htmlspecialchars((string) ($row['label'] ?: $row['path']), ENT_QUOTES, 'UTF-8') ?></strong><br>
+                            <span class="muted"><?= htmlspecialchars((string) ($row['path'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                        </td>
+                        <td><?= (int) $row['total'] ?></td>
+                        <td><?= (int) $row['users_count'] ?></td>
+                        <td><?= htmlspecialchars((string) ($row['last_seen_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <?php if (($topReports ?? []) === []): ?>
+                    <tr>
+                        <td colspan="4">Sem relatorios registrados no periodo.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
     </div>
 </section>
 
