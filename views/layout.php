@@ -1127,6 +1127,40 @@
             text-align: right;
             white-space: nowrap;
         }
+        .money-cell.is-positive {
+            color: #047857;
+        }
+        .money-cell.is-negative {
+            color: #b91c1c;
+        }
+        .finance-entries-table tbody tr.cashflow-row-income {
+            background: #f0fdf4;
+        }
+        .finance-entries-table tbody tr.cashflow-row-expense {
+            background: #fff5f5;
+        }
+        .finance-entries-table tbody tr.cashflow-row-income:nth-child(even) {
+            background: #eafaf1;
+        }
+        .finance-entries-table tbody tr.cashflow-row-expense:nth-child(even) {
+            background: #fff0f0;
+        }
+        .cashflow-type-pill {
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: 0.8rem;
+            font-weight: 900;
+            padding: 5px 9px;
+            white-space: nowrap;
+        }
+        .cashflow-type-pill.is-income {
+            background: #d1fae5;
+            color: #047857;
+        }
+        .cashflow-type-pill.is-expense {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
         .status-pill {
             border-radius: 999px;
             display: inline-flex;
@@ -1213,6 +1247,9 @@
             border-radius: inherit;
             display: block;
             width: 100%;
+        }
+        .income-column-chart .category-column-track span {
+            background: linear-gradient(180deg, #34d399, #0f9f86);
         }
         pre {
             background: #f8fbfd;

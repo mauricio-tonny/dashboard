@@ -35,8 +35,6 @@ require base_path('views/reports/_finance_filters.php');
                     <th>Data</th>
                     <th>Tipo</th>
                     <th>Descricao</th>
-                    <th>Origem/Categoria</th>
-                    <th>Status</th>
                     <th>Valor</th>
                     <th>Saldo</th>
                 </tr>
@@ -44,29 +42,33 @@ require base_path('views/reports/_finance_filters.php');
             <tbody>
                 <?php foreach ($cashflowRows as $row): ?>
                     <?php
-                    $signedAmount = (string) $row['type'] === 'income' ? (float) $row['amount'] : -(float) $row['amount'];
+                    $isIncome = (string) $row['type'] === 'income';
+                    $signedAmount = $isIncome ? (float) $row['amount'] : -(float) $row['amount'];
                     $cashflowBalance += $signedAmount;
+                    $balanceClass = $cashflowBalance >= 0 ? 'is-positive' : 'is-negative';
                     ?>
-                    <tr>
+                    <tr class="<?= $isIncome ? 'cashflow-row-income' : 'cashflow-row-expense' ?>">
                         <td><?= htmlspecialchars($formatDate((string) $row['entry_date']), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= (string) $row['type'] === 'income' ? 'Entrada' : 'Saida' ?></td>
+                        <td>
+                            <span class="cashflow-type-pill <?= $isIncome ? 'is-income' : 'is-expense' ?>">
+                                <?= $isIncome ? 'Entrada' : 'Saida' ?>
+                            </span>
+                        </td>
                         <td><strong><?= htmlspecialchars((string) $row['description'], ENT_QUOTES, 'UTF-8') ?></strong></td>
-                        <td><?= htmlspecialchars((string) ($row['vendor_name'] !== 'Sem fornecedor' ? $row['vendor_name'] : $row['category_name']), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= (string) $row['status'] === 'paid' ? 'Pago' : 'Aberto' ?></td>
-                        <td class="money-cell"><?= $formatMoney($signedAmount) ?></td>
-                        <td class="money-cell"><?= $formatMoney($cashflowBalance) ?></td>
+                        <td class="money-cell <?= $isIncome ? 'is-positive' : 'is-negative' ?>"><?= $formatMoney($signedAmount) ?></td>
+                        <td class="money-cell <?= $balanceClass ?>"><?= $formatMoney($cashflowBalance) ?></td>
                     </tr>
                 <?php endforeach; ?>
                 <?php if ($cashflowRows === []): ?>
                     <tr>
-                        <td colspan="7">Sem movimentacoes no periodo.</td>
+                        <td colspan="5">Sem movimentacoes no periodo.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="6">Saldo final</th>
-                    <th class="money-cell"><?= $formatMoney($cashflowBalance) ?></th>
+                    <th colspan="4">Saldo final</th>
+                    <th class="money-cell <?= $cashflowBalance >= 0 ? 'is-positive' : 'is-negative' ?>"><?= $formatMoney($cashflowBalance) ?></th>
                 </tr>
             </tfoot>
         </table>

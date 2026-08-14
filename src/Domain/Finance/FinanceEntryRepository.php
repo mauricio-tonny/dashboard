@@ -244,6 +244,99 @@ final class FinanceEntryRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function incomeSummary(string $startDate, string $endDate): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                COALESCE(SUM(amount), 0) AS total_amount,
+                COUNT(*) AS entries_count,
+                COALESCE(SUM(CASE WHEN description = "SALARIO MAURICIO" THEN amount ELSE 0 END), 0) AS mauricio_amount,
+                COALESCE(SUM(CASE WHEN description = "SALARIO KARINA" THEN amount ELSE 0 END), 0) AS karina_amount
+             FROM entries
+             WHERE type = "income"
+               AND entry_date BETWEEN :start_date AND :end_date'
+        );
+        $statement->execute([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+        $row = $statement->fetch(PDO::FETCH_ASSOC) ?: [];
+        $total = (float) ($row['total_amount'] ?? 0);
+        $mauricio = (float) ($row['mauricio_amount'] ?? 0);
+        $karina = (float) ($row['karina_amount'] ?? 0);
+
+        return [
+            'total_amount' => $total,
+            'entries_count' => (int) ($row['entries_count'] ?? 0),
+            'mauricio_amount' => $mauricio,
+            'karina_amount' => $karina,
+            'other_amount' => max(0.0, $total - $mauricio - $karina),
+        ];
+    }
+
+    public function incomeRows(string $startDate, string $endDate): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                id,
+                entry_date,
+                competence_month,
+                description,
+                amount,
+                status
+             FROM entries
+             WHERE type = "income"
+               AND entry_date BETWEEN :start_date AND :end_date
+             ORDER BY
+                entry_date ASC,
+                CASE description
+                    WHEN "SALARIO MAURICIO" THEN 1
+                    WHEN "OUTROS MAURICIO" THEN 2
+                    WHEN "SALARIO KARINA" THEN 3
+                    WHEN "OUTROS KARINA" THEN 4
+                    ELSE 5
+                END ASC,
+                description ASC,
+                id ASC'
+        );
+        $statement->execute([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function incomeByDescription(string $startDate, string $endDate): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                description,
+                COALESCE(SUM(amount), 0) AS total_amount,
+                COUNT(*) AS entries_count
+             FROM entries
+             WHERE type = "income"
+               AND entry_date BETWEEN :start_date AND :end_date
+             GROUP BY description
+             ORDER BY
+                CASE description
+                    WHEN "SALARIO MAURICIO" THEN 1
+                    WHEN "OUTROS MAURICIO" THEN 2
+                    WHEN "SALARIO KARINA" THEN 3
+                    WHEN "OUTROS KARINA" THEN 4
+                    ELSE 5
+                END ASC,
+                total_amount DESC,
+                description ASC'
+        );
+        $statement->execute([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function expensesByCategory(string $startDate, string $endDate, array $categoryIds): array
     {
         $filters = $this->filters($startDate, $endDate, $categoryIds);

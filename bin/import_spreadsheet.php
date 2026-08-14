@@ -65,6 +65,8 @@ $stats = [
     'entries_seen' => 0,
     'entries_importable' => 0,
     'entries_skipped' => 0,
+    'income_seen' => 0,
+    'income_importable' => 0,
     'vendor_pending' => 0,
     'category_pending' => 0,
     'last_installments' => 0,
@@ -72,9 +74,17 @@ $stats = [
     'entries_changed' => 0,
     'entries_unchanged' => 0,
     'payment_marked_ok' => 0,
+    'monthly_sheets' => 0,
+    'income_missing' => 0,
+    'income_formula_parts' => 0,
+    'income_formula_extra_parts' => 0,
+    'income_stale_parts_removed' => 0,
 ];
 $pendingVendors = [];
 $pendingCategories = [];
+$incomePreview = [];
+$missingIncomeSheets = [];
+$incomePartCleanup = [];
 
 foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
     $classification = classifySheet($worksheet->getTitle());
@@ -83,6 +93,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         continue;
     }
 
+    $stats['monthly_sheets']++;
     $columns = detectMonthlyColumns($worksheet, $classification['columns']);
     $highestRow = $worksheet->getHighestDataRow();
 
@@ -166,6 +177,70 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         ];
         $stats['entries_importable']++;
     }
+
+    $incomeRows = detectIncomeRows($worksheet, $classification);
+
+    if ($incomeRows === []) {
+        $stats['income_missing']++;
+        $missingIncomeSheets[] = $worksheet->getTitle();
+    }
+
+    foreach ($incomeRows as $income) {
+        $stats['income_seen']++;
+        $sourceKeyBase = 'spreadsheet:' . $worksheet->getTitle() . ':income:' . $income['label_cell'];
+        $sourceKey = $sourceKeyBase . ($income['source_suffix'] ?? '');
+        $incomePartCleanup[$sourceKeyBase][] = $sourceKey;
+        $stats['income_formula_parts'] += (($income['formula_part_count'] ?? 1) > 1 && ($income['source_suffix'] ?? '') === '') ? 1 : 0;
+        $stats['income_formula_extra_parts'] += ($income['source_suffix'] ?? '') !== '' ? 1 : 0;
+        $rawPayload = [
+            'sheet' => $worksheet->getTitle(),
+            'layout' => $classification['layout'],
+            'type' => 'income',
+            'label_cell' => $income['label_cell'],
+            'amount_cell' => $income['amount_cell'],
+            'description' => normalizeIncomeDescription($income['description']),
+            'raw_description' => $income['description'],
+            'amount' => $income['amount'],
+            'formula' => $income['formula'] ?? null,
+            'formula_part_index' => $income['formula_part_index'] ?? null,
+            'formula_part_count' => $income['formula_part_count'] ?? null,
+        ];
+        $sourceHash = hash('sha256', json_encode($rawPayload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        $rows[] = [
+            'source_key' => $sourceKey,
+            'source_hash' => $sourceHash,
+            'worksheet_name' => $worksheet->getTitle(),
+            'worksheet_row' => $income['row'],
+            'competence_month' => $classification['reference']->format('Y-m-01'),
+            'entry_date' => $classification['reference']->format('Y-m-01'),
+            'type' => 'income',
+            'description' => mb_substr(normalizeIncomeDescription($income['description']), 0, 255),
+            'amount' => (float) $income['amount'],
+            'status' => 'paid',
+            'vendor_name' => null,
+            'category_name' => null,
+            'modality' => null,
+            'legacy_reference' => null,
+            'installment_current' => null,
+            'installment_total' => null,
+            'is_last_installment' => 0,
+            'raw_payload' => $rawPayload,
+        ];
+        $stats['income_importable']++;
+
+        if (count($incomePreview) < $limit) {
+            $incomePreview[] = [
+                'sheet' => $worksheet->getTitle(),
+                'description' => normalizeIncomeDescription($income['description']),
+                'raw_description' => $income['description'],
+                'amount' => (float) $income['amount'],
+                'formula' => $income['formula'] ?? null,
+                'label_cell' => $income['label_cell'],
+                'amount_cell' => $income['amount_cell'],
+            ];
+        }
+    }
 }
 
 echo ($dryRun ? "DRY-RUN\n" : "APPLY\n");
@@ -173,14 +248,20 @@ echo "Arquivo: {$file}\n";
 echo "SHA256: {$fileHash}\n";
 echo "Fornecedores BASE: {$stats['base_vendors']}\n";
 echo "Categorias BASE: {$stats['base_categories']}\n";
+echo "Abas mensais: {$stats['monthly_sheets']}\n";
 echo "Linhas vistas: {$stats['entries_seen']}\n";
 echo "Lançamentos importáveis: {$stats['entries_importable']}\n";
 echo "Linhas ignoradas: {$stats['entries_skipped']}\n";
+echo "Recebidos importaveis: {$stats['income_importable']}\n";
+echo "Recebidos derivados de formula: {$stats['income_formula_extra_parts']}\n";
+echo "Abas mensais sem recebido: {$stats['income_missing']}\n";
 echo "Fornecedores pendentes: {$stats['vendor_pending']}\n";
 echo "Categorias pendentes: {$stats['category_pending']}\n";
 echo "Últimas parcelas: {$stats['last_installments']}\n\n";
 printPending('Top fornecedores pendentes', $pendingVendors, $limit);
 printPending('Top categorias/REF pendentes', $pendingCategories, $limit);
+printIncomePreview($incomePreview);
+printMissingIncomeSheets($missingIncomeSheets);
 
 if ($dryRun) {
     echo "Nada foi gravado. Use --apply para importar no banco.\n";
@@ -244,7 +325,36 @@ try {
     $entryHashStatement = $pdo->prepare(
         'SELECT source_hash FROM entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
     );
+    $staleIncomePartStatement = $pdo->prepare(
+        'SELECT id, source_key
+         FROM entries
+         WHERE source_system = "spreadsheet"
+           AND type = "income"
+           AND source_key LIKE :source_key_pattern'
+    );
+    $deleteEntrySourcesStatement = $pdo->prepare(
+        'DELETE FROM entry_sources WHERE entry_id = :entry_id'
+    );
+    $deleteEntryStatement = $pdo->prepare(
+        'DELETE FROM entries WHERE id = :entry_id'
+    );
     $persistedEntries = 0;
+
+    foreach ($incomePartCleanup as $sourceKeyBase => $activeSourceKeys) {
+        $staleIncomePartStatement->execute([
+            'source_key_pattern' => escapeLike($sourceKeyBase) . ':part:%',
+        ]);
+
+        foreach ($staleIncomePartStatement->fetchAll(PDO::FETCH_ASSOC) as $staleEntry) {
+            if (in_array((string) $staleEntry['source_key'], $activeSourceKeys, true)) {
+                continue;
+            }
+
+            $deleteEntrySourcesStatement->execute(['entry_id' => (int) $staleEntry['id']]);
+            $deleteEntryStatement->execute(['entry_id' => (int) $staleEntry['id']]);
+            $stats['income_stale_parts_removed']++;
+        }
+    }
 
     foreach ($rows as $row) {
         $entryHashStatement->execute(['source_key' => $row['source_key']]);
@@ -299,6 +409,7 @@ try {
     echo "Lancamentos novos: {$stats['entries_new']}\n";
     echo "Lancamentos alterados: {$stats['entries_changed']}\n";
     echo "Lancamentos inalterados: {$stats['entries_unchanged']}\n";
+    echo "Recebidos extras removidos: {$stats['income_stale_parts_removed']}\n";
     echo "Lancamentos gravados/atualizados: {$persistedEntries}\n";
 } catch (Throwable $exception) {
     $pdo->rollBack();
@@ -753,6 +864,212 @@ function paymentStatus(DateTimeImmutable $reference, DateTimeImmutable $currentM
     return $reference < $currentMonth ? 'paid' : 'open';
 }
 
+function detectIncomeRows(Worksheet $worksheet, array $classification): array
+{
+    $items = [];
+    $seen = [];
+    $highestColumnIndex = Coordinate::columnIndexFromString($worksheet->getHighestDataColumn());
+
+    foreach ([2, 3] as $row) {
+        for ($columnIndex = 1; $columnIndex < $highestColumnIndex; $columnIndex++) {
+            $labelCell = Coordinate::stringFromColumnIndex($columnIndex) . $row;
+            $amountCell = Coordinate::stringFromColumnIndex($columnIndex + 1) . $row;
+            $label = asText(cellValue($worksheet, $labelCell));
+            $amount = cellValue($worksheet, $amountCell);
+
+            if (!isIncomeLabel($label) || !is_numeric($amount)) {
+                continue;
+            }
+
+            $key = $labelCell . ':' . $amountCell;
+            if (isset($seen[$key])) {
+                continue;
+            }
+
+            $seen[$key] = true;
+            foreach (expandIncomeAmount($worksheet, $amountCell, $label, (float) $amount) as $incomePart) {
+                $items[] = [
+                    'row' => $row,
+                    'label_cell' => $labelCell,
+                    'amount_cell' => $amountCell,
+                    ...$incomePart,
+                ];
+            }
+        }
+    }
+
+    if ($items !== []) {
+        return $items;
+    }
+
+    $fallbacks = [
+        ['F2', 'G2', 2],
+        ['F3', 'G3', 3],
+    ];
+
+    foreach ($fallbacks as [$labelCell, $amountCell, $row]) {
+        $label = asText(cellValue($worksheet, $labelCell));
+        $amount = cellValue($worksheet, $amountCell);
+
+        if ($label === '' || !is_numeric($amount)) {
+            continue;
+        }
+
+        foreach (expandIncomeAmount($worksheet, $amountCell, $label, (float) $amount) as $incomePart) {
+            $items[] = [
+                'row' => $row,
+                'label_cell' => $labelCell,
+                'amount_cell' => $amountCell,
+                ...$incomePart,
+            ];
+        }
+    }
+
+    return $items;
+}
+
+function expandIncomeAmount(Worksheet $worksheet, string $amountCell, string $label, float $calculatedAmount): array
+{
+    $formula = $worksheet->getCell($amountCell)->getValue();
+    $parts = is_string($formula) ? parseSimpleSumFormula($formula) : [];
+
+    if (count($parts) < 2) {
+        return [[
+            'description' => $label,
+            'amount' => $calculatedAmount,
+            'source_suffix' => '',
+            'formula' => is_string($formula) && str_starts_with(trim($formula), '=') ? $formula : null,
+            'formula_part_index' => null,
+            'formula_part_count' => null,
+        ]];
+    }
+
+    $owner = str_contains(normalizeText($label), 'KARINA') ? 'KARINA' : 'MAURICIO';
+    $salaryIndex = firstLargestIndex($parts);
+    $expanded = [];
+
+    foreach ($parts as $index => $amount) {
+        $isSalaryPart = $index === $salaryIndex;
+        $expanded[] = [
+            'description' => $isSalaryPart ? $label : 'OUTROS ' . $owner,
+            'amount' => $amount,
+            'source_suffix' => $isSalaryPart ? '' : ':part:' . ($index + 1),
+            'formula' => $formula,
+            'formula_part_index' => $index + 1,
+            'formula_part_count' => count($parts),
+        ];
+    }
+
+    return $expanded;
+}
+
+function parseSimpleSumFormula(string $formula): array
+{
+    $formula = trim($formula);
+
+    if (!str_starts_with($formula, '=')) {
+        return [];
+    }
+
+    $expression = trim(substr($formula, 1));
+
+    if (preg_match('/^[0-9.,]+(?:\s*\+\s*[0-9.,]+)+$/', $expression) !== 1) {
+        if (preg_match('/^(?:SUM|SOMA)\((.+)\)$/i', $expression, $matches) !== 1) {
+            return [];
+        }
+
+        $arguments = trim($matches[1]);
+
+        if (preg_match('/^[0-9.,]+(?:\s*[,;]\s*[0-9.,]+)+$/', $arguments) !== 1) {
+            return [];
+        }
+
+        $separator = str_contains($arguments, ';') ? '/\s*;\s*/' : '/\s*,\s*/';
+
+        return array_map(
+            static fn (string $part): float => parseFormulaNumber($part),
+            preg_split($separator, $arguments) ?: []
+        );
+    }
+
+    return array_map(
+        static fn (string $part): float => parseFormulaNumber($part),
+        preg_split('/\s*\+\s*/', $expression) ?: []
+    );
+}
+
+function parseFormulaNumber(string $value): float
+{
+    $value = trim($value);
+
+    if (str_contains($value, ',')) {
+        $value = str_replace('.', '', $value);
+        $value = str_replace(',', '.', $value);
+    }
+
+    return (float) $value;
+}
+
+function escapeLike(string $value): string
+{
+    return addcslashes($value, '\\%_');
+}
+
+function firstLargestIndex(array $values): int
+{
+    $maxIndex = 0;
+    $maxValue = (float) ($values[0] ?? 0);
+
+    foreach ($values as $index => $value) {
+        if ((float) $value > $maxValue) {
+            $maxValue = (float) $value;
+            $maxIndex = (int) $index;
+        }
+    }
+
+    return $maxIndex;
+}
+
+function isIncomeLabel(string $label): bool
+{
+    $normalized = normalizeText($label);
+
+    if ($normalized === '') {
+        return false;
+    }
+
+    $keywords = [
+        'SALARIO',
+        'RECEBIDO',
+        'RECEITA',
+        'RENDA',
+        'PROVENTO',
+        'PROVENTOS',
+        'ENTRADA',
+        'KARINA',
+        'MAURICIO',
+    ];
+
+    foreach ($keywords as $keyword) {
+        if (str_contains($normalized, $keyword)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function normalizeIncomeDescription(string $description): string
+{
+    $normalized = normalizeText($description);
+
+    return match ($normalized) {
+        'SALARIO' => 'SALARIO MAURICIO',
+        'KARINA' => 'SALARIO KARINA',
+        default => $description,
+    };
+}
+
 function addPending(array &$items, string $raw, string $sheet, int $row, string $description): void
 {
     $key = normalizeText($raw) ?: '(VAZIO)';
@@ -775,6 +1092,37 @@ function printPending(string $title, array $items, int $limit): void
 
     foreach (array_slice($items, 0, $limit) as $item) {
         echo '- ' . json_encode($item, JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    echo "\n";
+}
+
+function printIncomePreview(array $items): void
+{
+    echo "Previa de recebidos\n";
+
+    foreach ($items as $item) {
+        echo '- ' . json_encode($item, JSON_UNESCAPED_UNICODE) . "\n";
+    }
+
+    if ($items === []) {
+        echo "- Nenhum recebido detectado.\n";
+    }
+
+    echo "\n";
+}
+
+function printMissingIncomeSheets(array $sheetNames): void
+{
+    echo "Abas sem recebido detectado\n";
+
+    if ($sheetNames === []) {
+        echo "- Nenhuma.\n\n";
+        return;
+    }
+
+    foreach ($sheetNames as $sheetName) {
+        echo "- {$sheetName}\n";
     }
 
     echo "\n";

@@ -176,3 +176,26 @@ No painel `/system/discord`, e possivel habilitar notificacoes separadas para im
 A partir de `JUL- 26`, a coluna `G` das abas mensais indica o pagamento. Quando o valor da celula for `OK`, o lancamento e importado como `paid`; caso contrario, fica como `open`.
 
 Para meses anteriores a `JUL- 26`, a regra historica continua valendo: meses anteriores ao mes atual sao considerados pagos e o mes atual/futuro fica aberto.
+
+## Status de Recebido
+
+Os recebidos mensais sao importados para `entries` com `type = income`.
+
+O leitor procura nas linhas `2` e `3` por rotulos como `SALARIO`, `RECEBIDO`, `RECEITA`, `RENDA`, `PROVENTOS`, `ENTRADA`, `MAURICIO` ou `KARINA`. O valor e lido na celula imediatamente a direita do rotulo encontrado.
+
+A partir de `JAN-24`, a planilha pode ter o recebido do Mauricio e da Karina em linhas separadas. Nesse caso, cada linha valida vira um lançamento `income` independente.
+
+Na importacao, os rotulos sao normalizados para melhorar os relatorios:
+
+- `SALARIO` vira `SALARIO MAURICIO`.
+- `KARINA` vira `SALARIO KARINA`.
+
+Quando a celula de valor do recebido tiver uma formula simples de soma de numeros, por exemplo `=500+1000+16000`, o importador divide as entradas:
+
+- O maior valor da soma continua como `SALARIO MAURICIO` ou `SALARIO KARINA`.
+- Os demais valores viram `OUTROS MAURICIO` ou `OUTROS KARINA`.
+- Formulas com referencia de celula ou funcoes, como `=SOMA(...)`, continuam sendo importadas pelo valor calculado total.
+
+Se a busca por rotulo nao encontrar nada, o importador usa fallback nas celulas antigas `F2:G2` e `F3:G3`.
+
+Recebidos entram com status `paid`, pois representam valores ja recebidos no mes.

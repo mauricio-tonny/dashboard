@@ -10,6 +10,7 @@ use App\Controllers\ContactController;
 use App\Controllers\DashboardController;
 use App\Controllers\EntryController;
 use App\Controllers\FinancePayableController;
+use App\Controllers\FinanceReceivableController;
 use App\Controllers\NavigationPageController;
 use App\Controllers\ReportController;
 use App\Controllers\ShoppingController;
@@ -145,7 +146,7 @@ $router->post('/contacts/update', [ContactController::class, 'update']);
 $router->post('/contacts/toggle', [ContactController::class, 'toggle']);
 
 $router->get('/finance/payable', [FinancePayableController::class, 'index']);
-$router->get('/finance/receivable', [NavigationPageController::class, 'financeReceivable']);
+$router->get('/finance/receivable', [FinanceReceivableController::class, 'index']);
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/categories', [ReportController::class, 'categories']);
 $router->get('/reports/category-chart', [ReportController::class, 'categoryChart']);
