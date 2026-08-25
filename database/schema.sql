@@ -57,6 +57,33 @@ CREATE TABLE IF NOT EXISTS categories (
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS category_budget_targets (
+    category_id BIGINT UNSIGNED PRIMARY KEY,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    control_type ENUM('maximum', 'minimum', 'track') NOT NULL DEFAULT 'maximum',
+    target_percent DECIMAL(5,2) NULL,
+    desired_amount DECIMAL(14,2) NULL,
+    reference_key VARCHAR(80) NULL,
+    reference_label VARCHAR(160) NULL,
+    reference_min_percent DECIMAL(5,2) NULL,
+    reference_max_percent DECIMAL(5,2) NULL,
+    notes VARCHAR(255) NULL,
+    updated_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_category_budget_targets_category FOREIGN KEY (category_id) REFERENCES categories(id),
+    CONSTRAINT fk_category_budget_targets_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS category_budget_settings (
+    id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+    base_income_amount DECIMAL(14,2) NULL,
+    updated_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_category_budget_settings_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS vendors (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(160) NOT NULL,

@@ -149,6 +149,34 @@ try {
     )');
     $pdo->exec("UPDATE contacts SET is_vendor = 1 WHERE type = 'vendor' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("UPDATE contacts SET is_client = 1 WHERE type = 'client' AND is_vendor = 0 AND is_client = 0");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS category_budget_targets (
+        category_id BIGINT UNSIGNED PRIMARY KEY,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        control_type ENUM('maximum', 'minimum', 'track') NOT NULL DEFAULT 'maximum',
+        target_percent DECIMAL(5,2) NULL,
+        desired_amount DECIMAL(14,2) NULL,
+        reference_key VARCHAR(80) NULL,
+        reference_label VARCHAR(160) NULL,
+        reference_min_percent DECIMAL(5,2) NULL,
+        reference_max_percent DECIMAL(5,2) NULL,
+        notes VARCHAR(255) NULL,
+        updated_by_user_id BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_category_budget_targets_category FOREIGN KEY (category_id) REFERENCES categories(id),
+        CONSTRAINT fk_category_budget_targets_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+    )");
+    ensureColumn($pdo, 'category_budget_targets', 'is_active', 'ALTER TABLE category_budget_targets ADD COLUMN is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER category_id');
+    ensureColumn($pdo, 'category_budget_targets', 'desired_amount', 'ALTER TABLE category_budget_targets ADD COLUMN desired_amount DECIMAL(14,2) NULL AFTER target_percent');
+    $pdo->exec("CREATE TABLE IF NOT EXISTS category_budget_settings (
+        id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+        base_income_amount DECIMAL(14,2) NULL,
+        updated_by_user_id BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_category_budget_settings_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+    )");
+    $pdo->exec('INSERT IGNORE INTO category_budget_settings (id) VALUES (1)');
 
     $permissionStatement = $pdo->prepare(
         'INSERT INTO permissions (name, label, description)

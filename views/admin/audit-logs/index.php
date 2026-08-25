@@ -46,6 +46,7 @@ $labels = [
     'contact_enabled' => 'Contato reativado',
     'contact_disabled' => 'Contato desativado',
     'user_permissions_updated' => 'Permissoes do usuario atualizadas',
+    'category_budget_targets_updated' => 'Metas por categoria atualizadas',
 ];
 ?>
 <section class="page-hero">

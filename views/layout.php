@@ -333,6 +333,86 @@
             border: 1px solid var(--border);
             font-size: 1rem;
         }
+        .inline-fields {
+            display: grid;
+            gap: 8px;
+            grid-template-columns: repeat(2, minmax(72px, 1fr));
+        }
+        .budget-category-cell {
+            align-items: flex-start;
+            display: grid;
+            gap: 8px;
+            min-width: 160px;
+        }
+        .budget-category-cell .badge {
+            justify-self: start;
+            padding: 4px 8px;
+        }
+        .budget-status-switch {
+            align-items: center;
+            display: inline-flex;
+            gap: 10px;
+            margin: 12px 0 0;
+            user-select: none;
+        }
+        .budget-status-switch input {
+            height: 1px;
+            opacity: 0;
+            position: absolute;
+            width: 1px;
+        }
+        .budget-status-track {
+            background: #dbe7ee;
+            border-radius: 999px;
+            box-shadow: inset 0 0 0 1px rgba(12, 42, 74, 0.08);
+            display: inline-flex;
+            flex: 0 0 auto;
+            height: 26px;
+            position: relative;
+            transition: background 160ms ease;
+            width: 48px;
+        }
+        .budget-status-track::after {
+            background: #fff;
+            border-radius: 999px;
+            box-shadow: 0 3px 9px rgba(12, 42, 74, 0.18);
+            content: '';
+            height: 20px;
+            left: 3px;
+            position: absolute;
+            top: 3px;
+            transition: transform 160ms ease;
+            width: 20px;
+        }
+        .budget-status-switch input:checked + .budget-status-track {
+            background: var(--accent-strong);
+        }
+        .budget-status-switch input:checked + .budget-status-track::after {
+            transform: translateX(22px);
+        }
+        .budget-status-label {
+            color: var(--muted);
+            font-size: 0.84rem;
+            font-weight: 900;
+            min-width: 48px;
+        }
+        .is-muted-row {
+            opacity: 0.72;
+        }
+        .inactive-targets-panel {
+            margin-top: 18px;
+        }
+        .inactive-targets-panel summary {
+            cursor: pointer;
+            list-style-position: inside;
+        }
+        .responsive-table input,
+        .responsive-table select {
+            min-width: 120px;
+        }
+        .responsive-table td {
+            vertical-align: top;
+        }
         button {
             align-items: center;
             background: var(--brand-dark);
@@ -1177,6 +1257,32 @@
             background: #fff4dd;
             color: #b45309;
         }
+        .status-planned {
+            background: #eef7fb;
+            color: var(--muted);
+        }
+        .target-meter {
+            background: #eaf2f7;
+            border-radius: 999px;
+            box-shadow: inset 0 0 0 1px rgba(12, 42, 74, 0.04);
+            height: 14px;
+            min-width: 120px;
+            overflow: hidden;
+        }
+        .target-meter span {
+            background: linear-gradient(90deg, var(--accent-strong), var(--brand-highlight));
+            border-radius: inherit;
+            display: block;
+            height: 100%;
+            min-width: 6px;
+            transition: width 180ms ease;
+        }
+        .target-meter.is-alert span {
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+        }
+        .target-meter.is-ok span {
+            background: linear-gradient(90deg, #10b981, var(--accent-strong));
+        }
         .last-installment-pill {
             background: var(--accent-soft);
             border-radius: 999px;
@@ -1399,11 +1505,20 @@
         .report-filter {
             align-items: end;
         }
+        .budget-target-filter label {
+            margin-bottom: 0;
+        }
+        .budget-target-filter button {
+            margin-top: 26px;
+        }
         .report-summary-grid {
             display: grid;
             gap: 14px;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             margin: 18px 0;
+        }
+        .budget-target-summary-grid {
+            grid-template-columns: repeat(2, minmax(240px, 1fr));
         }
         .report-summary-card {
             background: #f8fbfd;
@@ -1865,6 +1980,9 @@
                 padding-left: 16px;
                 padding-right: 16px;
             }
+            .budget-target-summary-grid {
+                grid-template-columns: 1fr;
+            }
             .app-shell {
                 display: block;
             }
@@ -2020,6 +2138,9 @@
                         <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_INCOME_TOTALS)): ?>
                             <a class="nav-subitem <?= $isActive('/finance/receivable') ?>" href="/finance/receivable"><span class="bi bi-arrow-down-left-circle"></span>A receber</a>
                         <?php endif; ?>
+                        <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_EXPENSE_TOTALS)): ?>
+                            <a class="nav-subitem <?= $isActive('/finance/budget-targets') ?>" href="/finance/budget-targets"><span class="bi bi-bullseye"></span>Metas de gastos</a>
+                        <?php endif; ?>
                         <?php if ($user->canEdit()): ?>
                             <a class="nav-subitem <?= $isActive('/entries/create') ?>" href="/entries/create"><span class="bi bi-plus-circle"></span>Novo lancamento</a>
                         <?php endif; ?>
@@ -2072,6 +2193,9 @@
                                 <a class="nav-subitem <?= $isActive('/system/sync') ?>" href="/system/sync"><span class="bi bi-clock-history"></span>Tempo de sincronização</a>
                                 <a class="nav-subitem <?= $isActive('/system/categories') ?>" href="/system/categories"><span class="bi bi-tags"></span>Categoria (DR)</a>
                                 <a class="nav-subitem <?= $isActive('/system/spreadsheet') ?>" href="/system/spreadsheet"><span class="bi bi-file-earmark-spreadsheet"></span>Gerenciar planilha</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CATEGORY_BUDGET_TARGETS)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/category-budget-targets') ?>" href="/system/category-budget-targets"><span class="bi bi-bullseye"></span>Metas por categoria</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_DISCORD_NOTIFICATIONS)): ?>
                                 <a class="nav-subitem <?= $isActive('/system/discord') ?>" href="/system/discord"><span class="bi bi-discord"></span>Discord</a>

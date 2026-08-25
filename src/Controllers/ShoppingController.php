@@ -614,6 +614,7 @@ final class ShoppingController extends Controller
             'purchased_at' => $purchasedAt ?: null,
             'purchased_amount' => $purchased ? $purchasedAmount : null,
         ]);
+        $this->flash('success', $purchased ? 'Item concluido com sucesso.' : 'Item reaberto com sucesso.');
 
         return Response::redirect($this->wishRedirect($type));
     }
@@ -951,7 +952,7 @@ final class ShoppingController extends Controller
 
     private function money(string $value): ?float
     {
-        $value = trim(str_replace('R$', '', $value));
+        $value = preg_replace('/[^\d,.-]+/u', '', $value) ?? '';
 
         if ($value === '') {
             return null;

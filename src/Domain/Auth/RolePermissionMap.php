@@ -70,6 +70,7 @@ final class RolePermissionMap
                 Permission::MANAGE_BACKUPS,
                 Permission::MANAGE_DISCORD_NOTIFICATIONS,
                 Permission::MANAGE_SPREADSHEET_URL,
+                Permission::MANAGE_CATEGORY_BUDGET_TARGETS,
             ],
         };
     }
@@ -105,6 +106,7 @@ final class RolePermissionMap
             Permission::MANAGE_BACKUPS->value => ['Acionar backup manual', 'Permite executar rotina de backup manualmente.'],
             Permission::MANAGE_DISCORD_NOTIFICATIONS->value => ['Gerenciar Discord', 'Permite habilitar, desabilitar e configurar webhook do Discord.'],
             Permission::MANAGE_SPREADSHEET_URL->value => ['Gerenciar URL da planilha', 'Permite inserir, editar ou excluir a URL da planilha.'],
+            Permission::MANAGE_CATEGORY_BUDGET_TARGETS->value => ['Gerenciar metas por categoria', 'Permite configurar metas percentuais por categoria/DR.'],
         ];
     }
 }

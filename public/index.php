@@ -10,11 +10,13 @@ use App\Controllers\ContactController;
 use App\Controllers\DashboardController;
 use App\Controllers\EntryController;
 use App\Controllers\FinancePayableController;
+use App\Controllers\FinanceBudgetTargetController;
 use App\Controllers\FinanceReceivableController;
 use App\Controllers\NavigationPageController;
 use App\Controllers\ReportController;
 use App\Controllers\ShoppingController;
 use App\Controllers\System\DiscordController;
+use App\Controllers\System\CategoryBudgetTargetController;
 use App\Controllers\System\PermissionController;
 use App\Controllers\System\SpreadsheetController;
 use App\Core\App;
@@ -29,6 +31,7 @@ use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AdminUserRepository;
 use App\Domain\Contacts\ContactRepository;
 use App\Domain\Finance\FinanceService;
+use App\Domain\Finance\CategoryBudgetTargetRepository;
 use App\Domain\Finance\FinanceEntryRepository;
 use App\Domain\Shopping\ShoppingRepository;
 use App\Domain\System\DiscordNotificationRepository;
@@ -78,6 +81,7 @@ $discordNotifier = new DiscordNotifier($discordNotificationRepository);
 $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $spreadsheetLinkTester = new SpreadsheetLinkTester();
 $contactRepository = new ContactRepository($database);
+$categoryBudgetTargetRepository = new CategoryBudgetTargetRepository($database);
 $financeEntryRepository = new FinanceEntryRepository($database);
 $userPermissionRepository = new UserPermissionRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
@@ -99,6 +103,7 @@ $app = new App([
     SpreadsheetSettingsRepository::class => $spreadsheetSettingsRepository,
     SpreadsheetLinkTester::class => $spreadsheetLinkTester,
     ContactRepository::class => $contactRepository,
+    CategoryBudgetTargetRepository::class => $categoryBudgetTargetRepository,
     FinanceEntryRepository::class => $financeEntryRepository,
     UserPermissionRepository::class => $userPermissionRepository,
     FinanceService::class => $financeService,
@@ -151,6 +156,7 @@ $router->post('/contacts/toggle', [ContactController::class, 'toggle']);
 
 $router->get('/finance/payable', [FinancePayableController::class, 'index']);
 $router->get('/finance/receivable', [FinanceReceivableController::class, 'index']);
+$router->get('/finance/budget-targets', [FinanceBudgetTargetController::class, 'index']);
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/categories', [ReportController::class, 'categories']);
 $router->get('/reports/category-chart', [ReportController::class, 'categoryChart']);
@@ -161,6 +167,8 @@ $router->get('/reports/market', [ReportController::class, 'market']);
 $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']);
 $router->get('/system/sync', [NavigationPageController::class, 'systemSync']);
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
+$router->get('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'index']);
+$router->post('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'save']);
 $router->get('/system/discord', [DiscordController::class, 'index']);
 $router->post('/system/discord', [DiscordController::class, 'save']);
 $router->post('/system/discord/test', [DiscordController::class, 'test']);
@@ -210,6 +218,7 @@ function auditPageUsage(Request $request, \App\Core\Response $response, AuthServ
         '/contacts' => 'Contatos',
         '/finance/payable' => 'Financeiro - A pagar',
         '/finance/receivable' => 'Financeiro - A receber',
+        '/finance/budget-targets' => 'Financeiro - metas de gastos',
         '/reports' => 'Relatorios - central',
         '/reports/categories' => 'Relatorio por categoria',
         '/reports/category-chart' => 'Relatorio grafico por categoria',
@@ -220,6 +229,7 @@ function auditPageUsage(Request $request, \App\Core\Response $response, AuthServ
         '/system/backup' => 'Sistema - backup',
         '/system/sync' => 'Sistema - sincronizacao',
         '/system/categories' => 'Sistema - categorias',
+        '/system/category-budget-targets' => 'Sistema - metas por categoria',
         '/system/discord' => 'Sistema - Discord',
         '/system/permissions' => 'Sistema - permissoes',
         '/system/spreadsheet' => 'Sistema - planilha',

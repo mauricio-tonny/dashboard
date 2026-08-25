@@ -38,4 +38,5 @@ enum Permission: string
     case MANAGE_BACKUPS = 'manage_backups';
     case MANAGE_DISCORD_NOTIFICATIONS = 'manage_discord_notifications';
     case MANAGE_SPREADSHEET_URL = 'manage_spreadsheet_url';
+    case MANAGE_CATEGORY_BUDGET_TARGETS = 'manage_category_budget_targets';
 }
