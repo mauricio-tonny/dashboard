@@ -162,6 +162,20 @@ try {
         INDEX idx_scheduled_task_runs_status (status),
         CONSTRAINT fk_scheduled_task_runs_task FOREIGN KEY (task_code) REFERENCES scheduled_tasks(code)
     )');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS spreadsheet_sync_events (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        source VARCHAR(30) NOT NULL DEFAULT "windows",
+        status VARCHAR(30) NOT NULL,
+        occurred_at DATETIME NOT NULL,
+        file_hash CHAR(64) NULL,
+        file_size BIGINT UNSIGNED NULL,
+        machine_name VARCHAR(120) NULL,
+        message VARCHAR(500) NULL,
+        metadata JSON NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_spreadsheet_sync_events_source_time (source, occurred_at),
+        INDEX idx_spreadsheet_sync_events_status (status)
+    )');
     $pdo->exec("UPDATE contacts SET is_vendor = 1 WHERE type = 'vendor' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("UPDATE contacts SET is_client = 1 WHERE type = 'client' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("CREATE TABLE IF NOT EXISTS category_budget_targets (

@@ -43,6 +43,10 @@ tail -n 50 storage/logs/scheduler.log
 
 O painel `/system/sync` permite configurar se a rotina está ativa, o intervalo e a janela permitida. Por padrão, a janela sugerida é de segunda a sexta, das 08:00 às 18:00. Execuções fora da janela são registradas como `skipped` em `scheduled_task_runs`, sem tentar importar a planilha.
 
+Essa tela também mostra o fluxo visual da sincronização: envio pelo Windows/OneDrive, arquivo recebido no servidor e última importação no banco. A comparação usa o último callback do script Windows, a data de modificação do arquivo configurado em `EXCEL_FILE` e o último log de `spreadsheet.import`, facilitando identificar se a falha está no envio local ou no processamento do servidor. O envio local é incremental: quando o hash da planilha não muda, o Windows registra `unchanged` e não reenvia o arquivo.
+
+O callback do Windows usa a rota `POST /system/sync/windows-callback`, protegida por `WINDOWS_SYNC_CALLBACK_TOKEN`. Quando o status recebido é `uploaded`, o scheduler antecipa a próxima execução de `spreadsheet.import`, sem criar um CRON separado.
+
 A task executa internamente:
 
 ```bash

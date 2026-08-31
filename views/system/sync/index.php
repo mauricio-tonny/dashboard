@@ -22,11 +22,34 @@ $formatDateTime = static function (?string $value) use ($parseSchedulerDate): st
 
     return $date === null ? '-' : $date->format('d/m/Y H:i:s');
 };
+$formatDateTimeObject = static fn (?DateTimeImmutable $date): string => $date === null ? '-' : $date->format('d/m/Y H:i:s');
+$formatBytes = static function (?int $bytes): string {
+    if ($bytes === null) {
+        return '-';
+    }
+
+    if ($bytes >= 1024 * 1024) {
+        return number_format($bytes / (1024 * 1024), 2, ',', '.') . ' MB';
+    }
+
+    if ($bytes >= 1024) {
+        return number_format($bytes / 1024, 2, ',', '.') . ' KB';
+    }
+
+    return $bytes . ' B';
+};
 $formatStatus = static fn (?string $status): string => match ($status) {
     'success' => 'Sucesso',
     'failed' => 'Falha',
     'skipped' => 'Ignorada',
     'running' => 'Em execução',
+    default => $status === null || $status === '' ? '-' : $status,
+};
+$formatWindowsStatus = static fn (?string $status): string => match ($status) {
+    'uploaded' => 'Arquivo enviado',
+    'unchanged' => 'Sem alterações',
+    'failed' => 'Falha',
+    'skipped' => 'Ignorada',
     default => $status === null || $status === '' ? '-' : $status,
 };
 $statusClass = static fn (?string $status): string => match ($status) {
@@ -35,9 +58,51 @@ $statusClass = static fn (?string $status): string => match ($status) {
     'skipped' => 'notice-warning',
     default => '',
 };
+$windowsStatusClass = static fn (?string $status): string => match ($status) {
+    'uploaded', 'unchanged' => 'notice-success',
+    'failed' => 'notice-error',
+    'skipped' => 'notice-warning',
+    default => '',
+};
 $lastRun = $runs[0] ?? null;
+$lastWindowsEvent = $windowsEvents[0] ?? null;
 $now = new DateTimeImmutable('now', $displayTimezone);
 $lastRunAt = $parseSchedulerDate($task['last_run_at'] ?? null);
+$fileReceivedAt = $parseSchedulerDate($spreadsheetFile['updated_at'] ?? null);
+$windowsEventAt = $parseSchedulerDate($lastWindowsEvent['occurred_at'] ?? null);
+$lastImportAt = $parseSchedulerDate($lastRun['finished_at'] ?? $task['last_run_at'] ?? null);
+$fileExists = (bool) ($spreadsheetFile['exists'] ?? false);
+$windowsStatus = (string) ($lastWindowsEvent['status'] ?? '');
+$eventIndicatesNewUpload = $windowsStatus === 'uploaded';
+$fileIsAfterImport = (
+    $eventIndicatesNewUpload
+    && $windowsEventAt !== null
+    && ($lastImportAt === null || $windowsEventAt->getTimestamp() > $lastImportAt->getTimestamp())
+) || (
+    $fileReceivedAt !== null
+    && ($lastImportAt === null || $fileReceivedAt->getTimestamp() > $lastImportAt->getTimestamp())
+);
+$flowStatus = $fileExists && !$fileIsAfterImport && $lastImportAt !== null ? 'success' : 'warning';
+$flowStatusLabel = match (true) {
+    $windowsStatus === 'failed' => 'Falha no Windows',
+    !$fileExists => 'Aguardando arquivo',
+    $fileIsAfterImport => 'Pendente de importação',
+    $lastImportAt !== null => 'Em dia',
+    default => 'Aguardando importação',
+};
+$flowDelayText = '-';
+
+if ($fileReceivedAt !== null && $lastImportAt !== null) {
+    $diffMinutes = (int) floor(abs($lastImportAt->getTimestamp() - $fileReceivedAt->getTimestamp()) / 60);
+    $flowDelayText = $diffMinutes < 1 ? 'menos de 1 minuto' : $diffMinutes . ' minuto(s)';
+}
+$windowsStepComplete = in_array($windowsStatus, ['uploaded', 'unchanged'], true) || ($lastWindowsEvent === null && $fileExists);
+$windowsStepTitle = $lastWindowsEvent === null
+    ? ($fileExists ? 'Arquivo disponível' : 'Sem evento registrado')
+    : $formatWindowsStatus($windowsStatus);
+$windowsStepMessage = $lastWindowsEvent === null
+    ? ($fileExists ? 'Ainda sem callback do Windows; usando a cópia existente no servidor como referência.' : (string) ($spreadsheetFile['error'] ?? 'Aguardando envio da planilha.'))
+    : (string) ($lastWindowsEvent['message'] ?? 'Evento recebido do sincronizador Windows.');
 $staleThresholdMinutes = max(120, $interval * 3);
 $isWeekday = (int) $now->format('N') <= 5;
 $currentHour = (int) $now->format('G');
@@ -89,6 +154,101 @@ ob_start();
         </div>
     </div>
 <?php endif; ?>
+
+<section class="card section-card sync-flow-card">
+    <div class="sync-flow-header">
+        <div>
+            <h2 class="section-title"><span class="bi bi-diagram-3"></span>Fluxo da planilha</h2>
+            <p class="muted">Compare a cópia disponível no servidor com a importação interna. O Windows só envia novamente quando a planilha muda ou quando a execução é forçada.</p>
+        </div>
+        <span class="sync-flow-badge sync-flow-badge-<?= htmlspecialchars($flowStatus, ENT_QUOTES, 'UTF-8') ?>">
+            <?= htmlspecialchars($flowStatusLabel, ENT_QUOTES, 'UTF-8') ?>
+        </span>
+    </div>
+
+    <div class="sync-flow-steps">
+        <div class="sync-flow-step <?= $windowsStepComplete ? 'is-complete' : 'is-warning' ?>">
+            <span class="sync-flow-icon bi bi-cloud-arrow-up"></span>
+            <small>1. Windows / OneDrive</small>
+            <strong><?= htmlspecialchars($windowsStepTitle, ENT_QUOTES, 'UTF-8') ?></strong>
+            <span>
+                <?= htmlspecialchars($windowsStepMessage, ENT_QUOTES, 'UTF-8') ?>
+                <?php if ($windowsEventAt !== null): ?>
+                    <br>Último evento: <?= htmlspecialchars($formatDateTimeObject($windowsEventAt), ENT_QUOTES, 'UTF-8') ?>
+                <?php endif; ?>
+            </span>
+        </div>
+        <div class="sync-flow-step <?= $fileExists ? 'is-complete' : 'is-warning' ?>">
+            <span class="sync-flow-icon bi bi-file-earmark-spreadsheet"></span>
+            <small>2. Arquivo no servidor</small>
+            <strong><?= htmlspecialchars($formatDateTimeObject($fileReceivedAt), ENT_QUOTES, 'UTF-8') ?></strong>
+            <span>
+                <?= htmlspecialchars($formatBytes($spreadsheetFile['size_bytes'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                <?php if (!empty($spreadsheetFile['hash'])): ?>
+                    | Hash: <?= htmlspecialchars(substr((string) $spreadsheetFile['hash'], 0, 10), ENT_QUOTES, 'UTF-8') ?>
+                <?php endif; ?>
+            </span>
+        </div>
+        <div class="sync-flow-step <?= $lastImportAt !== null && !$fileIsAfterImport ? 'is-complete' : 'is-warning' ?>">
+            <span class="sync-flow-icon bi bi-database-check"></span>
+            <small>3. Importação no banco</small>
+            <strong><?= htmlspecialchars($formatDateTimeObject($lastImportAt), ENT_QUOTES, 'UTF-8') ?></strong>
+            <span><?= htmlspecialchars((string) ($lastRun['message'] ?? $task['last_message'] ?? 'Ainda não há importação registrada.'), ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+    </div>
+
+    <div class="sync-flow-detail">
+        <span class="bi bi-hourglass-split"></span>
+        <strong>Diferença entre arquivo e importação:</strong>
+        <span><?= htmlspecialchars($flowDelayText, ENT_QUOTES, 'UTF-8') ?></span>
+    </div>
+    <p class="muted sync-flow-note">Observação: o agendador do Windows compara o hash da planilha local e só faz upload quando encontra alteração. Por isso, ausência de novo envio não significa falha se o arquivo atual já estiver igual ao último enviado.</p>
+
+    <details class="sync-flow-events">
+        <summary>
+            <span><span class="bi bi-pc-display-horizontal"></span>Eventos recentes do Windows</span>
+            <small><?= count($windowsEvents) ?> registro(s)</small>
+        </summary>
+
+        <?php if ($windowsEvents === []): ?>
+            <p class="muted">Nenhum callback do sincronizador Windows registrado ainda. A timeline continuará usando o arquivo recebido no servidor como fallback.</p>
+        <?php else: ?>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Horário</th>
+                            <th>Status</th>
+                            <th>Máquina</th>
+                            <th>Arquivo</th>
+                            <th>Mensagem</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($windowsEvents as $event): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($formatDateTime($event['occurred_at'] ?? null), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td>
+                                    <span class="notice <?= htmlspecialchars($windowsStatusClass($event['status'] ?? null), ENT_QUOTES, 'UTF-8') ?>">
+                                        <?= htmlspecialchars($formatWindowsStatus($event['status'] ?? null), ENT_QUOTES, 'UTF-8') ?>
+                                    </span>
+                                </td>
+                                <td><?= htmlspecialchars((string) ($event['machine_name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                                <td>
+                                    <?= htmlspecialchars($formatBytes(isset($event['file_size']) ? (int) $event['file_size'] : null), ENT_QUOTES, 'UTF-8') ?>
+                                    <?php if (!empty($event['file_hash'])): ?>
+                                        <br><span class="muted">Hash: <?= htmlspecialchars(substr((string) $event['file_hash'], 0, 10), ENT_QUOTES, 'UTF-8') ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td><?= htmlspecialchars((string) ($event['message'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </details>
+</section>
 
 <section class="report-summary-grid">
     <div class="report-summary-card">

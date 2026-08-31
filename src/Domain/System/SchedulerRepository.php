@@ -139,6 +139,21 @@ final class SchedulerRepository
         return $statement->rowCount() === 1;
     }
 
+    public function scheduleNow(string $code, DateTimeImmutable $now): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE scheduled_tasks
+             SET next_run_at = :next_run_at,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE code = :code
+               AND is_active = 1'
+        );
+        $statement->execute([
+            'code' => $code,
+            'next_run_at' => $this->format($now),
+        ]);
+    }
+
     public function startRun(string $code, DateTimeImmutable $startedAt): int
     {
         $statement = $this->database->connection()->prepare(

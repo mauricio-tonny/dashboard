@@ -48,7 +48,8 @@ Como o link público do OneDrive pode entregar uma página intermediária em vez
 2. A tarefa agendada do Windows roda `scripts/sync-spreadsheet.ps1` a cada 30 minutos, apenas de segunda a sexta, entre 08:00 e 18:00, com última execução prevista às 17:30.
 3. O script calcula o hash local e só envia o arquivo quando houver alteração.
 4. O envio é feito via `scp` para `storage/private/spreadsheets/financeiro.xlsx`.
-5. O dashboard usa `EXCEL_FILE` para ler sempre a última cópia recebida.
+5. Depois da execução, o script chama `/system/sync/windows-callback` para registrar se enviou, ignorou, falhou ou se a planilha estava sem alterações.
+6. O dashboard usa `EXCEL_FILE` para ler sempre a última cópia recebida.
 
 Para configurar:
 
@@ -62,7 +63,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-
 O arquivo `scripts/spreadsheet-sync.local.ps1` fica fora do Git. Ele guarda caminhos específicos da máquina, chave SSH, porta e destino remoto.
 Use `SyncStartHour` e `SyncEndHour` nesse arquivo somente se precisar mudar a janela permitida. A execução manual com `-Force` continua ignorando a janela para testes controlados.
 
+Para registrar os eventos do Windows no painel, configure também:
+
+- `WINDOWS_SYNC_CALLBACK_TOKEN` no `.env` do servidor.
+- `DashboardUrl` e `CallbackToken` em `scripts/spreadsheet-sync.local.ps1`.
+
+O valor de `CallbackToken` precisa ser igual ao `WINDOWS_SYNC_CALLBACK_TOKEN`. Esse token funciona como uma chave técnica para o script, sem depender de login humano.
+
 O painel `/system/sync` controla a janela e o intervalo da rotina interna de importação da planilha no servidor. A tarefa do Windows segue responsável apenas por enviar a cópia local do OneDrive para o servidor.
+
+Na mesma tela, o bloco de fluxo visual usa o último callback do Windows, a última modificação do arquivo definido em `EXCEL_FILE` e a última importação registrada pelo scheduler. Assim, fica claro se a planilha não mudou, se ainda não chegou do Windows, se chegou mas está pendente de importação, ou se o banco já está em dia com o arquivo recebido.
 
 ## Configuração no Painel
 
@@ -142,6 +152,10 @@ A importação alimenta `vendors`, `categories`, `entries`, `entry_sources` e `i
 Depois da primeira validação manual, a importação pode ser executada automaticamente pelo scheduler interno. Use o painel `Sistema > Sincronização` para ativar a rotina, definir intervalo e limitar a janela permitida.
 
 Com isso, o CRON único (`php bin/schedule_run.php`) passa a rodar `spreadsheet.import` no intervalo configurado pelo painel.
+
+O painel também exibe o fluxo `Windows/OneDrive -> Arquivo no servidor -> Importação no banco`, usando eventos do Windows, data de modificação, tamanho e hash parcial do arquivo recebido para diferenciar atraso no envio da planilha e atraso na importação interna. O envio pelo Windows é incremental: se o hash local for igual ao último hash enviado, o script registra que não houve alteração e não reenvia o arquivo.
+
+Quando o callback recebe o status `uploaded`, o servidor antecipa a próxima execução de `spreadsheet.import`. A importação continua acontecendo pelo scheduler interno, mantendo o CRON único como ponto de execução das rotinas.
 
 ## Escrita Segura
 

@@ -70,6 +70,45 @@ function Save-SyncState {
     $State | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $Path -Encoding UTF8
 }
 
+function Send-SyncCallback {
+    param(
+        [string] $Status,
+        [string] $Message,
+        [string] $FileHash = '',
+        [Nullable[Int64]] $FileSize = $null
+    )
+
+    if (-not $script:Config -or -not $script:Config.ContainsKey('DashboardUrl') -or -not $script:Config.ContainsKey('CallbackToken')) {
+        return
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string] $script:Config.DashboardUrl) -or [string]::IsNullOrWhiteSpace([string] $script:Config.CallbackToken)) {
+        return
+    }
+
+    $baseUrl = ([string] $script:Config.DashboardUrl).TrimEnd('/')
+    $url = "$baseUrl/system/sync/windows-callback"
+    $body = @{
+        status = $Status
+        message = $Message
+        file_hash = $FileHash
+        occurred_at = (Get-Date).ToString('o')
+        machine_name = $env:COMPUTERNAME
+        local_path = [string] $script:Config.LocalPath
+        remote_path = [string] $script:Config.RemotePath
+    }
+
+    if ($null -ne $FileSize) {
+        $body.file_size = [string] $FileSize
+    }
+
+    try {
+        Invoke-RestMethod -Method Post -Uri $url -Headers @{ 'X-Sync-Token' = [string] $script:Config.CallbackToken } -Body $body -TimeoutSec 20 | Out-Null
+    } catch {
+        Write-SyncLog "Não foi possível registrar callback no dashboard: $($_.Exception.Message)" 'WARN'
+    }
+}
+
 if (-not (Test-Path -LiteralPath $ConfigPath)) {
     throw "Arquivo de configuração não encontrado: $ConfigPath. Copie scripts\spreadsheet-sync.example.ps1 para scripts\spreadsheet-sync.local.ps1 e ajuste os caminhos."
 }
@@ -82,6 +121,11 @@ if (-not $SpreadsheetSyncConfig) {
 
 $script:Config = $SpreadsheetSyncConfig
 
+trap {
+    Send-SyncCallback -Status 'failed' -Message $_.Exception.Message -FileHash $localHash -FileSize $localFileSize
+    break
+}
+
 $syncStartHour = if ($script:Config.ContainsKey('SyncStartHour')) { [int] $script:Config.SyncStartHour } else { 8 }
 $syncEndHour = if ($script:Config.ContainsKey('SyncEndHour')) { [int] $script:Config.SyncEndHour } else { 18 }
 $now = Get-Date
@@ -89,7 +133,9 @@ $isWeekday = $now.DayOfWeek -notin @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)
 $isInsideWindow = $isWeekday -and $now.Hour -ge $syncStartHour -and $now.Hour -lt $syncEndHour
 
 if (-not $Force -and -not $isInsideWindow) {
-    Write-SyncLog "Sincronização ignorada fora da janela permitida: segunda a sexta, das $syncStartHour:00 às $syncEndHour:00."
+    $message = "Sincronização ignorada fora da janela permitida: segunda a sexta, das $syncStartHour:00 às $syncEndHour:00."
+    Write-SyncLog $message
+    Send-SyncCallback -Status 'skipped' -Message $message
     exit 0
 }
 
@@ -108,10 +154,13 @@ if (-not (Test-Path -LiteralPath $script:Config.SshKeyPath)) {
 }
 
 $localHash = Get-FileSha256 -Path $script:Config.LocalPath
+$localFileSize = (Get-Item -LiteralPath $script:Config.LocalPath).Length
 $state = Read-SyncState -Path $script:Config.StatePath
 
 if (-not $Force -and $state.last_hash -eq $localHash) {
-    Write-SyncLog "Planilha sem alterações. Hash: $localHash"
+    $message = "Planilha sem alterações. Hash: $localHash"
+    Write-SyncLog $message
+    Send-SyncCallback -Status 'unchanged' -Message $message -FileHash $localHash -FileSize $localFileSize
     exit 0
 }
 
@@ -155,6 +204,9 @@ Save-SyncState -Path $script:Config.StatePath -State @{
     last_sync_at = (Get-Date).ToString('o')
     local_path = $script:Config.LocalPath
     remote_path = $script:Config.RemotePath
+    last_file_size = $localFileSize
 }
 
-Write-SyncLog "Sincronização concluída com sucesso."
+$successMessage = "Sincronização concluída com sucesso."
+Write-SyncLog $successMessage
+Send-SyncCallback -Status 'uploaded' -Message $successMessage -FileHash $localHash -FileSize $localFileSize

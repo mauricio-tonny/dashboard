@@ -40,6 +40,7 @@ use App\Domain\System\DiscordNotifier;
 use App\Domain\System\SchedulerRepository;
 use App\Domain\System\SpreadsheetLinkTester;
 use App\Domain\System\SpreadsheetSettingsRepository;
+use App\Domain\System\SpreadsheetSyncEventRepository;
 use App\Infrastructure\Auth\DatabaseUserRepository;
 use App\Infrastructure\Finance\ExcelFinanceRepository;
 use App\Support\Env;
@@ -81,6 +82,7 @@ $shoppingRepository = new ShoppingRepository($database);
 $discordNotificationRepository = new DiscordNotificationRepository($database);
 $discordNotifier = new DiscordNotifier($discordNotificationRepository);
 $schedulerRepository = new SchedulerRepository($database);
+$spreadsheetSyncEventRepository = new SpreadsheetSyncEventRepository($database);
 $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $spreadsheetLinkTester = new SpreadsheetLinkTester();
 $contactRepository = new ContactRepository($database);
@@ -105,6 +107,7 @@ $app = new App([
     DiscordNotifier::class => $discordNotifier,
     SchedulerRepository::class => $schedulerRepository,
     SpreadsheetSettingsRepository::class => $spreadsheetSettingsRepository,
+    SpreadsheetSyncEventRepository::class => $spreadsheetSyncEventRepository,
     SpreadsheetLinkTester::class => $spreadsheetLinkTester,
     ContactRepository::class => $contactRepository,
     CategoryBudgetTargetRepository::class => $categoryBudgetTargetRepository,
@@ -172,6 +175,7 @@ $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']
 $router->get('/system/sync', [SyncController::class, 'index']);
 $router->post('/system/sync', [SyncController::class, 'save']);
 $router->post('/system/sync/run', [SyncController::class, 'runNow']);
+$router->post('/system/sync/windows-callback', [SyncController::class, 'windowsCallback']);
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
 $router->get('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'index']);
 $router->post('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'save']);

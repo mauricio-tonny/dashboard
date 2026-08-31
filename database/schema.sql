@@ -386,4 +386,19 @@ CREATE TABLE IF NOT EXISTS scheduled_task_runs (
     CONSTRAINT fk_scheduled_task_runs_task FOREIGN KEY (task_code) REFERENCES scheduled_tasks(code)
 );
 
+CREATE TABLE IF NOT EXISTS spreadsheet_sync_events (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    source VARCHAR(30) NOT NULL DEFAULT 'windows',
+    status VARCHAR(30) NOT NULL,
+    occurred_at DATETIME NOT NULL,
+    file_hash CHAR(64) NULL,
+    file_size BIGINT UNSIGNED NULL,
+    machine_name VARCHAR(120) NULL,
+    message VARCHAR(500) NULL,
+    metadata JSON NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_spreadsheet_sync_events_source_time (source, occurred_at),
+    INDEX idx_spreadsheet_sync_events_status (status)
+);
+
 INSERT IGNORE INTO roles (name) VALUES ('admin'), ('editor'), ('validator'), ('viewer');

@@ -16,6 +16,7 @@ use App\Domain\System\DiscordNotifier;
 use App\Domain\System\SchedulerRepository;
 use App\Domain\System\ScheduledTaskResult;
 use App\Domain\System\SpreadsheetSettingsRepository;
+use App\Domain\System\SpreadsheetSyncEventRepository;
 use App\Domain\System\Tasks\ImportSpreadsheetTask;
 
 final class SyncController extends Controller
@@ -37,6 +38,8 @@ final class SyncController extends Controller
             'success' => $this->app->make(Session::class)->pullFlash('success'),
             'error' => $this->app->make(Session::class)->pullFlash('error'),
             'syncSettings' => $this->app->make(SpreadsheetSettingsRepository::class)->syncSettings(),
+            'spreadsheetFile' => $this->spreadsheetFileStatus(),
+            'windowsEvents' => $this->app->make(SpreadsheetSyncEventRepository::class)->latest(10),
             'task' => $scheduler->task(self::TASK_CODE),
             'runs' => $scheduler->latestRuns(self::TASK_CODE, 40),
         ]);
@@ -82,6 +85,59 @@ final class SyncController extends Controller
         $this->flash('success', 'Configurações de sincronização salvas.');
 
         return Response::redirect('/system/sync');
+    }
+
+    public function windowsCallback(Request $request): Response
+    {
+        $expectedToken = trim((string) ($_ENV['WINDOWS_SYNC_CALLBACK_TOKEN'] ?? ''));
+        $receivedToken = trim((string) (
+            $request->server('HTTP_X_SYNC_TOKEN')
+            ?? $request->input('token', '')
+        ));
+
+        if ($expectedToken === '' || !hash_equals($expectedToken, $receivedToken)) {
+            return $this->json(['ok' => false, 'message' => 'Token inválido.'], 403);
+        }
+
+        $status = $this->normalizeWindowsStatus((string) $request->input('status', ''));
+
+        if ($status === null) {
+            return $this->json(['ok' => false, 'message' => 'Status inválido.'], 422);
+        }
+
+        $occurredAt = $this->parseCallbackDate((string) $request->input('occurred_at', ''));
+        $fileSize = $request->input('file_size');
+        $fileSize = is_numeric($fileSize) ? max(0, (int) $fileSize) : null;
+        $fileHash = strtolower(trim((string) $request->input('file_hash', '')));
+        $message = trim((string) $request->input('message', ''));
+        $machineName = trim((string) $request->input('machine_name', ''));
+        $metadata = [
+            'remote_path' => trim((string) $request->input('remote_path', '')),
+            'local_path' => trim((string) $request->input('local_path', '')),
+        ];
+
+        $eventId = $this->app->make(SpreadsheetSyncEventRepository::class)->record(
+            $status,
+            $occurredAt,
+            preg_match('/^[a-f0-9]{64}$/', $fileHash) === 1 ? $fileHash : null,
+            $fileSize,
+            $machineName,
+            $message,
+            array_filter($metadata, static fn (string $value): bool => $value !== '')
+        );
+
+        if ($status === 'uploaded') {
+            $this->app->make(SchedulerRepository::class)->scheduleNow(
+                self::TASK_CODE,
+                new \DateTimeImmutable('now', new \DateTimeZone('UTC'))
+            );
+        }
+
+        return $this->json([
+            'ok' => true,
+            'event_id' => $eventId,
+            'scheduled_import' => $status === 'uploaded',
+        ]);
     }
 
     public function runNow(Request $request): Response
@@ -180,6 +236,82 @@ final class SyncController extends Controller
         }
 
         return $auth;
+    }
+
+    private function spreadsheetFileStatus(): array
+    {
+        $configuredPath = trim((string) ($_ENV['EXCEL_FILE'] ?? ''));
+
+        if ($configuredPath === '') {
+            return [
+                'configured' => false,
+                'exists' => false,
+                'path' => '',
+                'updated_at' => null,
+                'size_bytes' => null,
+                'hash' => null,
+                'error' => 'EXCEL_FILE não configurado.',
+            ];
+        }
+
+        $path = str_starts_with($configuredPath, DIRECTORY_SEPARATOR) || preg_match('/^[A-Za-z]:[\\\\\\/]/', $configuredPath) === 1
+            ? $configuredPath
+            : base_path($configuredPath);
+
+        if (!is_file($path)) {
+            return [
+                'configured' => true,
+                'exists' => false,
+                'path' => $configuredPath,
+                'updated_at' => null,
+                'size_bytes' => null,
+                'hash' => null,
+                'error' => 'Arquivo ainda não encontrado no servidor.',
+            ];
+        }
+
+        $updatedAt = filemtime($path);
+        $sizeBytes = filesize($path);
+        $hash = hash_file('sha256', $path);
+
+        return [
+            'configured' => true,
+            'exists' => true,
+            'path' => $configuredPath,
+            'updated_at' => $updatedAt === false ? null : gmdate('Y-m-d H:i:s', $updatedAt),
+            'size_bytes' => $sizeBytes === false ? null : $sizeBytes,
+            'hash' => $hash === false ? null : $hash,
+            'error' => null,
+        ];
+    }
+
+    private function normalizeWindowsStatus(string $status): ?string
+    {
+        $status = strtolower(trim($status));
+
+        return in_array($status, ['uploaded', 'unchanged', 'failed', 'skipped'], true) ? $status : null;
+    }
+
+    private function parseCallbackDate(string $value): \DateTimeImmutable
+    {
+        if (trim($value) === '') {
+            return new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        }
+
+        try {
+            return (new \DateTimeImmutable($value))->setTimezone(new \DateTimeZone('UTC'));
+        } catch (\Throwable) {
+            return new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        }
+    }
+
+    private function json(array $payload, int $status = 200): Response
+    {
+        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE);
+
+        return new Response($encoded === false ? '{}' : $encoded, $status, [
+            'Content-Type' => 'application/json; charset=UTF-8',
+        ]);
     }
 
     private function flash(string $type, string $message): void
