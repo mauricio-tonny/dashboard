@@ -1,20 +1,26 @@
 <?php
-$title = 'Tempo de sincronização';
+$title = 'Sincronização';
 $enabled = ((int) ($syncSettings['sync_is_enabled'] ?? 0)) === 1;
+$canRunManualSync = $user->hasRole(\App\Domain\Auth\Role::ADMIN);
 $interval = (int) ($syncSettings['sync_interval_minutes'] ?? 30);
 $startHour = (int) ($syncSettings['sync_start_hour'] ?? 8);
 $endHour = (int) ($syncSettings['sync_end_hour'] ?? 18);
-$formatDateTime = static function (?string $value): string {
+$sourceTimezone = new DateTimeZone('UTC');
+$displayTimezone = new DateTimeZone('America/Sao_Paulo');
+$parseSchedulerDate = static function (?string $value) use ($sourceTimezone, $displayTimezone): ?DateTimeImmutable {
     if ($value === null || trim($value) === '') {
-        return '-';
+        return null;
     }
 
-    $sourceTimezone = new DateTimeZone('UTC');
-    $displayTimezone = new DateTimeZone('America/Sao_Paulo');
     $date = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value, $sourceTimezone)
         ?: new DateTimeImmutable($value, $sourceTimezone);
 
-    return $date->setTimezone($displayTimezone)->format('d/m/Y H:i:s');
+    return $date->setTimezone($displayTimezone);
+};
+$formatDateTime = static function (?string $value) use ($parseSchedulerDate): string {
+    $date = $parseSchedulerDate($value);
+
+    return $date === null ? '-' : $date->format('d/m/Y H:i:s');
 };
 $formatStatus = static fn (?string $status): string => match ($status) {
     'success' => 'Sucesso',
@@ -30,6 +36,21 @@ $statusClass = static fn (?string $status): string => match ($status) {
     default => '',
 };
 $lastRun = $runs[0] ?? null;
+$now = new DateTimeImmutable('now', $displayTimezone);
+$lastRunAt = $parseSchedulerDate($task['last_run_at'] ?? null);
+$staleThresholdMinutes = max(120, $interval * 3);
+$isWeekday = (int) $now->format('N') <= 5;
+$currentHour = (int) $now->format('G');
+$insideAllowedWindow = $isWeekday && $currentHour >= $startHour && $currentHour < $endHour;
+$minutesSinceLastRun = $lastRunAt === null ? null : (int) floor(max(0, $now->getTimestamp() - $lastRunAt->getTimestamp()) / 60);
+$syncIsStale = $enabled && ($lastRunAt === null || ($insideAllowedWindow && $minutesSinceLastRun !== null && $minutesSinceLastRun > $staleThresholdMinutes));
+$staleAlertText = $lastRunAt === null
+    ? 'A rotina está ativa, mas ainda não há nenhuma sincronização registrada.'
+    : sprintf(
+        'A última sincronização registrada foi há %d minuto(s), acima do limite de atenção de %d minuto(s).',
+        $minutesSinceLastRun,
+        $staleThresholdMinutes
+    );
 $intervalOptions = [
     15 => 'A cada 15 minutos',
     30 => 'A cada 30 minutos',
@@ -45,7 +66,7 @@ ob_start();
         <span class="page-hero-icon bi bi-clock-history"></span>
         <div>
             <span class="badge">Sistema</span>
-            <h1>Tempo de sincronização</h1>
+            <h1>Sincronização</h1>
             <p class="muted">Acompanhe a importação da planilha e limite execuções à janela em que o servidor fica ligado.</p>
         </div>
     </div>
@@ -57,6 +78,16 @@ ob_start();
 
 <?php if ($error): ?>
     <div class="notice notice-error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></div>
+<?php endif; ?>
+
+<?php if ($syncIsStale): ?>
+    <div class="notice notice-warning sync-health-alert">
+        <span class="bi bi-exclamation-triangle"></span>
+        <div>
+            <strong>Sincronização possivelmente atrasada.</strong>
+            <span><?= htmlspecialchars($staleAlertText, ENT_QUOTES, 'UTF-8') ?></span>
+        </div>
+    </div>
 <?php endif; ?>
 
 <section class="report-summary-grid">
@@ -77,6 +108,17 @@ ob_start();
         <strong><?= htmlspecialchars($formatStatus($task['last_status'] ?? null), ENT_QUOTES, 'UTF-8') ?></strong>
     </div>
 </section>
+
+<?php if ($canRunManualSync): ?>
+    <section class="card section-card">
+        <h2 class="section-title"><span class="bi bi-play-circle"></span>Sincronização manual</h2>
+        <p class="muted">Use esta ação quando quiser importar a planilha imediatamente. A execução manual ignora a janela configurada, mas respeita o bloqueio contra execuções simultâneas.</p>
+        <form method="post" action="/system/sync/run" onsubmit="return confirm('Confirmar sincronização manual da planilha agora?');">
+            <input type="hidden" name="confirm_manual_sync" value="1">
+            <button type="submit"><span class="bi bi-arrow-repeat"></span>Executar sincronização agora</button>
+        </form>
+    </section>
+<?php endif; ?>
 
 <section class="card section-card">
     <h2 class="section-title"><span class="bi bi-sliders"></span>Janela permitida</h2>

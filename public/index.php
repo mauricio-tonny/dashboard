@@ -171,6 +171,7 @@ $router->get('/reports/market', [ReportController::class, 'market']);
 $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']);
 $router->get('/system/sync', [SyncController::class, 'index']);
 $router->post('/system/sync', [SyncController::class, 'save']);
+$router->post('/system/sync/run', [SyncController::class, 'runNow']);
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
 $router->get('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'index']);
 $router->post('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'save']);

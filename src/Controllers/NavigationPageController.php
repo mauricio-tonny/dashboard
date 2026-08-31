@@ -33,7 +33,7 @@ final class NavigationPageController extends Controller
 
     public function systemSync(Request $request): Response
     {
-        return $this->placeholder('Tempo de sincronização', 'Sistema', 'Configuração futura para desligado, 1h, 2h, 4h ou 5h.', Permission::MANAGE_SPREADSHEET_URL);
+        return $this->placeholder('Sincronização', 'Sistema', 'Configuração futura para desligado, 1h, 2h, 4h ou 5h.', Permission::MANAGE_SPREADSHEET_URL);
     }
 
     public function systemCategories(Request $request): Response

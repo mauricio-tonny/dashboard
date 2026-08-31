@@ -66,7 +66,7 @@ O menu Sistema concentra as configurações administrativas:
 - Usuários.
 - Logs.
 - Backup.
-- Tempo de sincronização.
+- Sincronização.
 - Cadastro de Categoria (DR).
 - Discord.
 - Gerenciar planilha.

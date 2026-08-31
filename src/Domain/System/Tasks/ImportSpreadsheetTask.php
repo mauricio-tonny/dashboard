@@ -14,7 +14,8 @@ final class ImportSpreadsheetTask implements ScheduledTask
         private string $projectRoot,
         private int $intervalMinutes,
         private DiscordNotifier $discordNotifier,
-        private array $syncSettings = []
+        private array $syncSettings = [],
+        private bool $forceRun = false
     ) {
     }
 
@@ -43,7 +44,7 @@ final class ImportSpreadsheetTask implements ScheduledTask
         $currentHour = (int) $now->format('G');
         $insideWindow = $isWeekday && $currentHour >= $startHour && $currentHour < $endHour;
 
-        if (!$insideWindow) {
+        if (!$this->forceRun && !$insideWindow) {
             return ScheduledTaskResult::skipped(
                 "Importacao ignorada fora da janela permitida: segunda a sexta, das {$startHour}:00 as {$endHour}:00.",
                 [

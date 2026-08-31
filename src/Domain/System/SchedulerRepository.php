@@ -119,6 +119,26 @@ final class SchedulerRepository
         return $statement->rowCount() === 1;
     }
 
+    public function acquireManualLock(string $code, string $token, DateTimeImmutable $now, int $lockMinutes = 15): bool
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE scheduled_tasks
+             SET locked_until = :locked_until,
+                 lock_token = :lock_token,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE code = :code
+               AND (locked_until IS NULL OR locked_until < :now)'
+        );
+        $statement->execute([
+            'code' => $code,
+            'now' => $this->format($now),
+            'locked_until' => $this->format($now->modify("+{$lockMinutes} minutes")),
+            'lock_token' => $token,
+        ]);
+
+        return $statement->rowCount() === 1;
+    }
+
     public function startRun(string $code, DateTimeImmutable $startedAt): int
     {
         $statement = $this->database->connection()->prepare(

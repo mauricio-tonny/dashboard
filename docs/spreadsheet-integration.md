@@ -139,7 +139,7 @@ A importação alimenta `vendors`, `categories`, `entries`, `entry_sources` e `i
 
 ## Importação Automática
 
-Depois da primeira validação manual, a importação pode ser executada automaticamente pelo scheduler interno. Use o painel `Sistema > Tempo de sincronização` para ativar a rotina, definir intervalo e limitar a janela permitida.
+Depois da primeira validação manual, a importação pode ser executada automaticamente pelo scheduler interno. Use o painel `Sistema > Sincronização` para ativar a rotina, definir intervalo e limitar a janela permitida.
 
 Com isso, o CRON único (`php bin/schedule_run.php`) passa a rodar `spreadsheet.import` no intervalo configurado pelo painel.
 

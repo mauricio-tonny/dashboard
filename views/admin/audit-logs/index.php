@@ -41,6 +41,7 @@ $labels = [
     'spreadsheet_url_saved' => 'Link da planilha salvo',
     'spreadsheet_url_tested' => 'Link da planilha testado',
     'spreadsheet_url_removed' => 'Link da planilha removido',
+    'spreadsheet_sync_manual_run' => 'Sincronização manual acionada',
     'contact_created' => 'Contato criado',
     'contact_updated' => 'Contato atualizado',
     'contact_enabled' => 'Contato reativado',

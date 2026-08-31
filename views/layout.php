@@ -642,6 +642,31 @@
             background: #fff7ed;
             color: #b45309;
         }
+        .sync-health-alert {
+            align-items: center;
+            border: 1px solid #fed7aa;
+            display: flex;
+            gap: 12px;
+        }
+        .sync-health-alert > .bi {
+            align-items: center;
+            background: #ffedd5;
+            border-radius: 12px;
+            display: inline-flex;
+            flex: 0 0 40px;
+            font-size: 1.15rem;
+            height: 40px;
+            justify-content: center;
+            width: 40px;
+        }
+        .sync-health-alert strong,
+        .sync-health-alert span {
+            display: block;
+        }
+        .sync-health-alert span {
+            font-weight: 600;
+            margin-top: 2px;
+        }
         td .notice {
             display: inline-block;
             margin-bottom: 0;
@@ -2312,7 +2337,7 @@
                                 <a class="nav-subitem <?= $isActive('/system/backup') ?>" href="/system/backup"><span class="bi bi-cloud-arrow-down"></span>Backup</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SPREADSHEET_URL)): ?>
-                                <a class="nav-subitem <?= $isActive('/system/sync') ?>" href="/system/sync"><span class="bi bi-clock-history"></span>Tempo de sincronização</a>
+                                <a class="nav-subitem <?= $isActive('/system/sync') ?>" href="/system/sync"><span class="bi bi-clock-history"></span>Sincronização</a>
                                 <a class="nav-subitem <?= $isActive('/system/categories') ?>" href="/system/categories"><span class="bi bi-tags"></span>Categoria (DR)</a>
                                 <a class="nav-subitem <?= $isActive('/system/spreadsheet') ?>" href="/system/spreadsheet"><span class="bi bi-file-earmark-spreadsheet"></span>Gerenciar planilha</a>
                             <?php endif; ?>

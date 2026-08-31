@@ -11,8 +11,12 @@ use App\Core\Session;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\Permission;
+use App\Domain\Auth\Role;
+use App\Domain\System\DiscordNotifier;
 use App\Domain\System\SchedulerRepository;
+use App\Domain\System\ScheduledTaskResult;
 use App\Domain\System\SpreadsheetSettingsRepository;
+use App\Domain\System\Tasks\ImportSpreadsheetTask;
 
 final class SyncController extends Controller
 {
@@ -67,7 +71,7 @@ final class SyncController extends Controller
             'Importar planilha financeira',
             $intervalMinutes,
             $enabled,
-            new \DateTimeImmutable()
+            new \DateTimeImmutable('now', new \DateTimeZone('UTC'))
         );
         $this->app->make(AuditLogger::class)->log('spreadsheet_sync_settings_updated', 'spreadsheet_settings', 1, $auth->user(), [
             'sync_is_enabled' => $enabled,
@@ -76,6 +80,74 @@ final class SyncController extends Controller
             'sync_end_hour' => $endHour,
         ]);
         $this->flash('success', 'Configurações de sincronização salvas.');
+
+        return Response::redirect('/system/sync');
+    }
+
+    public function runNow(Request $request): Response
+    {
+        $auth = $this->authorizeAdmin();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        if ((string) $request->input('confirm_manual_sync') !== '1') {
+            $this->flash('error', 'Confirme a sincronização manual antes de executar.');
+            return Response::redirect('/system/sync');
+        }
+
+        $settings = $this->app->make(SpreadsheetSettingsRepository::class)->syncSettings();
+        $intervalMinutes = max(5, (int) ($settings['sync_interval_minutes'] ?? 30));
+        $repository = $this->app->make(SchedulerRepository::class);
+        $task = new ImportSpreadsheetTask(
+            base_path(),
+            $intervalMinutes,
+            $this->app->make(DiscordNotifier::class),
+            $settings,
+            true
+        );
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $repository->configureTask(
+            self::TASK_CODE,
+            $task->name(),
+            $intervalMinutes,
+            ((int) ($settings['sync_is_enabled'] ?? 0)) === 1,
+            $now
+        );
+
+        $token = bin2hex(random_bytes(16));
+
+        if (!$repository->acquireManualLock(self::TASK_CODE, $token, $now)) {
+            $this->flash('error', 'Já existe uma sincronização em execução. Aguarde a finalização antes de iniciar outra.');
+            return Response::redirect('/system/sync');
+        }
+
+        $startedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $runId = $repository->startRun(self::TASK_CODE, $startedAt);
+
+        try {
+            $result = $task->run();
+        } catch (\Throwable $exception) {
+            $result = ScheduledTaskResult::failure($exception->getMessage(), [
+                'exception' => $exception::class,
+            ]);
+        }
+
+        $metadata = [
+            ...$result->metadata,
+            'trigger' => 'manual',
+            'triggered_by_user_id' => $auth->user()?->id,
+        ];
+        $result = new ScheduledTaskResult($result->success, $result->message, $metadata, $result->status);
+        $finishedAt = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+        $repository->finishRun($runId, $result, $startedAt, $finishedAt);
+        $repository->releaseTask(self::TASK_CODE, $token, $task, $result, $finishedAt);
+        $this->app->make(AuditLogger::class)->log('spreadsheet_sync_manual_run', 'scheduled_task', null, $auth->user(), [
+            'status' => $result->status,
+            'message' => $result->message,
+        ]);
+        $this->flash($result->success ? 'success' : 'error', $result->message);
 
         return Response::redirect('/system/sync');
     }
@@ -89,6 +161,21 @@ final class SyncController extends Controller
         }
 
         if (!$auth->user()?->can(Permission::MANAGE_SPREADSHEET_URL)) {
+            return new Response('Acesso negado.', 403);
+        }
+
+        return $auth;
+    }
+
+    private function authorizeAdmin(): AuthService|Response
+    {
+        $auth = $this->authorize();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        if (!$auth->user()?->hasRole(Role::ADMIN)) {
             return new Response('Acesso negado.', 403);
         }
 
