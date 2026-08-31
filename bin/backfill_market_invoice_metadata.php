@@ -42,7 +42,7 @@ $statement = $pdo->query(
      FROM shopping_market_invoices
      WHERE source_type = "file"
        AND stored_name <> ""
-       AND (purchase_date IS NULL OR access_key IS NULL OR access_key = "")'
+       AND (purchase_date IS NULL OR access_key IS NULL OR access_key = "" OR total_amount IS NULL)'
 );
 $invoices = $statement->fetchAll(PDO::FETCH_ASSOC);
 $updated = 0;
@@ -66,7 +66,9 @@ foreach ($invoices as $invoice) {
         $repository->updateMarketInvoiceMetadata((int) $invoice['id'], [
             'access_key' => $parsed['access_key'] ?? null,
             'issued_at' => $parsed['issued_at'] ?? null,
+            'total_amount' => $parsed['total_amount'] ?? null,
         ]);
+        $repository->syncMarketListTotalsFromInvoices((int) $invoice['list_id']);
         $repository->updateMarketListPurchaseDate((int) $invoice['list_id'], $parsed['issued_at'] ?? null);
         $updated++;
     } catch (Throwable $exception) {

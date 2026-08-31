@@ -260,10 +260,14 @@ final class ShoppingRepository
             ? preg_replace('/\D+/', '', (string) $data['access_key'])
             : null;
         $purchaseDate = $this->normalizeDateTime($data['issued_at'] ?? null);
+        $totalAmount = isset($data['total_amount']) && $data['total_amount'] !== null
+            ? round((float) $data['total_amount'], 2)
+            : null;
 
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_market_invoices
              SET access_key = COALESCE(NULLIF(:access_key, ""), access_key),
+                 total_amount = COALESCE(:total_amount, total_amount),
                  purchase_date = COALESCE(:purchase_date, purchase_date),
                  status = :status
              WHERE id = :id'
@@ -271,8 +275,9 @@ final class ShoppingRepository
         $statement->execute([
             'id' => $id,
             'access_key' => $accessKey,
+            'total_amount' => $totalAmount,
             'purchase_date' => $purchaseDate,
-            'status' => ($accessKey !== null && $accessKey !== '') || $purchaseDate !== null ? 'imported_with_metadata' : 'imported',
+            'status' => ($accessKey !== null && $accessKey !== '') || $purchaseDate !== null || $totalAmount !== null ? 'imported_with_metadata' : 'imported',
         ]);
     }
 
@@ -405,6 +410,44 @@ final class ShoppingRepository
             'id' => $id,
             'total_amount' => $totalAmount,
             'discount_amount' => $discountAmount,
+        ]);
+    }
+
+    public function syncMarketListTotalsFromInvoices(int $id): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT COUNT(*) AS invoice_count,
+                    COALESCE(SUM(total_amount), 0) AS total_amount,
+                    MAX(purchase_date) AS purchase_date
+             FROM shopping_market_invoices
+             WHERE list_id = :list_id
+               AND total_amount IS NOT NULL
+               AND total_amount > 0'
+        );
+        $statement->execute(['list_id' => $id]);
+        $summary = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($summary === false || (int) $summary['invoice_count'] === 0) {
+            return;
+        }
+
+        $totalAmount = round((float) $summary['total_amount'], 2);
+        $discountAmount = $this->discountAmount($id, $totalAmount);
+        $purchaseDate = $this->normalizeDateTime($summary['purchase_date'] ?? null);
+
+        $update = $this->database->connection()->prepare(
+            'UPDATE shopping_market_lists
+             SET total_amount = :total_amount,
+                 discount_amount = :discount_amount,
+                 purchase_date = COALESCE(:purchase_date, purchase_date),
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+        $update->execute([
+            'id' => $id,
+            'total_amount' => $totalAmount,
+            'discount_amount' => $discountAmount,
+            'purchase_date' => $purchaseDate,
         ]);
     }
 

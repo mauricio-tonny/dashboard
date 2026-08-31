@@ -232,6 +232,7 @@ CREATE TABLE IF NOT EXISTS shopping_market_invoices (
     stored_name VARCHAR(255) NOT NULL,
     mime_type VARCHAR(120) NOT NULL,
     file_size BIGINT UNSIGNED NOT NULL,
+    total_amount DECIMAL(14,2) NULL,
     access_key CHAR(44) NULL,
     uf_code CHAR(2) NULL,
     issued_year_month CHAR(4) NULL,
@@ -302,6 +303,7 @@ CREATE TABLE IF NOT EXISTS shopping_wish_items (
 
 CREATE TABLE IF NOT EXISTS contacts (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vendor_id BIGINT UNSIGNED NULL,
     type ENUM('vendor', 'client') NOT NULL,
     is_vendor TINYINT(1) NOT NULL DEFAULT 0,
     is_client TINYINT(1) NOT NULL DEFAULT 0,
@@ -310,7 +312,11 @@ CREATE TABLE IF NOT EXISTS contacts (
     document VARCHAR(30) NULL,
     phone VARCHAR(40) NULL,
     email VARCHAR(190) NULL,
+    postal_code VARCHAR(9) NULL,
     address VARCHAR(255) NULL,
+    address_number VARCHAR(30) NULL,
+    neighborhood VARCHAR(120) NULL,
+    complement VARCHAR(120) NULL,
     city VARCHAR(120) NOT NULL,
     state CHAR(2) NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -319,6 +325,8 @@ CREATE TABLE IF NOT EXISTS contacts (
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_contacts_type (type),
     INDEX idx_contacts_name (first_name, last_name),
+    UNIQUE KEY uq_contacts_vendor (vendor_id),
+    CONSTRAINT fk_contacts_vendor FOREIGN KEY (vendor_id) REFERENCES vendors(id),
     CONSTRAINT fk_contacts_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
 );
 

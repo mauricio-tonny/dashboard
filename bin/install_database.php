@@ -64,10 +64,17 @@ try {
 
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_created_at', 'CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at)');
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_action', 'CREATE INDEX idx_audit_logs_action ON audit_logs (action)');
+    ensureColumn($pdo, 'contacts', 'vendor_id', 'ALTER TABLE contacts ADD COLUMN vendor_id BIGINT UNSIGNED NULL AFTER id');
+    ensureIndex($pdo, 'contacts', 'uq_contacts_vendor', 'CREATE UNIQUE INDEX uq_contacts_vendor ON contacts (vendor_id)');
     ensureColumn($pdo, 'contacts', 'is_vendor', 'ALTER TABLE contacts ADD COLUMN is_vendor TINYINT(1) NOT NULL DEFAULT 0 AFTER type');
     ensureColumn($pdo, 'contacts', 'is_client', 'ALTER TABLE contacts ADD COLUMN is_client TINYINT(1) NOT NULL DEFAULT 0 AFTER is_vendor');
+    ensureColumn($pdo, 'contacts', 'postal_code', 'ALTER TABLE contacts ADD COLUMN postal_code VARCHAR(9) NULL AFTER email');
+    ensureColumn($pdo, 'contacts', 'address_number', 'ALTER TABLE contacts ADD COLUMN address_number VARCHAR(30) NULL AFTER address');
+    ensureColumn($pdo, 'contacts', 'neighborhood', 'ALTER TABLE contacts ADD COLUMN neighborhood VARCHAR(120) NULL AFTER address_number');
+    ensureColumn($pdo, 'contacts', 'complement', 'ALTER TABLE contacts ADD COLUMN complement VARCHAR(120) NULL AFTER neighborhood');
     ensureColumn($pdo, 'shopping_market_invoices', 'source_type', "ALTER TABLE shopping_market_invoices ADD COLUMN source_type ENUM('file', 'access_key') NOT NULL DEFAULT 'file' AFTER list_id");
     ensureColumn($pdo, 'shopping_market_invoices', 'access_key', 'ALTER TABLE shopping_market_invoices ADD COLUMN access_key CHAR(44) NULL AFTER file_size');
+    ensureColumn($pdo, 'shopping_market_invoices', 'total_amount', 'ALTER TABLE shopping_market_invoices ADD COLUMN total_amount DECIMAL(14,2) NULL AFTER file_size');
     ensureColumn($pdo, 'shopping_market_invoices', 'uf_code', 'ALTER TABLE shopping_market_invoices ADD COLUMN uf_code CHAR(2) NULL AFTER access_key');
     ensureColumn($pdo, 'shopping_market_invoices', 'issued_year_month', 'ALTER TABLE shopping_market_invoices ADD COLUMN issued_year_month CHAR(4) NULL AFTER uf_code');
     ensureColumn($pdo, 'shopping_market_invoices', 'issuer_document', 'ALTER TABLE shopping_market_invoices ADD COLUMN issuer_document CHAR(14) NULL AFTER issued_year_month');

@@ -413,6 +413,64 @@
         .responsive-table td {
             vertical-align: top;
         }
+        .contacts-table th:nth-child(1) {
+            width: 34%;
+        }
+        .contacts-table th:nth-child(2) {
+            width: 16%;
+        }
+        .contacts-table th:nth-child(3),
+        .contacts-table th:nth-child(4) {
+            width: 20%;
+        }
+        .contacts-table th:last-child {
+            width: 10%;
+        }
+        .contacts-table .contact-nowrap {
+            white-space: nowrap;
+        }
+        .contacts-table .contact-actions {
+            align-items: stretch;
+            display: grid;
+            gap: 8px;
+            min-width: 126px;
+        }
+        .contacts-table .contact-actions button {
+            justify-content: center;
+            width: 100%;
+        }
+        .inactive-contacts-panel {
+            border-top: 1px solid var(--border);
+            margin-top: 18px;
+            padding-top: 14px;
+        }
+        .inactive-contacts-panel > summary {
+            align-items: center;
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--brand-dark);
+            cursor: pointer;
+            display: flex;
+            font-weight: 900;
+            justify-content: space-between;
+            list-style: none;
+            padding: 14px 16px;
+        }
+        .inactive-contacts-panel > summary::-webkit-details-marker {
+            display: none;
+        }
+        .inactive-contacts-panel > summary span {
+            align-items: center;
+            display: inline-flex;
+            gap: 8px;
+        }
+        .inactive-contacts-panel > summary small {
+            color: var(--muted);
+        }
+        .inactive-contacts-panel .responsive-table {
+            margin-top: 12px;
+        }
         button {
             align-items: center;
             background: var(--brand-dark);
@@ -481,10 +539,25 @@
             gap: 8px;
         }
         .modal-footer-actions {
-            align-items: end;
+            align-items: center;
             display: flex;
             gap: 10px;
+            grid-column: 1 / -1;
             justify-content: flex-end;
+            padding-top: 8px;
+        }
+        .modal-footer-actions button {
+            min-height: 48px;
+            white-space: nowrap;
+        }
+        .modal-footer-actions .inline-button,
+        .modal-footer-actions button[type="submit"] {
+            align-items: center;
+            display: inline-flex;
+            gap: 8px;
+            justify-content: center;
+            min-width: 190px;
+            width: auto;
         }
         .form-check-group {
             margin-bottom: 14px;
@@ -504,6 +577,46 @@
         .check-option input {
             margin: 0;
             width: auto;
+        }
+        .segmented-check-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .segmented-check-option {
+            align-items: center;
+            background: #f8fbfd;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            color: var(--brand-dark);
+            cursor: pointer;
+            display: inline-flex;
+            font-weight: 800;
+            gap: 8px;
+            padding: 10px 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+        .segmented-check-option:has(input:checked) {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            box-shadow: 0 8px 18px rgba(20, 184, 166, 0.16);
+        }
+        .segmented-check-option:hover {
+            transform: translateY(-1px);
+        }
+        .segmented-check-option input {
+            accent-color: var(--accent);
+            margin: 0;
+            width: auto;
+        }
+        .form-section-title {
+            border-top: 1px solid var(--border);
+            color: var(--brand-dark);
+            font-weight: 900;
+            grid-column: 1 / -1;
+            margin-top: 6px;
+            padding-top: 16px;
         }
         .sr-only {
             height: 1px;
@@ -2283,6 +2396,100 @@
 
             if (input.value.trim() !== '') {
                 applyCurrency();
+            }
+        });
+        document.querySelectorAll('[data-mask="document"]').forEach((input) => {
+            const formatDocument = () => {
+                const digits = input.value.replace(/\D+/g, '').slice(0, 14);
+
+                if (digits.length <= 11) {
+                    input.value = digits
+                        .replace(/(\d{3})(\d)/, '$1.$2')
+                        .replace(/(\d{3})(\d)/, '$1.$2')
+                        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                    return;
+                }
+
+                input.value = digits
+                    .replace(/^(\d{2})(\d)/, '$1.$2')
+                    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                    .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                    .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+            };
+
+            input.addEventListener('input', formatDocument);
+            if (input.value.trim() !== '') {
+                formatDocument();
+            }
+        });
+        document.querySelectorAll('[data-mask="phone"]').forEach((input) => {
+            const formatPhone = () => {
+                const digits = input.value.replace(/\D+/g, '').slice(0, 11);
+
+                input.value = digits.length <= 10
+                    ? digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d{1,4})$/, '$1-$2')
+                    : digits.replace(/(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d{1,4})$/, '$1-$2');
+            };
+
+            input.addEventListener('input', formatPhone);
+            if (input.value.trim() !== '') {
+                formatPhone();
+            }
+        });
+        document.querySelectorAll('[data-mask="postal-code"]').forEach((input) => {
+            const form = input.closest('form');
+            const addressInput = form?.querySelector('[data-viacep-address]');
+            const neighborhoodInput = form?.querySelector('[data-viacep-neighborhood]');
+            const cityInput = form?.querySelector('[data-viacep-city]');
+            const stateInput = form?.querySelector('[data-viacep-state]');
+            const numberInput = form?.querySelector('[data-viacep-number]');
+            const formatPostalCode = () => {
+                const digits = input.value.replace(/\D+/g, '').slice(0, 8);
+                input.value = digits.replace(/(\d{5})(\d{1,3})$/, '$1-$2');
+
+                return digits;
+            };
+            const fillAddress = async () => {
+                const digits = formatPostalCode();
+
+                if (digits.length !== 8) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+                    const data = await response.json();
+
+                    if (!data || data.erro) {
+                        return;
+                    }
+
+                    if (addressInput && addressInput.value.trim() === '') {
+                        addressInput.value = data.logradouro || '';
+                    }
+
+                    if (neighborhoodInput && neighborhoodInput.value.trim() === '') {
+                        neighborhoodInput.value = data.bairro || '';
+                    }
+
+                    if (cityInput && cityInput.value.trim() === '') {
+                        cityInput.value = data.localidade || '';
+                    }
+
+                    if (stateInput && data.uf) {
+                        stateInput.value = data.uf;
+                    }
+
+                    numberInput?.focus();
+                } catch (error) {
+                    console.warn('Não foi possível consultar o CEP no ViaCEP.', error);
+                }
+            };
+
+            input.addEventListener('input', formatPostalCode);
+            input.addEventListener('blur', fillAddress);
+            if (input.value.trim() !== '') {
+                formatPostalCode();
             }
         });
         document.addEventListener('keydown', (event) => {

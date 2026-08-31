@@ -440,7 +440,9 @@ final class ShoppingController extends Controller
                 $repository->updateMarketInvoiceMetadata($id, [
                     'access_key' => $summary['access_key'] ?? null,
                     'issued_at' => $summary['issued_at'] ?? null,
+                    'total_amount' => $summary['total_amount'] ?? null,
                 ]);
+                $repository->syncMarketListTotalsFromInvoices($listId);
                 $repository->updateMarketListPurchaseDate($listId, $summary['issued_at'] ?? null);
                 $this->audit('shopping_market_invoice_imported', 'shopping_market_invoice', $id, ['source' => $extension, ...$summary]);
                 $this->flash('success', sprintf(
@@ -795,10 +797,6 @@ final class ShoppingController extends Controller
                 $items
             );
             $updated++;
-        }
-
-        if ($invoice['total_amount'] !== null) {
-            $repository->updateMarketListTotal($listId, (float) $invoice['total_amount']);
         }
 
         return [

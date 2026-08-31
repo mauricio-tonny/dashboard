@@ -25,12 +25,16 @@ final class ContactController extends Controller
 
         $type = (string) $request->input('type', '');
         $type = in_array($type, ['vendor', 'client'], true) ? $type : null;
+        $search = trim((string) $request->input('q', ''));
         $session = $this->app->make(Session::class);
+        $repository = $this->app->make(ContactRepository::class);
 
         return Response::view('contacts/index', [
             'user' => $auth->user(),
-            'contacts' => $this->app->make(ContactRepository::class)->all($type),
+            'contacts' => $repository->all($type, $search),
+            'summary' => $repository->summary(),
             'selectedType' => $type,
+            'search' => $search,
             'states' => $this->states(),
             'success' => $session->pullFlash('success'),
             'error' => $session->pullFlash('error'),
@@ -80,7 +84,11 @@ final class ContactController extends Controller
             'document' => trim((string) $request->input('document')) ?: null,
             'phone' => trim((string) $request->input('phone')) ?: null,
             'email' => trim((string) $request->input('email')) ?: null,
+            'postal_code' => trim((string) $request->input('postal_code')) ?: null,
             'address' => trim((string) $request->input('address')) ?: null,
+            'address_number' => trim((string) $request->input('address_number')) ?: null,
+            'neighborhood' => trim((string) $request->input('neighborhood')) ?: null,
+            'complement' => trim((string) $request->input('complement')) ?: null,
             'city' => trim((string) $request->input('city')),
             'state' => mb_strtoupper(trim((string) $request->input('state'))),
         ];
