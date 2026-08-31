@@ -13,7 +13,8 @@ final class ImportSpreadsheetTask implements ScheduledTask
     public function __construct(
         private string $projectRoot,
         private int $intervalMinutes,
-        private DiscordNotifier $discordNotifier
+        private DiscordNotifier $discordNotifier,
+        private array $syncSettings = []
     ) {
     }
 
@@ -34,6 +35,27 @@ final class ImportSpreadsheetTask implements ScheduledTask
 
     public function run(): ScheduledTaskResult
     {
+        $now = new \DateTimeImmutable();
+        $startHour = min(23, max(0, (int) ($this->syncSettings['sync_start_hour'] ?? 8)));
+        $endHour = min(24, max(1, (int) ($this->syncSettings['sync_end_hour'] ?? 18)));
+        $isWeekday = (int) $now->format('N') <= 5;
+        $currentHour = (int) $now->format('G');
+        $insideWindow = $isWeekday && $currentHour >= $startHour && $currentHour < $endHour;
+
+        if (!$insideWindow) {
+            return ScheduledTaskResult::skipped(
+                "Importacao ignorada fora da janela permitida: segunda a sexta, das {$startHour}:00 as {$endHour}:00.",
+                [
+                    'reason' => 'outside_allowed_window',
+                    'checked_at' => $now->format('Y-m-d H:i:s'),
+                    'weekday' => $now->format('N'),
+                    'current_hour' => $currentHour,
+                    'sync_start_hour' => $startHour,
+                    'sync_end_hour' => $endHour,
+                ]
+            );
+        }
+
         $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($this->projectRoot . '/bin/import_spreadsheet.php') . ' --apply';
         $descriptors = [
             1 => ['pipe', 'w'],

@@ -62,6 +62,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-
 O arquivo `scripts/spreadsheet-sync.local.ps1` fica fora do Git. Ele guarda caminhos específicos da máquina, chave SSH, porta e destino remoto.
 Use `SyncStartHour` e `SyncEndHour` nesse arquivo somente se precisar mudar a janela permitida. A execução manual com `-Force` continua ignorando a janela para testes controlados.
 
+O painel `/system/sync` controla a janela e o intervalo da rotina interna de importação da planilha no servidor. A tarefa do Windows segue responsável apenas por enviar a cópia local do OneDrive para o servidor.
+
 ## Configuração no Painel
 
 A tela `/system/spreadsheet` permite salvar o link compartilhado da planilha. O valor é criptografado antes de ser persistido no banco e aparece apenas mascarado na interface.
@@ -135,16 +137,11 @@ php bin/import_spreadsheet.php --apply
 
 A importação alimenta `vendors`, `categories`, `entries`, `entry_sources` e `import_runs`. Cada lançamento usa `source_key` no formato `spreadsheet:{aba}:row:{linha}` para evitar duplicidade e `source_hash` para detectar alterações futuras.
 
-## Importacao Automatica
+## Importação Automática
 
-Depois da primeira validacao manual, a importacao pode ser executada automaticamente pelo scheduler interno. No `.env` do servidor:
+Depois da primeira validação manual, a importação pode ser executada automaticamente pelo scheduler interno. Use o painel `Sistema > Tempo de sincronização` para ativar a rotina, definir intervalo e limitar a janela permitida.
 
-```env
-SPREADSHEET_IMPORT_SCHEDULE_ENABLED=true
-SPREADSHEET_IMPORT_INTERVAL_MINUTES=30
-```
-
-Com isso, o CRON unico (`php bin/schedule_run.php`) passa a rodar `spreadsheet.import` no intervalo configurado.
+Com isso, o CRON único (`php bin/schedule_run.php`) passa a rodar `spreadsheet.import` no intervalo configurado pelo painel.
 
 ## Escrita Segura
 

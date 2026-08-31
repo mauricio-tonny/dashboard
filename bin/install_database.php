@@ -119,9 +119,17 @@ try {
         id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
         encrypted_url TEXT NULL,
         url_hash CHAR(64) NULL,
+        sync_is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        sync_interval_minutes INT UNSIGNED NOT NULL DEFAULT 30,
+        sync_start_hour TINYINT UNSIGNED NOT NULL DEFAULT 8,
+        sync_end_hour TINYINT UNSIGNED NOT NULL DEFAULT 18,
         created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )');
+    ensureColumn($pdo, 'spreadsheet_settings', 'sync_is_enabled', 'ALTER TABLE spreadsheet_settings ADD COLUMN sync_is_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER url_hash');
+    ensureColumn($pdo, 'spreadsheet_settings', 'sync_interval_minutes', 'ALTER TABLE spreadsheet_settings ADD COLUMN sync_interval_minutes INT UNSIGNED NOT NULL DEFAULT 30 AFTER sync_is_enabled');
+    ensureColumn($pdo, 'spreadsheet_settings', 'sync_start_hour', 'ALTER TABLE spreadsheet_settings ADD COLUMN sync_start_hour TINYINT UNSIGNED NOT NULL DEFAULT 8 AFTER sync_interval_minutes');
+    ensureColumn($pdo, 'spreadsheet_settings', 'sync_end_hour', 'ALTER TABLE spreadsheet_settings ADD COLUMN sync_end_hour TINYINT UNSIGNED NOT NULL DEFAULT 18 AFTER sync_start_hour');
     $pdo->exec('INSERT IGNORE INTO spreadsheet_settings (id) VALUES (1)');
     $pdo->exec('CREATE TABLE IF NOT EXISTS scheduled_tasks (
         code VARCHAR(120) PRIMARY KEY,

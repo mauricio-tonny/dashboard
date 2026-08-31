@@ -638,6 +638,15 @@
             background: #fee4e2;
             color: var(--danger);
         }
+        .notice-warning {
+            background: #fff7ed;
+            color: #b45309;
+        }
+        td .notice {
+            display: inline-block;
+            margin-bottom: 0;
+            padding: 6px 10px;
+        }
         .form-grid {
             display: grid;
             gap: 16px;

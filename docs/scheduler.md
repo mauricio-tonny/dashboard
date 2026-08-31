@@ -37,16 +37,11 @@ tail -n 50 storage/logs/scheduler.log
 
 - `market.ensure_next_list`: garante a lista de mercado do próximo mês uma vez ao dia e reaproveita a notificação do Discord quando uma lista nova é criada.
 
-## Importacao da Planilha
+## Importação da Planilha
 
-- `spreadsheet.import`: importa a planilha financeira sincronizada para o banco, quando `SPREADSHEET_IMPORT_SCHEDULE_ENABLED=true`.
+- `spreadsheet.import`: importa a planilha financeira sincronizada para o banco, quando estiver ativa em `/system/sync`.
 
-Para habilitar a importacao automatica pelo CRON interno, configure no `.env`:
-
-```env
-SPREADSHEET_IMPORT_SCHEDULE_ENABLED=true
-SPREADSHEET_IMPORT_INTERVAL_MINUTES=30
-```
+O painel `/system/sync` permite configurar se a rotina está ativa, o intervalo e a janela permitida. Por padrão, a janela sugerida é de segunda a sexta, das 08:00 às 18:00. Execuções fora da janela são registradas como `skipped` em `scheduled_task_runs`, sem tentar importar a planilha.
 
 A task executa internamente:
 

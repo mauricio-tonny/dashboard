@@ -57,6 +57,38 @@ final class SpreadsheetSettingsRepository
         ]);
     }
 
+    public function syncSettings(): array
+    {
+        $settings = $this->settings();
+
+        return [
+            'sync_is_enabled' => (int) ($settings['sync_is_enabled'] ?? 0),
+            'sync_interval_minutes' => max(5, (int) ($settings['sync_interval_minutes'] ?? 30)),
+            'sync_start_hour' => min(23, max(0, (int) ($settings['sync_start_hour'] ?? 8))),
+            'sync_end_hour' => min(24, max(1, (int) ($settings['sync_end_hour'] ?? 18))),
+        ];
+    }
+
+    public function saveSyncSettings(bool $enabled, int $intervalMinutes, int $startHour, int $endHour): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'INSERT INTO spreadsheet_settings (id, sync_is_enabled, sync_interval_minutes, sync_start_hour, sync_end_hour)
+             VALUES (1, :sync_is_enabled, :sync_interval_minutes, :sync_start_hour, :sync_end_hour)
+             ON DUPLICATE KEY UPDATE
+                sync_is_enabled = VALUES(sync_is_enabled),
+                sync_interval_minutes = VALUES(sync_interval_minutes),
+                sync_start_hour = VALUES(sync_start_hour),
+                sync_end_hour = VALUES(sync_end_hour),
+                updated_at = CURRENT_TIMESTAMP'
+        );
+        $statement->execute([
+            'sync_is_enabled' => $enabled ? 1 : 0,
+            'sync_interval_minutes' => max(5, $intervalMinutes),
+            'sync_start_hour' => min(23, max(0, $startHour)),
+            'sync_end_hour' => min(24, max(1, $endHour)),
+        ]);
+    }
+
     public function remove(): void
     {
         $statement = $this->database->connection()->prepare(
@@ -93,6 +125,10 @@ final class SpreadsheetSettingsRepository
             'url' => '',
             'masked_url' => '',
             'has_url' => false,
+            'sync_is_enabled' => 0,
+            'sync_interval_minutes' => 30,
+            'sync_start_hour' => 8,
+            'sync_end_hour' => 18,
         ];
     }
 }

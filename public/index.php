@@ -19,6 +19,7 @@ use App\Controllers\System\DiscordController;
 use App\Controllers\System\CategoryBudgetTargetController;
 use App\Controllers\System\PermissionController;
 use App\Controllers\System\SpreadsheetController;
+use App\Controllers\System\SyncController;
 use App\Core\App;
 use App\Core\Database;
 use App\Core\Request;
@@ -36,6 +37,7 @@ use App\Domain\Finance\FinanceEntryRepository;
 use App\Domain\Shopping\ShoppingRepository;
 use App\Domain\System\DiscordNotificationRepository;
 use App\Domain\System\DiscordNotifier;
+use App\Domain\System\SchedulerRepository;
 use App\Domain\System\SpreadsheetLinkTester;
 use App\Domain\System\SpreadsheetSettingsRepository;
 use App\Infrastructure\Auth\DatabaseUserRepository;
@@ -78,6 +80,7 @@ $auditLogger = new AuditLogger($database);
 $shoppingRepository = new ShoppingRepository($database);
 $discordNotificationRepository = new DiscordNotificationRepository($database);
 $discordNotifier = new DiscordNotifier($discordNotificationRepository);
+$schedulerRepository = new SchedulerRepository($database);
 $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $spreadsheetLinkTester = new SpreadsheetLinkTester();
 $contactRepository = new ContactRepository($database);
@@ -100,6 +103,7 @@ $app = new App([
     ShoppingRepository::class => $shoppingRepository,
     DiscordNotificationRepository::class => $discordNotificationRepository,
     DiscordNotifier::class => $discordNotifier,
+    SchedulerRepository::class => $schedulerRepository,
     SpreadsheetSettingsRepository::class => $spreadsheetSettingsRepository,
     SpreadsheetLinkTester::class => $spreadsheetLinkTester,
     ContactRepository::class => $contactRepository,
@@ -165,7 +169,8 @@ $router->get('/reports/paid-vs-received', [ReportController::class, 'paidVsRecei
 $router->get('/reports/cashflow', [ReportController::class, 'cashflow']);
 $router->get('/reports/market', [ReportController::class, 'market']);
 $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']);
-$router->get('/system/sync', [NavigationPageController::class, 'systemSync']);
+$router->get('/system/sync', [SyncController::class, 'index']);
+$router->post('/system/sync', [SyncController::class, 'save']);
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
 $router->get('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'index']);
 $router->post('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'save']);

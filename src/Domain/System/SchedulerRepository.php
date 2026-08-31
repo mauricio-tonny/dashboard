@@ -46,6 +46,57 @@ final class SchedulerRepository
         return $statement->fetchAll(PDO::FETCH_COLUMN);
     }
 
+    public function task(string $code): ?array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT *
+             FROM scheduled_tasks
+             WHERE code = :code
+             LIMIT 1'
+        );
+        $statement->execute(['code' => $code]);
+        $task = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $task === false ? null : $task;
+    }
+
+    public function latestRuns(string $code, int $limit = 30): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT *
+             FROM scheduled_task_runs
+             WHERE task_code = :task_code
+             ORDER BY started_at DESC
+             LIMIT :limit'
+        );
+        $statement->bindValue('task_code', $code);
+        $statement->bindValue('limit', $limit, PDO::PARAM_INT);
+        $statement->execute();
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function configureTask(string $code, string $name, int $intervalMinutes, bool $active, DateTimeImmutable $now): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'INSERT INTO scheduled_tasks (code, name, interval_minutes, is_active, next_run_at)
+             VALUES (:code, :name, :interval_minutes, :is_active, :next_run_at)
+             ON DUPLICATE KEY UPDATE
+                name = VALUES(name),
+                interval_minutes = VALUES(interval_minutes),
+                is_active = VALUES(is_active),
+                next_run_at = CASE WHEN VALUES(is_active) = 1 THEN LEAST(next_run_at, VALUES(next_run_at)) ELSE next_run_at END,
+                updated_at = CURRENT_TIMESTAMP'
+        );
+        $statement->execute([
+            'code' => $code,
+            'name' => $name,
+            'interval_minutes' => max(5, $intervalMinutes),
+            'is_active' => $active ? 1 : 0,
+            'next_run_at' => $this->format($now),
+        ]);
+    }
+
     public function acquireLock(string $code, string $token, DateTimeImmutable $now, int $lockMinutes = 15): bool
     {
         $statement = $this->database->connection()->prepare(
@@ -97,7 +148,7 @@ final class SchedulerRepository
         );
         $statement->execute([
             'id' => $runId,
-            'status' => $result->success ? 'success' : 'failed',
+            'status' => $result->status !== '' ? $result->status : ($result->success ? 'success' : 'failed'),
             'finished_at' => $this->format($finishedAt),
             'duration_ms' => $durationMs,
             'message' => mb_substr($result->message, 0, 500),
@@ -127,7 +178,7 @@ final class SchedulerRepository
             'last_run_at' => $this->format($finishedAt),
             'next_run_at' => $this->format($nextRunAt),
             'success' => $result->success ? 1 : 0,
-            'last_status' => $result->success ? 'success' : 'failed',
+            'last_status' => $result->status !== '' ? $result->status : ($result->success ? 'success' : 'failed'),
             'last_message' => mb_substr($result->message, 0, 500),
         ]);
     }
