@@ -3,7 +3,9 @@ param(
     [string] $ScriptPath = "$PSScriptRoot\sync-spreadsheet.ps1",
     [string] $ConfigPath = "$PSScriptRoot\spreadsheet-sync.local.ps1",
     [string] $HiddenRunnerPath = "$PSScriptRoot\run-spreadsheet-sync-hidden.vbs",
-    [int] $IntervalMinutes = 30
+    [int] $IntervalMinutes = 30,
+    [int] $StartHour = 8,
+    [int] $EndHour = 18
 )
 
 $ErrorActionPreference = 'Stop'
@@ -21,35 +23,17 @@ if (-not (Test-Path -LiteralPath $HiddenRunnerPath)) {
 }
 
 $taskCommand = "`"$env:WINDIR\System32\wscript.exe`" `"$HiddenRunnerPath`""
+$windowMinutes = (($EndHour - $StartHour) * 60) - $IntervalMinutes
 
-try {
-    $action = New-ScheduledTaskAction -Execute "$env:WINDIR\System32\wscript.exe" -Argument "`"$HiddenRunnerPath`""
-    $triggerAtLogon = New-ScheduledTaskTrigger -AtLogOn
-    $triggerRecurring = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
-        -RepetitionInterval (New-TimeSpan -Minutes $IntervalMinutes) `
-        -RepetitionDuration (New-TimeSpan -Days 3650)
-
-    $settings = New-ScheduledTaskSettingsSet `
-        -AllowStartIfOnBatteries `
-        -DontStopIfGoingOnBatteries `
-        -StartWhenAvailable `
-        -MultipleInstances IgnoreNew
-
-    Register-ScheduledTask `
-        -TaskName $TaskName `
-        -Action $action `
-        -Trigger @($triggerAtLogon, $triggerRecurring) `
-        -Settings $settings `
-        -Description 'Sincroniza a planilha financeira do OneDrive local com o servidor do dashboard.' `
-        -Force | Out-Null
-} catch {
-    Write-Warning "Register-ScheduledTask falhou. Tentando fallback com schtasks.exe: $($_.Exception.Message)"
-    & schtasks.exe /Create /F /TN $TaskName /SC MINUTE /MO $IntervalMinutes /TR $taskCommand | Out-Host
-
-    if ($LASTEXITCODE -ne 0) {
-        throw "Não foi possível criar a tarefa pelo schtasks.exe. Código: $LASTEXITCODE"
-    }
+if ($windowMinutes -lt $IntervalMinutes) {
+    throw 'Janela de sincronização inválida. O horário final precisa permitir ao menos uma execução dentro do intervalo.'
 }
 
-Write-Host "Tarefa '$TaskName' instalada/atualizada com intervalo de $IntervalMinutes minutos."
+& schtasks.exe /Create /F /TN $TaskName /SC WEEKLY /D MON,TUE,WED,THU,FRI /ST "$($StartHour.ToString('00')):00" /RI $IntervalMinutes /DU "$([Math]::Floor($windowMinutes / 60).ToString('00')):$((($windowMinutes % 60)).ToString('00'))" /TR $taskCommand | Out-Host
+
+if ($LASTEXITCODE -ne 0) {
+    throw "Não foi possível criar a tarefa pelo schtasks.exe. Código: $LASTEXITCODE"
+}
+
+Write-Host "Tarefa '$TaskName' instalada/atualizada com intervalo de $IntervalMinutes minutos, de segunda a sexta, das ${StartHour}:00 às ${EndHour}:00."
 Write-Host "Para testar agora: powershell -NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`" -ConfigPath `"$ConfigPath`" -Force"

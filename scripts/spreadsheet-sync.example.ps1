@@ -9,4 +9,6 @@ $SpreadsheetSyncConfig = @{
     RemotePath = '/var/www/dashboard.oficinadodev.com.br/html/storage/private/spreadsheets/financeiro.xlsx'
     StatePath = "$PSScriptRoot\spreadsheet-sync.state.json"
     LogPath = "$PSScriptRoot\spreadsheet-sync.log"
+    SyncStartHour = 8
+    SyncEndHour = 18
 }

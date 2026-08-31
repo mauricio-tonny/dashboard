@@ -45,7 +45,7 @@ O diretório `vendor/` não deve ser versionado, mas precisa existir no servidor
 Como o link público do OneDrive pode entregar uma página intermediária em vez do `.xlsx`, o caminho mais previsível é usar o computador Windows como ponte segura:
 
 1. O aplicativo do OneDrive mantém a planilha original sincronizada localmente.
-2. A tarefa agendada do Windows roda `scripts/sync-spreadsheet.ps1`.
+2. A tarefa agendada do Windows roda `scripts/sync-spreadsheet.ps1` a cada 30 minutos, apenas de segunda a sexta, entre 08:00 e 18:00, com última execução prevista às 17:30.
 3. O script calcula o hash local e só envia o arquivo quando houver alteração.
 4. O envio é feito via `scp` para `storage/private/spreadsheets/financeiro.xlsx`.
 5. O dashboard usa `EXCEL_FILE` para ler sempre a última cópia recebida.
@@ -60,6 +60,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-
 ```
 
 O arquivo `scripts/spreadsheet-sync.local.ps1` fica fora do Git. Ele guarda caminhos específicos da máquina, chave SSH, porta e destino remoto.
+Use `SyncStartHour` e `SyncEndHour` nesse arquivo somente se precisar mudar a janela permitida. A execução manual com `-Force` continua ignorando a janela para testes controlados.
 
 ## Configuração no Painel
 

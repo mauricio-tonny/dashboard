@@ -163,7 +163,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\sync-spreadsheet.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\install-spreadsheet-sync-task.ps1 -IntervalMinutes 30
 ```
 
-A tarefa criada se chama `Dashboard Spreadsheet Sync` e envia a planilha ao servidor a cada 30 minutos, mas só faz upload quando o hash do arquivo muda.
+A tarefa criada se chama `Dashboard Spreadsheet Sync` e envia a planilha ao servidor a cada 30 minutos, apenas de segunda a sexta, das 08:00 às 18:00. Na prática, a última execução agendada fica às 17:30 para evitar tentativa de envio exatamente no horário de desligamento do servidor.
+Por segurança, o script também ignora execuções fora dessa janela quando não estiver em modo `-Force`.
+Mesmo dentro da janela, o upload só acontece quando o hash do arquivo muda.
 Ela usa `wscript.exe` para executar o PowerShell em modo oculto, evitando abrir janela de CMD/PowerShell durante o trabalho.
 
 ## Próximos Passos Recomendados

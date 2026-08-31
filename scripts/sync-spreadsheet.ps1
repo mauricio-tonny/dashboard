@@ -82,6 +82,17 @@ if (-not $SpreadsheetSyncConfig) {
 
 $script:Config = $SpreadsheetSyncConfig
 
+$syncStartHour = if ($script:Config.ContainsKey('SyncStartHour')) { [int] $script:Config.SyncStartHour } else { 8 }
+$syncEndHour = if ($script:Config.ContainsKey('SyncEndHour')) { [int] $script:Config.SyncEndHour } else { 18 }
+$now = Get-Date
+$isWeekday = $now.DayOfWeek -notin @([DayOfWeek]::Saturday, [DayOfWeek]::Sunday)
+$isInsideWindow = $isWeekday -and $now.Hour -ge $syncStartHour -and $now.Hour -lt $syncEndHour
+
+if (-not $Force -and -not $isInsideWindow) {
+    Write-SyncLog "Sincronização ignorada fora da janela permitida: segunda a sexta, das $syncStartHour:00 às $syncEndHour:00."
+    exit 0
+}
+
 foreach ($requiredKey in @('LocalPath', 'RemoteHost', 'RemotePort', 'SshKeyPath', 'RemotePath', 'StatePath', 'LogPath')) {
     if (-not $script:Config.ContainsKey($requiredKey) -or [string]::IsNullOrWhiteSpace([string] $script:Config[$requiredKey])) {
         throw "Configuração obrigatória ausente: $requiredKey"
