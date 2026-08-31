@@ -35,7 +35,8 @@ final class ImportSpreadsheetTask implements ScheduledTask
 
     public function run(): ScheduledTaskResult
     {
-        $now = new \DateTimeImmutable();
+        $timezone = new \DateTimeZone('America/Sao_Paulo');
+        $now = new \DateTimeImmutable('now', $timezone);
         $startHour = min(23, max(0, (int) ($this->syncSettings['sync_start_hour'] ?? 8)));
         $endHour = min(24, max(1, (int) ($this->syncSettings['sync_end_hour'] ?? 18)));
         $isWeekday = (int) $now->format('N') <= 5;

@@ -9,7 +9,12 @@ $formatDateTime = static function (?string $value): string {
         return '-';
     }
 
-    return (new DateTimeImmutable($value))->format('d/m/Y H:i:s');
+    $sourceTimezone = new DateTimeZone('UTC');
+    $displayTimezone = new DateTimeZone('America/Sao_Paulo');
+    $date = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $value, $sourceTimezone)
+        ?: new DateTimeImmutable($value, $sourceTimezone);
+
+    return $date->setTimezone($displayTimezone)->format('d/m/Y H:i:s');
 };
 $formatStatus = static fn (?string $status): string => match ($status) {
     'success' => 'Sucesso',
@@ -113,7 +118,7 @@ ob_start();
             <button type="submit"><span class="bi bi-save"></span>Salvar sincronização</button>
         </div>
     </form>
-    <p class="muted">A rotina roda somente de segunda a sexta e considera a hora final como limite exclusivo. Exemplo: 08:00 até 18:00 permite execuções antes das 18:00.</p>
+    <p class="muted">A rotina roda somente de segunda a sexta no fuso America/Sao_Paulo e considera a hora final como limite exclusivo. Exemplo: 08:00 até 18:00 permite execuções antes das 18:00.</p>
 </section>
 
 <section class="card section-card">
