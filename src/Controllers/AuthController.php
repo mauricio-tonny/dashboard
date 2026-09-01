@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Request;
 use App\Core\Response;
+use App\Core\Session;
 use App\Domain\Audit\AuditLogger;
 use App\Domain\Auth\AuthService;
 
@@ -13,8 +14,10 @@ final class AuthController extends Controller
 {
     public function showLogin(Request $request): Response
     {
+        $session = $this->app->make(Session::class);
+
         return Response::view('auth/login', [
-            'error' => null,
+            'error' => $session->pullFlash('error'),
         ]);
     }
 

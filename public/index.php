@@ -34,6 +34,7 @@ use App\Domain\Contacts\ContactRepository;
 use App\Domain\Finance\FinanceService;
 use App\Domain\Finance\CategoryBudgetTargetRepository;
 use App\Domain\Finance\FinanceEntryRepository;
+use App\Domain\Finance\KarinaStatementRepository;
 use App\Domain\Shopping\ShoppingRepository;
 use App\Domain\System\DiscordNotificationRepository;
 use App\Domain\System\DiscordNotifier;
@@ -88,10 +89,12 @@ $spreadsheetLinkTester = new SpreadsheetLinkTester();
 $contactRepository = new ContactRepository($database);
 $categoryBudgetTargetRepository = new CategoryBudgetTargetRepository($database);
 $financeEntryRepository = new FinanceEntryRepository($database);
+$karinaStatementRepository = new KarinaStatementRepository($database);
 $userPermissionRepository = new UserPermissionRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
 
+$authService->enforceSingleSession($auditLogger);
 $authService->enforceIdleTimeout((int) ($_ENV['SESSION_IDLE_TIMEOUT_MINUTES'] ?? 15) * 60, $auditLogger);
 
 $app = new App([
@@ -112,6 +115,7 @@ $app = new App([
     ContactRepository::class => $contactRepository,
     CategoryBudgetTargetRepository::class => $categoryBudgetTargetRepository,
     FinanceEntryRepository::class => $financeEntryRepository,
+    KarinaStatementRepository::class => $karinaStatementRepository,
     UserPermissionRepository::class => $userPermissionRepository,
     FinanceService::class => $financeService,
 ]);
@@ -170,6 +174,7 @@ $router->get('/reports/category-chart', [ReportController::class, 'categoryChart
 $router->get('/reports/vendors', [ReportController::class, 'vendors']);
 $router->get('/reports/paid-vs-received', [ReportController::class, 'paidVsReceived']);
 $router->get('/reports/cashflow', [ReportController::class, 'cashflow']);
+$router->get('/reports/karina-statement', [ReportController::class, 'karinaStatement']);
 $router->get('/reports/market', [ReportController::class, 'market']);
 $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']);
 $router->get('/system/sync', [SyncController::class, 'index']);

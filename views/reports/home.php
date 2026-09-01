@@ -49,6 +49,13 @@ ob_start();
             <p class="muted">Modelo extrato com entradas, saidas e saldo acumulado do periodo.</p>
         </a>
     <?php endif; ?>
+    <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_KARINA_STATEMENT_REPORT)): ?>
+        <a class="module-card" href="/reports/karina-statement">
+            <span class="bi bi-arrow-left-right"></span>
+            <strong>Extrato Karina</strong>
+            <p class="muted">Controle de crédito x débito, com saldo do empréstimo e histórico recente.</p>
+        </a>
+    <?php endif; ?>
     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_MARKET_REPORT)): ?>
         <a class="module-card" href="/reports/market">
             <span class="bi bi-basket2"></span>

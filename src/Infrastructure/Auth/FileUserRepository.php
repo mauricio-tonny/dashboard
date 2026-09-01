@@ -31,8 +31,13 @@ final class FileUserRepository implements UserRepository
         return null;
     }
 
-    public function recordLogin(string $email): void
+    public function recordLogin(string $email, string $sessionTokenHash): void
     {
+    }
+
+    public function currentSessionTokenHash(string $email): ?string
+    {
+        return null;
     }
 
     private function all(): array

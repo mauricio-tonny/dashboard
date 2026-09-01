@@ -9,6 +9,7 @@ use App\Core\Response;
 use App\Domain\Auth\AuthService;
 use App\Domain\Auth\Permission;
 use App\Domain\Finance\FinanceEntryRepository;
+use App\Domain\Finance\KarinaStatementRepository;
 use App\Domain\Shopping\ShoppingRepository;
 
 final class ReportController extends Controller
@@ -103,6 +104,24 @@ final class ReportController extends Controller
         return Response::view('reports/cashflow', [
             'user' => $auth->user(),
             ...$context,
+        ]);
+    }
+
+    public function karinaStatement(Request $request): Response
+    {
+        $auth = $this->authorize(Permission::VIEW_KARINA_STATEMENT_REPORT);
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $repository = $this->app->make(KarinaStatementRepository::class);
+
+        return Response::view('reports/karina-statement', [
+            'user' => $auth->user(),
+            'summary' => $repository->summary(),
+            'rows' => $repository->rows(),
+            'categorySummary' => $repository->byCategory(),
         ]);
     }
 
@@ -230,6 +249,7 @@ final class ReportController extends Controller
             Permission::VIEW_VENDOR_REPORT,
             Permission::VIEW_PAID_VS_RECEIVED_REPORT,
             Permission::VIEW_CASHFLOW_REPORT,
+            Permission::VIEW_KARINA_STATEMENT_REPORT,
             Permission::VIEW_MARKET_REPORT,
         ];
     }

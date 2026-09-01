@@ -8,5 +8,7 @@ interface UserRepository
 {
     public function findByEmail(string $email): ?User;
 
-    public function recordLogin(string $email): void;
+    public function recordLogin(string $email, string $sessionTokenHash): void;
+
+    public function currentSessionTokenHash(string $email): ?string;
 }

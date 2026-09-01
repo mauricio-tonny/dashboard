@@ -62,6 +62,7 @@ try {
         $pdo->exec($statement);
     }
 
+    ensureColumn($pdo, 'users', 'active_session_token_hash', 'ALTER TABLE users ADD COLUMN active_session_token_hash CHAR(64) NULL AFTER last_login_at');
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_created_at', 'CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at)');
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_action', 'CREATE INDEX idx_audit_logs_action ON audit_logs (action)');
     ensureColumn($pdo, 'contacts', 'vendor_id', 'ALTER TABLE contacts ADD COLUMN vendor_id BIGINT UNSIGNED NULL AFTER id');
@@ -161,6 +162,27 @@ try {
         INDEX idx_scheduled_task_runs_task (task_code, started_at),
         INDEX idx_scheduled_task_runs_status (status),
         CONSTRAINT fk_scheduled_task_runs_task FOREIGN KEY (task_code) REFERENCES scheduled_tasks(code)
+    )');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS karina_statement_entries (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        category_id BIGINT UNSIGNED NULL,
+        transaction_date DATE NOT NULL,
+        movement_type VARCHAR(20) NOT NULL,
+        description VARCHAR(255) NOT NULL,
+        paid_account VARCHAR(80) NULL,
+        amount DECIMAL(14,2) NOT NULL,
+        category_name VARCHAR(120) NULL,
+        source_system VARCHAR(30) NOT NULL DEFAULT "spreadsheet",
+        source_key VARCHAR(190) NOT NULL,
+        source_hash CHAR(64) NOT NULL,
+        raw_payload JSON NULL,
+        imported_at DATETIME NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT uq_karina_statement_source_key UNIQUE (source_system, source_key),
+        CONSTRAINT fk_karina_statement_category FOREIGN KEY (category_id) REFERENCES categories(id),
+        INDEX idx_karina_statement_date (transaction_date),
+        INDEX idx_karina_statement_type (movement_type)
     )');
     $pdo->exec('CREATE TABLE IF NOT EXISTS spreadsheet_sync_events (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,

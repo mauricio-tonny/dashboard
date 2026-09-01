@@ -71,6 +71,7 @@ final class RolePermissionMap
                 Permission::MANAGE_DISCORD_NOTIFICATIONS,
                 Permission::MANAGE_SPREADSHEET_URL,
                 Permission::MANAGE_CATEGORY_BUDGET_TARGETS,
+                Permission::VIEW_KARINA_STATEMENT_REPORT,
             ],
         };
     }
@@ -86,6 +87,7 @@ final class RolePermissionMap
             Permission::VIEW_VENDOR_REPORT->value => ['Relatorio por fornecedor', 'Permite visualizar despesas agrupadas por fornecedor.'],
             Permission::VIEW_PAID_VS_RECEIVED_REPORT->value => ['Relatorio Pago x Recebido', 'Permite visualizar o comparativo de entradas e saidas por periodo.'],
             Permission::VIEW_CASHFLOW_REPORT->value => ['Relatorio Fluxo de Caixa', 'Permite visualizar o extrato de entradas, saidas e saldo acumulado.'],
+            Permission::VIEW_KARINA_STATEMENT_REPORT->value => ['Extrato Karina', 'Permite visualizar o extrato de credito x debito da Karina.'],
             Permission::VIEW_MARKET_REPORT->value => ['Relatorio de Mercado', 'Permite visualizar os relatorios de compras de mercado.'],
             Permission::CREATE_EXPENSE->value => ['Lancar debitos', 'Permite inserir novas despesas.'],
             Permission::CREATE_INCOME->value => ['Lancar creditos', 'Permite inserir entradas de dinheiro.'],

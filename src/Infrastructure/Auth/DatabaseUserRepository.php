@@ -43,15 +43,34 @@ final class DatabaseUserRepository implements UserRepository
         );
     }
 
-    public function recordLogin(string $email): void
+    public function recordLogin(string $email, string $sessionTokenHash): void
     {
         $statement = $this->database->connection()->prepare(
             'UPDATE users
              SET last_login_at = NOW(),
+                 active_session_token_hash = :session_token_hash,
                  updated_at = CURRENT_TIMESTAMP
              WHERE email = :email'
         );
+        $statement->execute([
+            'email' => $email,
+            'session_token_hash' => $sessionTokenHash,
+        ]);
+    }
+
+    public function currentSessionTokenHash(string $email): ?string
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT active_session_token_hash
+             FROM users
+             WHERE email = :email AND is_active = 1
+             LIMIT 1'
+        );
         $statement->execute(['email' => $email]);
+
+        $tokenHash = $statement->fetchColumn();
+
+        return is_string($tokenHash) && $tokenHash !== '' ? $tokenHash : null;
     }
 
     private function permissionOverrides(int $userId): array

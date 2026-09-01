@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     last_login_at DATETIME NULL,
+    active_session_token_hash CHAR(64) NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id)
@@ -150,6 +151,28 @@ CREATE TABLE IF NOT EXISTS entry_sources (
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_entry_sources_entry FOREIGN KEY (entry_id) REFERENCES entries(id),
     CONSTRAINT fk_entry_sources_import_run FOREIGN KEY (import_run_id) REFERENCES import_runs(id)
+);
+
+CREATE TABLE IF NOT EXISTS karina_statement_entries (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    category_id BIGINT UNSIGNED NULL,
+    transaction_date DATE NOT NULL,
+    movement_type VARCHAR(20) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    paid_account VARCHAR(80) NULL,
+    amount DECIMAL(14,2) NOT NULL,
+    category_name VARCHAR(120) NULL,
+    source_system VARCHAR(30) NOT NULL DEFAULT 'spreadsheet',
+    source_key VARCHAR(190) NOT NULL,
+    source_hash CHAR(64) NOT NULL,
+    raw_payload JSON NULL,
+    imported_at DATETIME NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uq_karina_statement_source_key UNIQUE (source_system, source_key),
+    CONSTRAINT fk_karina_statement_category FOREIGN KEY (category_id) REFERENCES categories(id),
+    INDEX idx_karina_statement_date (transaction_date),
+    INDEX idx_karina_statement_type (movement_type)
 );
 
 CREATE TABLE IF NOT EXISTS audit_logs (

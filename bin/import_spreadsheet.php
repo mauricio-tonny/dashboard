@@ -6,6 +6,7 @@ use App\Core\Database;
 use App\Support\Env;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date as SpreadsheetDate;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 require_once dirname(__DIR__) . '/src/Support/helpers.php';
@@ -79,14 +80,25 @@ $stats = [
     'income_formula_parts' => 0,
     'income_formula_extra_parts' => 0,
     'income_stale_parts_removed' => 0,
+    'karina_entries_seen' => 0,
+    'karina_entries_importable' => 0,
+    'karina_entries_new' => 0,
+    'karina_entries_changed' => 0,
+    'karina_entries_unchanged' => 0,
 ];
 $pendingVendors = [];
 $pendingCategories = [];
 $incomePreview = [];
 $missingIncomeSheets = [];
 $incomePartCleanup = [];
+$karinaRows = [];
 
 foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
+    if (normalizeText($worksheet->getTitle()) === 'KARINA') {
+        $karinaRows = parseKarinaStatementRows($worksheet, $base, $stats, $limit);
+        continue;
+    }
+
     $classification = classifySheet($worksheet->getTitle());
 
     if ($classification['kind'] !== 'monthly') {
@@ -255,6 +267,7 @@ echo "Linhas ignoradas: {$stats['entries_skipped']}\n";
 echo "Recebidos importaveis: {$stats['income_importable']}\n";
 echo "Recebidos derivados de formula: {$stats['income_formula_extra_parts']}\n";
 echo "Abas mensais sem recebido: {$stats['income_missing']}\n";
+echo "Extrato Karina importavel: {$stats['karina_entries_importable']}\n";
 echo "Fornecedores pendentes: {$stats['vendor_pending']}\n";
 echo "Categorias pendentes: {$stats['category_pending']}\n";
 echo "Últimas parcelas: {$stats['last_installments']}\n\n";
@@ -284,6 +297,12 @@ try {
             $vendorIds += upsertLookup($pdo, 'vendors', [$row['vendor_name']]);
         }
 
+        if ($row['category_name'] !== null && !isset($categoryIds[normalizeText($row['category_name'])])) {
+            $categoryIds += upsertLookup($pdo, 'categories', [$row['category_name']]);
+        }
+    }
+
+    foreach ($karinaRows as $row) {
         if ($row['category_name'] !== null && !isset($categoryIds[normalizeText($row['category_name'])])) {
             $categoryIds += upsertLookup($pdo, 'categories', [$row['category_name']]);
         }
@@ -325,6 +344,28 @@ try {
     $entryHashStatement = $pdo->prepare(
         'SELECT source_hash FROM entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
     );
+    $karinaStatement = $pdo->prepare(
+        'INSERT INTO karina_statement_entries
+            (category_id, transaction_date, movement_type, description, paid_account, amount, category_name,
+             source_system, source_key, source_hash, raw_payload, imported_at)
+         VALUES
+            (:category_id, :transaction_date, :movement_type, :description, :paid_account, :amount, :category_name,
+             "spreadsheet", :source_key, :source_hash, :raw_payload, NOW())
+         ON DUPLICATE KEY UPDATE
+            category_id = VALUES(category_id),
+            transaction_date = VALUES(transaction_date),
+            movement_type = VALUES(movement_type),
+            description = VALUES(description),
+            paid_account = VALUES(paid_account),
+            amount = VALUES(amount),
+            category_name = VALUES(category_name),
+            source_hash = VALUES(source_hash),
+            raw_payload = VALUES(raw_payload),
+            imported_at = NOW()'
+    );
+    $karinaHashStatement = $pdo->prepare(
+        'SELECT source_hash FROM karina_statement_entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
+    );
     $staleIncomePartStatement = $pdo->prepare(
         'SELECT id, source_key
          FROM entries
@@ -339,6 +380,7 @@ try {
         'DELETE FROM entries WHERE id = :entry_id'
     );
     $persistedEntries = 0;
+    $karinaPersistedEntries = 0;
 
     foreach ($incomePartCleanup as $sourceKeyBase => $activeSourceKeys) {
         $staleIncomePartStatement->execute([
@@ -400,7 +442,36 @@ try {
         $persistedEntries++;
     }
 
-    finishImportRun($pdo, $importRunId, 'success', $persistedEntries, $importedCategories, $importedVendors, $stats);
+    foreach ($karinaRows as $row) {
+        $karinaHashStatement->execute(['source_key' => $row['source_key']]);
+        $existingHash = $karinaHashStatement->fetchColumn();
+
+        if ($existingHash === false) {
+            $stats['karina_entries_new']++;
+        } elseif ((string) $existingHash !== $row['source_hash']) {
+            $stats['karina_entries_changed']++;
+        } else {
+            $stats['karina_entries_unchanged']++;
+            continue;
+        }
+
+        $categoryId = $row['category_name'] === null ? null : ($categoryIds[normalizeText($row['category_name'])] ?? null);
+        $karinaStatement->execute([
+            'category_id' => $categoryId,
+            'transaction_date' => $row['transaction_date'],
+            'movement_type' => $row['movement_type'],
+            'description' => $row['description'],
+            'paid_account' => $row['paid_account'],
+            'amount' => $row['amount'],
+            'category_name' => $row['category_name'],
+            'source_key' => $row['source_key'],
+            'source_hash' => $row['source_hash'],
+            'raw_payload' => json_encode($row['raw_payload'], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+        ]);
+        $karinaPersistedEntries++;
+    }
+
+    finishImportRun($pdo, $importRunId, 'success', $persistedEntries + $karinaPersistedEntries, $importedCategories, $importedVendors, $stats);
     $pdo->commit();
 
     echo "Importação concluída.\n";
@@ -410,11 +481,168 @@ try {
     echo "Lancamentos alterados: {$stats['entries_changed']}\n";
     echo "Lancamentos inalterados: {$stats['entries_unchanged']}\n";
     echo "Recebidos extras removidos: {$stats['income_stale_parts_removed']}\n";
-    echo "Lancamentos gravados/atualizados: {$persistedEntries}\n";
+    echo "Lancamentos financeiros gravados/atualizados: {$persistedEntries}\n";
+    echo "Extrato Karina novos: {$stats['karina_entries_new']}\n";
+    echo "Extrato Karina alterados: {$stats['karina_entries_changed']}\n";
+    echo "Extrato Karina inalterados: {$stats['karina_entries_unchanged']}\n";
+    echo "Extrato Karina gravados/atualizados: {$karinaPersistedEntries}\n";
+    echo "Lancamentos gravados/atualizados: " . ($persistedEntries + $karinaPersistedEntries) . "\n";
 } catch (Throwable $exception) {
     $pdo->rollBack();
     fwrite(STDERR, "Erro ao importar: {$exception->getMessage()}\n");
     exit(1);
+}
+
+function parseKarinaStatementRows(Worksheet $worksheet, array $base, array &$stats, int $limit): array
+{
+    $rows = [];
+    $columns = detectKarinaStatementColumns($worksheet);
+    $highestRow = $worksheet->getHighestDataRow();
+
+    if ($columns === null) {
+        return [];
+    }
+
+    for ($row = 2; $row <= $highestRow; $row++) {
+        $rawType = asText(cellValue($worksheet, $columns['reference'] . $row));
+        $description = asText(cellValue($worksheet, $columns['description'] . $row));
+        $amount = cellValue($worksheet, $columns['amount'] . $row);
+        $stats['karina_entries_seen']++;
+
+        if ($rawType === '' || $description === '' || !is_numeric($amount)) {
+            continue;
+        }
+
+        $movementType = normalizeKarinaMovementType($rawType);
+        $transactionDate = parseSpreadsheetDate(cellValue($worksheet, $columns['date'] . $row));
+
+        if ($movementType === null || $transactionDate === null) {
+            continue;
+        }
+
+        $paidAccount = asText(cellValue($worksheet, $columns['paid_account'] . $row));
+        $rawCategory = asText(cellValue($worksheet, $columns['category'] . $row));
+        $category = normalizeKarinaCategory($rawCategory, $movementType, $description, $base);
+        $sourceKey = 'spreadsheet:' . $worksheet->getTitle() . ':row:' . $row;
+        $rawPayload = [
+            'sheet' => $worksheet->getTitle(),
+            'row' => $row,
+            'raw_type' => $rawType,
+            'movement_type' => $movementType,
+            'transaction_date' => $transactionDate,
+            'description' => $description,
+            'paid_account' => $paidAccount,
+            'amount' => (float) $amount,
+            'raw_category' => $rawCategory,
+            'category_name' => $category,
+        ];
+
+        $rows[] = [
+            'source_key' => $sourceKey,
+            'source_hash' => hash('sha256', json_encode($rawPayload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)),
+            'transaction_date' => $transactionDate,
+            'movement_type' => $movementType,
+            'description' => mb_substr($description, 0, 255),
+            'paid_account' => $paidAccount === '' ? null : mb_substr($paidAccount, 0, 80),
+            'amount' => (float) $amount,
+            'category_name' => $category,
+            'raw_payload' => $rawPayload,
+        ];
+        $stats['karina_entries_importable']++;
+    }
+
+    return $rows;
+}
+
+function detectKarinaStatementColumns(Worksheet $worksheet): ?array
+{
+    $headers = [];
+    $highestColumnIndex = Coordinate::columnIndexFromString($worksheet->getHighestDataColumn());
+
+    for ($column = 1; $column <= $highestColumnIndex; $column++) {
+        $letter = Coordinate::stringFromColumnIndex($column);
+        $header = normalizeText(asText(cellValue($worksheet, $letter . '1')));
+
+        if ($header !== '') {
+            $headers[$letter] = $header;
+        }
+    }
+
+    $columns = [
+        'reference' => findHeaderColumn($headers, ['REF']) ?? 'A',
+        'date' => findHeaderColumn($headers, ['DATA']) ?? 'B',
+        'description' => findHeaderColumn($headers, ['CONTA']) ?? 'C',
+        'paid_account' => findHeaderColumn($headers, ['PAGO EM']) ?? 'E',
+        'amount' => findHeaderColumn($headers, ['VALOR']) ?? 'F',
+        'category' => findHeaderColumn($headers, ['CATEGORIA']) ?? 'G',
+    ];
+
+    foreach (['reference', 'date', 'description', 'amount'] as $required) {
+        if ($columns[$required] === '') {
+            return null;
+        }
+    }
+
+    return $columns;
+}
+
+function normalizeKarinaMovementType(string $value): ?string
+{
+    return match (normalizeText($value)) {
+        'CREDITO', 'CREDITOS' => 'credit',
+        'DEBITO', 'DEBITOS' => 'debit',
+        default => null,
+    };
+}
+
+function parseSpreadsheetDate(mixed $value): ?string
+{
+    if ($value instanceof DateTimeInterface) {
+        return $value->format('Y-m-d');
+    }
+
+    if (is_numeric($value)) {
+        try {
+            return SpreadsheetDate::excelToDateTimeObject((float) $value)->format('Y-m-d');
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    $text = trim((string) ($value ?? ''));
+
+    if ($text === '') {
+        return null;
+    }
+
+    foreach (['d/m/Y', 'd/m/y', 'Y-m-d'] as $format) {
+        $date = DateTimeImmutable::createFromFormat($format, $text);
+
+        if ($date instanceof DateTimeImmutable) {
+            return $date->format('Y-m-d');
+        }
+    }
+
+    try {
+        return (new DateTimeImmutable($text))->format('Y-m-d');
+    } catch (Throwable) {
+        return null;
+    }
+}
+
+function normalizeKarinaCategory(string $rawCategory, string $movementType, string $description, array $base): string
+{
+    if ($movementType === 'credit' && trim($rawCategory) === '') {
+        return 'ENTRADA DE VALOR';
+    }
+
+    $category = normalizeCategory($rawCategory, $description, $base);
+
+    if ($category['status'] !== 'pending') {
+        return $category['value'];
+    }
+
+    return $movementType === 'credit' ? 'ENTRADA DE VALOR' : 'SEM CATEGORIA';
 }
 
 function createImportRun(PDO $pdo, string $file, string $fileHash, DateTimeImmutable $startedAt): int
@@ -775,7 +1003,7 @@ function normalizeCategoryByDescription(string $normalizedDescription, array $ba
         [['CARRO 43', 'CARRO 44', 'CARRO 45', 'CARRO 46', 'CARRO 47', 'CARRO 48'], 'FINANC VEICULAR', 'FINANC. VEICULAR'],
         [['RIZZO', 'ESTAC SHOP BOULEVARD'], 'ESTACIONAMENTO', 'ESTACIONAMENTO'],
         [['UBER', 'EQUIPS AIRSOFT', 'CATUAI ESTACIONAMENTO', 'BANCO IMOBILIARIO', 'CINEMA BOULEVARD', 'CINEMARK', 'BRITOS ROLE', 'RACA NEGRA', '2800 DESPESA', 'SIMPLA EVENTO GOOGLE', 'VIACAO GARCIA', 'TRANSITO ESTACIONAMENTO', 'VIAGEM', 'PLATINUM'], 'DIVERSAO PASSEIO', 'DIVERSÃO/PASSEIO'],
-        [['MAKITA', 'CAPACETE MERCADO LIVRE', 'SAO JOAO CARTAO UMIDIF', 'MERCADO LIVRE MALETA', 'MERCADOLIVRE', 'LUVA MERC LIVRE', 'SHOPEE', 'A BARATEIRA', 'HAVAN', 'PULSEIRA RELOGIO', 'KIT CELULAR KARINA', 'REPARO CELULAR KARINA', 'TRAVESSEIRO ORTOBOM', 'PEDALON LIQUIDIFICADOR', 'ITENS COZINHA ML', 'LOJAS TUDO 10 COISA P COZ', 'POLTRONA MARCIO', 'MANINHO CAPACETE', 'JOGO DE FACA', 'JOGO DE PANELA', 'FURADEIRA', 'KIT PARAFUSADEIRA', 'GAS BUTIJAO RESERVA', 'CLIMATIZADOR', 'AR CONDIC', 'WAP LAVADORA', 'SERRA LIXADEIRA', 'FOGAO', 'SMARTPHONE', 'AMAZON NATAL', 'LIQUIDIFICADOR MARA', 'ESPUMA FONE', 'TANQUINHO CENTRIFUGA', 'FILTRO DE BARRO', 'PRESENTE FADONI', 'PRESENTE ROSE REGINALDO', 'MATHEUS RISTAU BINGO', 'ALIANCA NAMORO', 'COLCHAO INFLAVEL', 'CAPA PALETA', 'SOFA', 'CABECEIRA', 'KIT JARDINAGEM MARA', 'KIT CROCHET MARA', 'PRESENTE MARA', 'PRESENTE ISADORA', 'PRESENTE MAE DA ISA', 'PRESENTE ROGER', 'PRESENTE KARINA', 'MOCHILA ISADORA', 'KIT AGULHA MARA', 'SERRA COPO WD40', 'KIT POLIMENTO', 'KIT CHAVE CATRACA', 'FERRAMENTAS ELETROTRAFO', 'PRESENTE TAI', 'AMORT CADEIRA UNIMAQ', 'AMIGO SECRETO E PERFUME', 'PRESENTE AMIGO SECRETO', 'ELETROBARROS RODIZIO SOFA', 'LUMINARIA MESA', 'ACM SUPORTE ESPELHO', 'TRENA A LASER PAULO', 'SMARTPHONE KARINA', 'SOCOPIAS PADRINHOS', 'KIT BROCA CHINA', 'BANDOLEIRA', 'LANTERNA TATICA', 'RADIO BAOFENG', 'RELOGIO CHINA', 'FLORES SHOPPING', 'CAPACETE 1 3', 'CAPACETE 2 3', 'CAPACETE 3 3', 'ALGO DO MAYCON', 'MATERIAIS ELETRICOS', 'PGTO CHICOTE MAURICIO', 'TV LG SMART 49 LED 4K', 'PLIMOR', 'CAMISAS MAYCON', 'SOM QUARTO', 'CABO SOM'], 'AQUISICAO', 'AQUISIÇÃO'],
+        [['MAKITA', 'CAPACETE MERCADO LIVRE', 'SAO JOAO CARTAO UMIDIF', 'MERCADO LIVRE MALETA', 'MERCADOLIVRE', 'LUVA MERC LIVRE', 'SHOPEE', 'A BARATEIRA', 'HAVAN', 'PULSEIRA RELOGIO', 'KIT CELULAR KARINA', 'REPARO CELULAR KARINA', 'CAPINHA PELICULA', 'IPHONE KARINA', 'IPHONE 16E KARINA', 'TRAVESSEIRO ORTOBOM', 'PEDALON LIQUIDIFICADOR', 'ITENS COZINHA ML', 'LOJAS TUDO 10 COISA P COZ', 'POLTRONA MARCIO', 'MANINHO CAPACETE', 'JOGO DE FACA', 'JOGO DE PANELA', 'FURADEIRA', 'KIT PARAFUSADEIRA', 'GAS BUTIJAO RESERVA', 'CLIMATIZADOR', 'AR CONDIC', 'WAP LAVADORA', 'SERRA LIXADEIRA', 'FOGAO', 'SMARTPHONE', 'AMAZON NATAL', 'LIQUIDIFICADOR MARA', 'ESPUMA FONE', 'TANQUINHO CENTRIFUGA', 'FILTRO DE BARRO', 'PRESENTE FADONI', 'PRESENTE ROSE REGINALDO', 'MATHEUS RISTAU BINGO', 'ALIANCA NAMORO', 'COLCHAO INFLAVEL', 'CAPA PALETA', 'SOFA', 'CABECEIRA', 'KIT JARDINAGEM MARA', 'KIT CROCHET MARA', 'PRESENTE MARA', 'PRESENTE ISADORA', 'PRESENTE MAE DA ISA', 'PRESENTE ROGER', 'PRESENTE KARINA', 'MOCHILA ISADORA', 'KIT AGULHA MARA', 'SERRA COPO WD40', 'KIT POLIMENTO', 'KIT CHAVE CATRACA', 'FERRAMENTAS ELETROTRAFO', 'PRESENTE TAI', 'AMORT CADEIRA UNIMAQ', 'AMIGO SECRETO E PERFUME', 'PRESENTE AMIGO SECRETO', 'ELETROBARROS RODIZIO SOFA', 'LUMINARIA MESA', 'ACM SUPORTE ESPELHO', 'TRENA A LASER PAULO', 'SMARTPHONE KARINA', 'SOCOPIAS PADRINHOS', 'KIT BROCA CHINA', 'BANDOLEIRA', 'LANTERNA TATICA', 'RADIO BAOFENG', 'RELOGIO CHINA', 'FLORES SHOPPING', 'CAPACETE 1 3', 'CAPACETE 2 3', 'CAPACETE 3 3', 'ALGO DO MAYCON', 'MATERIAIS ELETRICOS', 'PGTO CHICOTE MAURICIO', 'TV LG SMART 49 LED 4K', 'PLIMOR', 'CAMISAS MAYCON', 'SOM QUARTO', 'CABO SOM'], 'AQUISICAO', 'AQUISIÇÃO'],
         [['GAS'], 'GAS', 'GÁS'],
         [['TELHANORTE', 'DEP SAO LUIS', 'DEP SAO LUIZ', 'BOX BANHEIRO', 'REFORMA CASA', 'MATERIAL DE CONSTRUCAO', 'CATIVA TELA MOSQUITEIRA', 'ELETROTRAFO RESISTENCIA CHUV', 'ELETROTRAFO REPARO BANHEIRO', 'ELETROBARROS RESISTENCIA', 'JH MAT CONSTRUCAO BAN MAITE', 'MANG CHUVEIRO SUITE', 'NEGRIPAR PARAFUSO SALA', 'SUPORTE REDE', 'LEROY MERLIN', 'COLOR TINTAS', 'MATERIAL ELETRICO', 'MAT ELETRICO KARINA', 'INSTALACAO AR CONDICIONADO'], 'REFORMA MANUT', 'REFORMA/MANUT.'],
         [['MICROSIS', 'THAIS CRISTINA DE LIMA', 'ADVOGADO BRUNO', 'BRUNO FABRETTI ADVOGADO', 'PREFEITURA MUNICIP', 'REPASSE A MAYCON', 'PARTE MAYCON'], 'DESP EMPRESA', 'DESP. EMPRESA'],

@@ -1504,6 +1504,14 @@
         .money-cell.is-negative {
             color: #b91c1c;
         }
+        .karina-category-summary-table .count-cell {
+            text-align: center;
+            width: 180px;
+        }
+        .karina-category-summary-table th.money-cell {
+            color: var(--muted);
+            min-width: 140px;
+        }
         .finance-entries-table tbody tr.cashflow-row-income {
             background: #f0fdf4;
         }
@@ -2468,12 +2476,18 @@
                         || $user->can(\App\Domain\Auth\Permission::VIEW_VENDOR_REPORT)
                         || $user->can(\App\Domain\Auth\Permission::VIEW_PAID_VS_RECEIVED_REPORT)
                         || $user->can(\App\Domain\Auth\Permission::VIEW_CASHFLOW_REPORT)
+                        || $user->can(\App\Domain\Auth\Permission::VIEW_KARINA_STATEMENT_REPORT)
                         || $user->can(\App\Domain\Auth\Permission::VIEW_MARKET_REPORT)
                     ): ?>
                         <div class="nav-group">
                             <div class="nav-group-title">Relatórios</div>
                             <a class="nav-subitem <?= $isActive('/reports') ?>" href="/reports"><span class="bi bi-bar-chart-line"></span>Financeiro</a>
-                            <a class="nav-subitem <?= $isActive('/reports/market') ?>" href="/reports/market"><span class="bi bi-basket2"></span>Mercado</a>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_KARINA_STATEMENT_REPORT)): ?>
+                                <a class="nav-subitem <?= $isActive('/reports/karina-statement') ?>" href="/reports/karina-statement"><span class="bi bi-arrow-left-right"></span>Extrato Karina</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_MARKET_REPORT)): ?>
+                                <a class="nav-subitem <?= $isActive('/reports/market') ?>" href="/reports/market"><span class="bi bi-basket2"></span>Mercado</a>
+                            <?php endif; ?>
                         </div>
                     <?php endif; ?>
                     <?php if ($user->hasRole(\App\Domain\Auth\Role::ADMIN)): ?>
@@ -2539,6 +2553,7 @@
     <?php endif; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
     <script>
+        const sessionIdleTimeoutMs = <?= isset($user) ? (int) ($_ENV['SESSION_IDLE_TIMEOUT_MINUTES'] ?? 15) * 60 * 1000 : 0 ?>;
         const sidebar = document.querySelector('#appSidebar');
         const menuToggle = document.querySelector('[data-menu-toggle]');
         const menuOverlay = document.querySelector('[data-menu-overlay]');
@@ -2686,6 +2701,22 @@
                 closeMenu();
             }
         });
+        if (sessionIdleTimeoutMs > 0) {
+            let idleRedirectTimer = window.setTimeout(() => {
+                window.location.href = '/login';
+            }, sessionIdleTimeoutMs);
+
+            const resetIdleRedirect = () => {
+                window.clearTimeout(idleRedirectTimer);
+                idleRedirectTimer = window.setTimeout(() => {
+                    window.location.href = '/login';
+                }, sessionIdleTimeoutMs);
+            };
+
+            ['click', 'keydown', 'scroll', 'touchstart', 'mousemove'].forEach((eventName) => {
+                document.addEventListener(eventName, resetIdleRedirect, { passive: true });
+            });
+        }
     </script>
 </body>
 </html>

@@ -24,9 +24,11 @@ final class AuthService
         }
 
         $this->session->regenerate();
+        $sessionToken = bin2hex(random_bytes(32));
         $this->session->put('user_email', $user->email);
+        $this->session->put('session_token', $sessionToken);
         $this->session->touchActivity();
-        $this->users->recordLogin($user->email);
+        $this->users->recordLogin($user->email, hash('sha256', $sessionToken));
 
         return true;
     }
@@ -50,6 +52,7 @@ final class AuthService
     public function logout(): void
     {
         $this->session->forget('user_email');
+        $this->session->forget('session_token');
         $this->session->forget('last_activity_at');
         $this->session->regenerate();
     }
@@ -77,5 +80,39 @@ final class AuthService
         ]);
 
         $this->logout();
+        $this->session->flash('error', 'Sua sessão expirou por inatividade. Faça login novamente.');
+    }
+
+    public function enforceSingleSession(AuditLogger $auditLogger): void
+    {
+        $user = $this->user();
+
+        if ($user === null) {
+            return;
+        }
+
+        $sessionToken = $this->session->get('session_token');
+
+        if (!is_string($sessionToken) || $sessionToken === '') {
+            $this->logout();
+            return;
+        }
+
+        $currentTokenHash = $this->users->currentSessionTokenHash($user->email);
+
+        if ($currentTokenHash === null) {
+            return;
+        }
+
+        if (hash_equals($currentTokenHash, hash('sha256', $sessionToken))) {
+            return;
+        }
+
+        $auditLogger->log('session_replaced', 'auth', null, $user, [
+            'reason' => 'new_login_detected',
+        ]);
+
+        $this->logout();
+        $this->session->flash('error', 'Sua sessão foi encerrada porque este usuário entrou em outro dispositivo ou navegador.');
     }
 }

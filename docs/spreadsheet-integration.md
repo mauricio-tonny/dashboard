@@ -98,7 +98,7 @@ O link salvo deve ter permissão de leitura. Para a primeira fase, o sistema ape
 - As células `F2/G2` e `F3/G3` representam recebidos/salário.
 - A célula `G10` representa o total de despesas da aba mensal.
 - Abas anuais de relatório devem ser ignoradas pelo parser principal.
-- A aba `KARINA` deve ser ignorada por enquanto e tratada como melhoria futura para controle de empréstimo/extrato.
+- A aba `KARINA` alimenta o relatório `Extrato Karina`, separando movimentos de credito e debito em uma tabela própria.
 - Fórmulas da planilha não devem ser quebradas durante etapas de leitura ou escrita.
 - Toda importação precisa gerar histórico suficiente para auditoria e diagnóstico.
 - Até os meses anteriores ao mês atual, os lançamentos importados podem ser tratados como pagos por regra.
@@ -145,7 +145,7 @@ Para gravar no banco:
 php bin/import_spreadsheet.php --apply
 ```
 
-A importação alimenta `vendors`, `categories`, `entries`, `entry_sources` e `import_runs`. Cada lançamento usa `source_key` no formato `spreadsheet:{aba}:row:{linha}` para evitar duplicidade e `source_hash` para detectar alterações futuras.
+A importação alimenta `vendors`, `categories`, `entries`, `entry_sources`, `karina_statement_entries` e `import_runs`. Cada lançamento usa `source_key` no formato `spreadsheet:{aba}:row:{linha}` para evitar duplicidade e `source_hash` para detectar alterações futuras.
 
 ## Importação Automática
 
