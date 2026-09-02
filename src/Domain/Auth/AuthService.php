@@ -77,6 +77,8 @@ final class AuthService
 
         $auditLogger->log('session_timeout', 'auth', null, $user, [
             'idle_limit_seconds' => $seconds,
+            'ip' => request_ip($_SERVER),
+            'user_agent' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
         ]);
 
         $this->logout();
@@ -110,6 +112,8 @@ final class AuthService
 
         $auditLogger->log('session_replaced', 'auth', null, $user, [
             'reason' => 'new_login_detected',
+            'ip' => request_ip($_SERVER),
+            'user_agent' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
         ]);
 
         $this->logout();

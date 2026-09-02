@@ -71,6 +71,7 @@ final class RolePermissionMap
                 Permission::MANAGE_DISCORD_NOTIFICATIONS,
                 Permission::MANAGE_SPREADSHEET_URL,
                 Permission::MANAGE_CATEGORY_BUDGET_TARGETS,
+                Permission::MANAGE_SECURITY_SETTINGS,
                 Permission::VIEW_KARINA_STATEMENT_REPORT,
             ],
         };
@@ -109,6 +110,7 @@ final class RolePermissionMap
             Permission::MANAGE_DISCORD_NOTIFICATIONS->value => ['Gerenciar Discord', 'Permite habilitar, desabilitar e configurar webhook do Discord.'],
             Permission::MANAGE_SPREADSHEET_URL->value => ['Gerenciar URL da planilha', 'Permite inserir, editar ou excluir a URL da planilha.'],
             Permission::MANAGE_CATEGORY_BUDGET_TARGETS->value => ['Gerenciar metas por categoria', 'Permite configurar metas percentuais por categoria/DR.'],
+            Permission::MANAGE_SECURITY_SETTINGS->value => ['Gerenciar seguranca e analytics', 'Permite configurar reCAPTCHA, Analytics e controles de seguranca.'],
         ];
     }
 }

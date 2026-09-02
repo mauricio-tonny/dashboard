@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Controllers\AuthController;
+use App\Controllers\AccountController;
 use App\Controllers\Admin\AuditLogController;
 use App\Controllers\Admin\ShoppingSettingsController;
 use App\Controllers\Admin\UserController;
@@ -18,6 +19,7 @@ use App\Controllers\ShoppingController;
 use App\Controllers\System\DiscordController;
 use App\Controllers\System\CategoryBudgetTargetController;
 use App\Controllers\System\PermissionController;
+use App\Controllers\System\SecurityController;
 use App\Controllers\System\SpreadsheetController;
 use App\Controllers\System\SyncController;
 use App\Core\App;
@@ -26,6 +28,7 @@ use App\Core\Request;
 use App\Core\Router;
 use App\Core\Session;
 use App\Domain\Auth\AuthService;
+use App\Domain\Auth\LoginAttemptRepository;
 use App\Domain\Auth\UserRepository;
 use App\Domain\Auth\UserPermissionRepository;
 use App\Domain\Audit\AuditLogger;
@@ -39,6 +42,8 @@ use App\Domain\Shopping\ShoppingRepository;
 use App\Domain\System\DiscordNotificationRepository;
 use App\Domain\System\DiscordNotifier;
 use App\Domain\System\SchedulerRepository;
+use App\Domain\System\RecaptchaVerifier;
+use App\Domain\System\SecuritySettingsRepository;
 use App\Domain\System\SpreadsheetLinkTester;
 use App\Domain\System\SpreadsheetSettingsRepository;
 use App\Domain\System\SpreadsheetSyncEventRepository;
@@ -78,6 +83,7 @@ $database = new Database();
 $userRepository = new DatabaseUserRepository($database);
 $adminUserRepository = new AdminUserRepository($database);
 $authService = new AuthService($userRepository, $session);
+$loginAttemptRepository = new LoginAttemptRepository($database);
 $auditLogger = new AuditLogger($database);
 $shoppingRepository = new ShoppingRepository($database);
 $discordNotificationRepository = new DiscordNotificationRepository($database);
@@ -86,6 +92,8 @@ $schedulerRepository = new SchedulerRepository($database);
 $spreadsheetSyncEventRepository = new SpreadsheetSyncEventRepository($database);
 $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $spreadsheetLinkTester = new SpreadsheetLinkTester();
+$securitySettingsRepository = new SecuritySettingsRepository($database);
+$recaptchaVerifier = new RecaptchaVerifier();
 $contactRepository = new ContactRepository($database);
 $categoryBudgetTargetRepository = new CategoryBudgetTargetRepository($database);
 $financeEntryRepository = new FinanceEntryRepository($database);
@@ -94,6 +102,7 @@ $userPermissionRepository = new UserPermissionRepository($database);
 $financeRepository = new ExcelFinanceRepository($_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx');
 $financeService = new FinanceService($financeRepository);
 
+$GLOBALS['security_public_settings'] = $securitySettingsRepository->publicSettings();
 $authService->enforceSingleSession($auditLogger);
 $authService->enforceIdleTimeout((int) ($_ENV['SESSION_IDLE_TIMEOUT_MINUTES'] ?? 15) * 60, $auditLogger);
 
@@ -104,6 +113,7 @@ $app = new App([
     UserRepository::class => $userRepository,
     AdminUserRepository::class => $adminUserRepository,
     AuthService::class => $authService,
+    LoginAttemptRepository::class => $loginAttemptRepository,
     AuditLogger::class => $auditLogger,
     ShoppingRepository::class => $shoppingRepository,
     DiscordNotificationRepository::class => $discordNotificationRepository,
@@ -112,6 +122,8 @@ $app = new App([
     SpreadsheetSettingsRepository::class => $spreadsheetSettingsRepository,
     SpreadsheetSyncEventRepository::class => $spreadsheetSyncEventRepository,
     SpreadsheetLinkTester::class => $spreadsheetLinkTester,
+    SecuritySettingsRepository::class => $securitySettingsRepository,
+    RecaptchaVerifier::class => $recaptchaVerifier,
     ContactRepository::class => $contactRepository,
     CategoryBudgetTargetRepository::class => $categoryBudgetTargetRepository,
     FinanceEntryRepository::class => $financeEntryRepository,
@@ -126,6 +138,8 @@ $router->get('/', [DashboardController::class, 'index']);
 $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->post('/logout', [AuthController::class, 'logout']);
+$router->get('/account/password', [AccountController::class, 'password']);
+$router->post('/account/password', [AccountController::class, 'updatePassword']);
 
 $router->get('/admin/audit-logs', [AuditLogController::class, 'index']);
 $router->get('/admin/users', [UserController::class, 'index']);
@@ -189,6 +203,8 @@ $router->post('/system/discord', [DiscordController::class, 'save']);
 $router->post('/system/discord/test', [DiscordController::class, 'test']);
 $router->get('/system/permissions', [PermissionController::class, 'index']);
 $router->post('/system/permissions', [PermissionController::class, 'save']);
+$router->get('/system/security', [SecurityController::class, 'index']);
+$router->post('/system/security', [SecurityController::class, 'save']);
 $router->get('/system/spreadsheet', [SpreadsheetController::class, 'index']);
 $router->post('/system/spreadsheet', [SpreadsheetController::class, 'save']);
 $router->post('/system/spreadsheet/test', [SpreadsheetController::class, 'test']);
@@ -221,6 +237,7 @@ function auditPageUsage(Request $request, \App\Core\Response $response, AuthServ
 
     $pageLabels = [
         '/' => 'Dashboard',
+        '/account/password' => 'Minha conta - alterar senha',
         '/admin/audit-logs' => 'Logs de auditoria',
         '/admin/users' => 'Usuarios',
         '/admin/shopping-settings' => 'Configuracao de compras',
@@ -247,6 +264,7 @@ function auditPageUsage(Request $request, \App\Core\Response $response, AuthServ
         '/system/category-budget-targets' => 'Sistema - metas por categoria',
         '/system/discord' => 'Sistema - Discord',
         '/system/permissions' => 'Sistema - permissoes',
+        '/system/security' => 'Sistema - seguranca e analytics',
         '/system/spreadsheet' => 'Sistema - planilha',
         '/entries/create' => 'Novo lancamento',
     ];
@@ -257,7 +275,7 @@ function auditPageUsage(Request $request, \App\Core\Response $response, AuthServ
         'label' => $label,
         'status_code' => $response->statusCode(),
         'query' => sanitizedAuditQuery($request->query()),
-        'ip' => (string) $request->server('REMOTE_ADDR', ''),
+        'ip' => request_ip($_SERVER),
         'user_agent' => mb_substr((string) $request->server('HTTP_USER_AGENT', ''), 0, 255),
     ];
 

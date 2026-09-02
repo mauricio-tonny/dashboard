@@ -48,6 +48,19 @@ CREATE TABLE IF NOT EXISTS user_permission_overrides (
     CONSTRAINT fk_user_permission_overrides_permission FOREIGN KEY (permission_id) REFERENCES permissions(id)
 );
 
+CREATE TABLE IF NOT EXISTS login_attempts (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(190) NOT NULL,
+    ip_address VARCHAR(45) NOT NULL,
+    user_agent VARCHAR(255) NULL,
+    success TINYINT(1) NOT NULL DEFAULT 0,
+    attempted_at DATETIME NOT NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_login_attempts_email_time (email, attempted_at),
+    INDEX idx_login_attempts_ip_time (ip_address, attempted_at),
+    INDEX idx_login_attempts_success_time (success, attempted_at)
+);
+
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL,
@@ -372,6 +385,18 @@ CREATE TABLE IF NOT EXISTS spreadsheet_settings (
     sync_interval_minutes INT UNSIGNED NOT NULL DEFAULT 30,
     sync_start_hour TINYINT UNSIGNED NOT NULL DEFAULT 8,
     sync_end_hour TINYINT UNSIGNED NOT NULL DEFAULT 18,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS security_settings (
+    id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+    recaptcha_is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    recaptcha_site_key VARCHAR(190) NULL,
+    encrypted_recaptcha_secret_key TEXT NULL,
+    recaptcha_min_score DECIMAL(3,2) NOT NULL DEFAULT 0.50,
+    analytics_is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    analytics_measurement_id VARCHAR(30) NULL,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

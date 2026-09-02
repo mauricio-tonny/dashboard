@@ -42,3 +42,23 @@ function format_money_for_user(mixed $value, mixed $user = null, bool $nbsp = fa
 
     return 'R$' . $space . number_format($amount, 2, ',', '.');
 }
+
+function request_ip(array $server): string
+{
+    $forwardedFor = explode(',', (string) ($server['HTTP_X_FORWARDED_FOR'] ?? ''));
+    $candidates = [
+        (string) ($server['HTTP_CF_CONNECTING_IP'] ?? ''),
+        (string) ($forwardedFor[0] ?? ''),
+        (string) ($server['REMOTE_ADDR'] ?? ''),
+    ];
+
+    foreach ($candidates as $candidate) {
+        $ip = trim($candidate);
+
+        if (filter_var($ip, FILTER_VALIDATE_IP)) {
+            return $ip;
+        }
+    }
+
+    return '';
+}

@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex,nofollow,noarchive">
+    <?php $securityPublicSettings = is_array($GLOBALS['security_public_settings'] ?? null) ? $GLOBALS['security_public_settings'] : []; ?>
+    <?php if (($securityPublicSettings['analytics_is_enabled'] ?? false) && !empty($securityPublicSettings['analytics_measurement_id'])): ?>
+        <?php $gaMeasurementId = htmlspecialchars((string) $securityPublicSettings['analytics_measurement_id'], ENT_QUOTES, 'UTF-8'); ?>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= $gaMeasurementId ?>"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '<?= $gaMeasurementId ?>');
+        </script>
+    <?php endif; ?>
     <title><?= htmlspecialchars($title ?? 'Dashboard Financeiro', ENT_QUOTES, 'UTF-8') ?></title>
     <link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg?v=<?= htmlspecialchars($_ENV['APP_VERSION'] ?? '0.1.0', ENT_QUOTES, 'UTF-8') ?>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
@@ -824,6 +835,40 @@
         .form-actions {
             align-self: end;
         }
+        .account-password-card {
+            margin-left: auto;
+            margin-right: auto;
+            max-width: 920px;
+        }
+        .account-password-form {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+        .account-password-fields {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .account-password-fields label {
+            margin: 0;
+        }
+        .account-password-actions {
+            align-items: center;
+            background: linear-gradient(135deg, #f8fbfd, #eef7fb);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            gap: 18px;
+            justify-content: space-between;
+            padding: 16px;
+        }
+        .account-password-actions p {
+            margin: 0;
+        }
+        .account-password-actions button {
+            min-width: 220px;
+        }
         .stacked-form {
             border-top: 1px solid var(--border);
             margin-top: 14px;
@@ -1255,6 +1300,15 @@
         }
         .discord-card {
             max-width: 860px;
+        }
+        .security-settings-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .security-card {
+            margin-bottom: 0;
+            width: 100%;
         }
         .discord-settings-form {
             display: flex;
@@ -2401,6 +2455,16 @@
             .finance-filter-form {
                 grid-template-columns: 1fr;
             }
+            .account-password-fields {
+                grid-template-columns: 1fr;
+            }
+            .account-password-actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .account-password-actions button {
+                width: 100%;
+            }
             .permission-grid,
             .permission-save-bar {
                 grid-template-columns: 1fr;
@@ -2438,7 +2502,8 @@
                 </div>
                 <nav class="app-nav" aria-label="Menu principal">
                     <div class="nav-group">
-                        <a class="<?= $isActive('/') ?>" href="/"><span class="bi bi-speedometer2"></span>Dashboard</a>
+                        <a class="nav-subitem <?= $isActive('/') ?>" href="/"><span class="bi bi-speedometer2"></span>Dashboard</a>
+                        <a class="nav-subitem <?= $isActive('/account/password') ?>" href="/account/password"><span class="bi bi-key"></span>Atualizar senha</a>
                     </div>
                     <div class="nav-group">
                         <div class="nav-group-title">Financeiro</div>
@@ -2515,6 +2580,9 @@
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_DISCORD_NOTIFICATIONS)): ?>
                                 <a class="nav-subitem <?= $isActive('/system/discord') ?>" href="/system/discord"><span class="bi bi-discord"></span>Discord</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SECURITY_SETTINGS)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/security') ?>" href="/system/security"><span class="bi bi-shield-check"></span>Segurança e Analytics</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING_SETTINGS)): ?>
                                 <a class="nav-subitem <?= $isActive('/admin/shopping-settings') ?>" href="/admin/shopping-settings"><span class="bi bi-sliders"></span>Configuração compras</a>

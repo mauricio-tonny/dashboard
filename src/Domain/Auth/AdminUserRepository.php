@@ -88,6 +88,21 @@ final class AdminUserRepository
         ]);
     }
 
+    public function updatePassword(int $id, string $password): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE users
+             SET password_hash = :password_hash,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id'
+        );
+
+        $statement->execute([
+            'id' => $id,
+            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+        ]);
+    }
+
     public function find(int $id): ?array
     {
         $statement = $this->database->connection()->prepare(

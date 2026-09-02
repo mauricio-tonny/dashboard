@@ -63,6 +63,18 @@ try {
     }
 
     ensureColumn($pdo, 'users', 'active_session_token_hash', 'ALTER TABLE users ADD COLUMN active_session_token_hash CHAR(64) NULL AFTER last_login_at');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS login_attempts (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        email VARCHAR(190) NOT NULL,
+        ip_address VARCHAR(45) NOT NULL,
+        user_agent VARCHAR(255) NULL,
+        success TINYINT(1) NOT NULL DEFAULT 0,
+        attempted_at DATETIME NOT NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_login_attempts_email_time (email, attempted_at),
+        INDEX idx_login_attempts_ip_time (ip_address, attempted_at),
+        INDEX idx_login_attempts_success_time (success, attempted_at)
+    )');
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_created_at', 'CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at)');
     ensureIndex($pdo, 'audit_logs', 'idx_audit_logs_action', 'CREATE INDEX idx_audit_logs_action ON audit_logs (action)');
     ensureColumn($pdo, 'contacts', 'vendor_id', 'ALTER TABLE contacts ADD COLUMN vendor_id BIGINT UNSIGNED NULL AFTER id');
@@ -132,6 +144,24 @@ try {
     ensureColumn($pdo, 'spreadsheet_settings', 'sync_start_hour', 'ALTER TABLE spreadsheet_settings ADD COLUMN sync_start_hour TINYINT UNSIGNED NOT NULL DEFAULT 8 AFTER sync_interval_minutes');
     ensureColumn($pdo, 'spreadsheet_settings', 'sync_end_hour', 'ALTER TABLE spreadsheet_settings ADD COLUMN sync_end_hour TINYINT UNSIGNED NOT NULL DEFAULT 18 AFTER sync_start_hour');
     $pdo->exec('INSERT IGNORE INTO spreadsheet_settings (id) VALUES (1)');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS security_settings (
+        id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+        recaptcha_is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        recaptcha_site_key VARCHAR(190) NULL,
+        encrypted_recaptcha_secret_key TEXT NULL,
+        recaptcha_min_score DECIMAL(3,2) NOT NULL DEFAULT 0.50,
+        analytics_is_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        analytics_measurement_id VARCHAR(30) NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )');
+    ensureColumn($pdo, 'security_settings', 'recaptcha_is_enabled', 'ALTER TABLE security_settings ADD COLUMN recaptcha_is_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER id');
+    ensureColumn($pdo, 'security_settings', 'recaptcha_site_key', 'ALTER TABLE security_settings ADD COLUMN recaptcha_site_key VARCHAR(190) NULL AFTER recaptcha_is_enabled');
+    ensureColumn($pdo, 'security_settings', 'encrypted_recaptcha_secret_key', 'ALTER TABLE security_settings ADD COLUMN encrypted_recaptcha_secret_key TEXT NULL AFTER recaptcha_site_key');
+    ensureColumn($pdo, 'security_settings', 'recaptcha_min_score', 'ALTER TABLE security_settings ADD COLUMN recaptcha_min_score DECIMAL(3,2) NOT NULL DEFAULT 0.50 AFTER encrypted_recaptcha_secret_key');
+    ensureColumn($pdo, 'security_settings', 'analytics_is_enabled', 'ALTER TABLE security_settings ADD COLUMN analytics_is_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER recaptcha_min_score');
+    ensureColumn($pdo, 'security_settings', 'analytics_measurement_id', 'ALTER TABLE security_settings ADD COLUMN analytics_measurement_id VARCHAR(30) NULL AFTER analytics_is_enabled');
+    $pdo->exec('INSERT IGNORE INTO security_settings (id) VALUES (1)');
     $pdo->exec('CREATE TABLE IF NOT EXISTS scheduled_tasks (
         code VARCHAR(120) PRIMARY KEY,
         name VARCHAR(160) NOT NULL,
