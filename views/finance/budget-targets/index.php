@@ -5,13 +5,13 @@ $formatPercent = static fn (mixed $value): string => $value === null ? '-' : num
 $statusLabels = [
     'within' => ['Dentro da meta', 'status-paid'],
     'above_target' => ['Acima da meta', 'status-open'],
-    'below_minimum' => ['Abaixo do minimo', 'status-open'],
+    'below_minimum' => ['Abaixo do mínimo', 'status-open'],
     'tracking' => ['Acompanhar', 'status-planned'],
     'unconfigured' => ['Sem meta', 'status-planned'],
 ];
 $controlLabels = [
-    'maximum' => 'Maximo',
-    'minimum' => 'Minimo',
+    'maximum' => 'Máximo',
+    'minimum' => 'Mínimo',
     'track' => 'Acompanhar',
 ];
 $referenceRange = static function (array $target) use ($formatPercent): string {
@@ -46,20 +46,20 @@ ob_start();
         <div>
             <span class="badge">Financeiro</span>
             <h1>Metas de gastos</h1>
-            <p class="muted">Compare o gasto realizado por categoria com a meta configurada para o periodo.</p>
+            <p class="muted">Compare o gasto realizado por categoria com a meta configurada para o período.</p>
         </div>
     </div>
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-funnel"></span>Periodo</h2>
+    <h2 class="section-title"><span class="bi bi-funnel"></span>Período</h2>
     <form class="grid report-filter budget-target-filter" method="get" action="/finance/budget-targets">
         <label>
             De
             <input type="month" name="start_month" value="<?= htmlspecialchars($startMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <label>
-            Ate
+            Até
             <input type="month" name="end_month" value="<?= htmlspecialchars($endMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <button type="submit"><span class="bi bi-search"></span>Aplicar filtros</button>
@@ -73,9 +73,9 @@ ob_start();
         <span class="muted">Categorias controladas</span>
     </article>
     <article class="card report-summary-card">
-        <small>Em atencao</small>
+        <small>Em atenção</small>
         <strong><?= (int) ($summary['above_target'] ?? 0) + (int) ($summary['below_minimum'] ?? 0) ?></strong>
-        <span class="muted">Acima do maximo ou abaixo do minimo</span>
+        <span class="muted">Acima do máximo ou abaixo do mínimo</span>
     </article>
 </section>
 
@@ -86,7 +86,7 @@ ob_start();
             <thead>
                 <tr>
                     <th>Categoria</th>
-                    <th>Referencia</th>
+                    <th>Referência</th>
                     <th>Realizado</th>
                     <th>Meta</th>
                     <th>Uso da meta</th>
@@ -135,7 +135,7 @@ ob_start();
                 <?php endforeach; ?>
                 <?php if ($targets === []): ?>
                     <tr>
-                        <td colspan="6" class="muted">Nenhuma despesa ou meta encontrada para o periodo.</td>
+                        <td colspan="6" class="muted">Nenhuma despesa ou meta encontrada para o período.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>

@@ -11,13 +11,13 @@ ob_start();
         <div>
             <span class="badge">Financeiro</span>
             <h1>A receber</h1>
-            <p class="muted">Visualizacao das entradas importadas da planilha para <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
+            <p class="muted">Visualização das entradas importadas da planilha para <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
         </div>
     </div>
     <div class="hero-actions month-actions">
-        <a class="month-nav-button" href="<?= htmlspecialchars($previousMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-chevron-left"></span>Mes anterior</a>
-        <a class="month-nav-button is-primary" href="<?= htmlspecialchars($nextWorkMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-calendar2-check"></span>Proximo recebimento</a>
-        <a class="month-nav-button" href="<?= htmlspecialchars($nextMonthUrl, ENT_QUOTES, 'UTF-8') ?>">Proximo mes<span class="bi bi-chevron-right"></span></a>
+        <a class="month-nav-button" href="<?= htmlspecialchars($previousMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-chevron-left"></span>Mês anterior</a>
+        <a class="month-nav-button is-primary" href="<?= htmlspecialchars($nextWorkMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-calendar2-check"></span>Próximo recebimento</a>
+        <a class="month-nav-button" href="<?= htmlspecialchars($nextMonthUrl, ENT_QUOTES, 'UTF-8') ?>">Próximo mês<span class="bi bi-chevron-right"></span></a>
     </div>
 </section>
 
@@ -25,15 +25,15 @@ ob_start();
     <article class="card finance-summary-card receivable-summary-card">
         <span class="muted">Total recebido</span>
         <strong><?= $formatMoney((float) $summary['total_amount']) ?></strong>
-        <small><?= (int) $summary['entries_count'] ?> entrada(s) no periodo</small>
+        <small><?= (int) $summary['entries_count'] ?> entrada(s) no período</small>
     </article>
     <article class="card finance-summary-card receivable-summary-card">
-        <span class="muted">Salario Mauricio</span>
+        <span class="muted">Salário Mauricio</span>
         <strong><?= $formatMoney((float) $summary['mauricio_amount']) ?></strong>
         <small>&nbsp;</small>
     </article>
     <article class="card finance-summary-card receivable-summary-card">
-        <span class="muted">Salario Karina</span>
+        <span class="muted">Salário Karina</span>
         <strong><?= $formatMoney((float) $summary['karina_amount']) ?></strong>
         <small>&nbsp;</small>
     </article>
@@ -52,7 +52,7 @@ ob_start();
             <input type="month" name="start_month" value="<?= htmlspecialchars($startMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <label>
-            Ate
+            Até
             <input type="month" name="end_month" value="<?= htmlspecialchars($endMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <div class="form-actions">
@@ -62,19 +62,19 @@ ob_start();
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-wallet2"></span>Entradas do periodo</h2>
+    <h2 class="section-title"><span class="bi bi-wallet2"></span>Entradas do período</h2>
     <?php if ($entries === []): ?>
         <div class="empty-state">
             <span class="bi bi-inbox"></span>
             <strong>Nenhuma entrada encontrada</strong>
-            <p class="muted">Ajuste o periodo para consultar outros recebimentos importados.</p>
+            <p class="muted">Ajuste o período para consultar outros recebimentos importados.</p>
         </div>
     <?php else: ?>
         <div class="responsive-table">
             <table class="finance-entries-table">
                 <thead>
                     <tr>
-                        <th>Descricao</th>
+                        <th>Descrição</th>
                         <th>Data</th>
                         <th>Status</th>
                         <th>Valor</th>
@@ -102,7 +102,7 @@ ob_start();
 <section class="card section-card">
     <h2 class="section-title"><span class="bi bi-bar-chart"></span>Entradas por origem</h2>
     <?php if ($incomeSummary === []): ?>
-        <p class="muted">Sem dados para montar o grafico neste periodo.</p>
+        <p class="muted">Sem dados para montar o gráfico neste período.</p>
     <?php else: ?>
         <div class="category-column-chart income-column-chart">
             <?php foreach ($incomeSummary as $row): ?>
@@ -141,7 +141,7 @@ ob_start();
                 <?php endforeach; ?>
                 <?php if ($incomeSummary === []): ?>
                     <tr>
-                        <td colspan="3">Sem entradas no periodo.</td>
+                        <td colspan="3">Sem entradas no período.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>

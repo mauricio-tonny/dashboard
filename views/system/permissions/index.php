@@ -1,5 +1,5 @@
 <?php
-$title = 'Permissoes';
+$title = 'Permissões';
 $roleLabel = static fn (string $role): string => \App\Domain\Auth\Role::from($role)->label();
 $effectLabel = static fn (?string $effect, bool $baseAllowed): string => match ($effect) {
     'allow' => 'Permitido manualmente',
@@ -13,12 +13,12 @@ ob_start();
         <span class="page-hero-icon bi bi-shield-lock"></span>
         <div>
             <span class="badge">Sistema</span>
-            <h1>Permissoes por usuario</h1>
-            <p class="muted">Ajuste excecoes individuais sem alterar o perfil base do usuario.</p>
+            <h1>Permissões por usuário</h1>
+            <p class="muted">Ajuste exceções individuais sem alterar o perfil base do usuário.</p>
         </div>
     </div>
     <div class="hero-actions">
-        <a href="/admin/users"><button class="inline-button button-light" type="button"><span class="bi bi-people"></span>Usuarios</button></a>
+        <a href="/admin/users"><button class="inline-button button-light" type="button"><span class="bi bi-people"></span>Usuários</button></a>
     </div>
 </section>
 
@@ -31,10 +31,10 @@ ob_start();
 <?php endif; ?>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-person-check"></span>Usuario em configuracao</h2>
+    <h2 class="section-title"><span class="bi bi-person-check"></span>Usuário em configuração</h2>
     <form method="get" action="/system/permissions" class="finance-filter-form">
         <label>
-            Usuario
+            Usuário
             <select name="user_id">
                 <?php foreach ($users as $managedUser): ?>
                     <option value="<?= (int) $managedUser['id'] ?>" <?= (int) $managedUser['id'] === (int) $selectedUserId ? 'selected' : '' ?>>
@@ -52,11 +52,11 @@ ob_start();
 
 <?php if ($selectedUser !== null): ?>
     <section class="card section-card">
-        <h2 class="section-title"><span class="bi bi-sliders"></span>Matriz de permissoes</h2>
+        <h2 class="section-title"><span class="bi bi-sliders"></span>Matriz de permissões</h2>
         <p class="muted">
             Perfil base:
             <strong><?= htmlspecialchars($roleLabel((string) $selectedUser['role']), ENT_QUOTES, 'UTF-8') ?></strong>.
-            Use bloqueio manual para remover acessos especificos, como relatorios financeiros.
+            Use bloqueio manual para remover acessos específicos, como relatórios financeiros.
         </p>
         <form method="post" action="/system/permissions" class="permission-matrix-form">
             <input type="hidden" name="user_id" value="<?= (int) $selectedUserId ?>">
@@ -97,7 +97,7 @@ ob_start();
                     Sua senha de administrador
                     <input type="password" name="admin_password" required>
                 </label>
-                <button type="submit"><span class="bi bi-shield-check"></span>Salvar permissoes</button>
+                <button type="submit"><span class="bi bi-shield-check"></span>Salvar permissões</button>
             </div>
         </form>
     </section>

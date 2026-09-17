@@ -4,6 +4,7 @@ $formatMoney = static fn (float $value): string => format_money_for_user($value,
 $formatDate = static fn (string $value): string => (new DateTimeImmutable($value))->format('d/m/Y');
 $maxCategoryAmount = $categorySummary === [] ? 0.0 : max(array_map(static fn (array $row): float => (float) $row['total_amount'], $categorySummary));
 $selectedCategoryCount = count($categoryIds);
+$displayTotalAmount = (float) ($summary['period_total_amount'] ?? $summary['total_amount']) + (float) ($summary['previous_open_amount'] ?? 0);
 ob_start();
 ?>
 <section class="page-hero finance-hero">
@@ -12,42 +13,40 @@ ob_start();
         <div>
             <span class="badge">Financeiro</span>
             <h1>A pagar</h1>
-            <p class="muted">Visualizacao das despesas importadas da planilha para <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
+            <p class="muted">Visualização das despesas importadas da planilha para <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
         </div>
     </div>
     <div class="hero-actions month-actions">
-        <a class="month-nav-button" href="<?= htmlspecialchars($previousMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-chevron-left"></span>Mes anterior</a>
-        <a class="month-nav-button is-primary" href="<?= htmlspecialchars($nextWorkMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-calendar2-check"></span>Proximo vencimento</a>
-        <a class="month-nav-button" href="<?= htmlspecialchars($nextMonthUrl, ENT_QUOTES, 'UTF-8') ?>">Proximo mes<span class="bi bi-chevron-right"></span></a>
+        <a class="month-nav-button" href="<?= htmlspecialchars($previousMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-chevron-left"></span>Mês anterior</a>
+        <a class="month-nav-button is-primary" href="<?= htmlspecialchars($nextWorkMonthUrl, ENT_QUOTES, 'UTF-8') ?>"><span class="bi bi-calendar2-check"></span>Próximo vencimento</a>
+        <a class="month-nav-button" href="<?= htmlspecialchars($nextMonthUrl, ENT_QUOTES, 'UTF-8') ?>">Próximo mês<span class="bi bi-chevron-right"></span></a>
     </div>
 </section>
 
 <section class="finance-summary-grid">
     <article class="card finance-summary-card">
         <span class="muted">Total de despesas</span>
-        <strong><?= $formatMoney((float) $summary['total_amount']) ?></strong>
+        <strong><?= $formatMoney($displayTotalAmount) ?></strong>
         <small>
-            <?= (int) $summary['entries_count'] ?> lancamentos no periodo
-        </small>
-    </article>
-    <article class="card finance-summary-card">
-        <span class="muted">Falta pagar</span>
-        <strong><?= $formatMoney((float) $summary['open_amount']) ?></strong>
-        <small>
-            Periodo + pendencias anteriores
-            <?php if ((int) $summary['previous_open_count'] > 0): ?>
-                (<?= (int) $summary['previous_open_count'] ?> antigas)
+            <?= (int) $summary['entries_count'] ?> lançamentos no período
+            <?php if ((float) ($summary['previous_open_amount'] ?? 0) > 0): ?>
+                + <?= $formatMoney((float) $summary['previous_open_amount']) ?> em aberto anterior
             <?php endif; ?>
         </small>
     </article>
     <article class="card finance-summary-card">
-        <span class="muted">Ja pago</span>
+        <span class="muted">Margem estimada</span>
+        <strong><?= $formatMoney((float) ($summary['open_estimated_amount'] ?? 0)) ?></strong>
+        <small>Parte do total marcada como estimativa</small>
+    </article>
+    <article class="card finance-summary-card">
+        <span class="muted">Já pago</span>
         <strong><?= $formatMoney((float) $summary['paid_amount']) ?></strong>
     </article>
     <article class="card finance-summary-card">
-        <span class="muted">Ultimas parcelas</span>
+        <span class="muted">Últimas parcelas</span>
         <strong><?= $formatMoney((float) $summary['last_installments_amount']) ?></strong>
-        <small>Parcelas finais identificadas no periodo</small>
+        <small>Parcelas finais identificadas no período</small>
     </article>
 </section>
 
@@ -59,7 +58,7 @@ ob_start();
             <input type="month" name="start_month" value="<?= htmlspecialchars($startMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <label>
-            Ate
+            Até
             <input type="month" name="end_month" value="<?= htmlspecialchars($endMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <div class="form-actions">
@@ -85,12 +84,12 @@ ob_start();
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-list-check"></span>Despesas do periodo</h2>
+    <h2 class="section-title"><span class="bi bi-list-check"></span>Despesas do período</h2>
     <?php if ($entries === []): ?>
         <div class="empty-state">
             <span class="bi bi-inbox"></span>
             <strong>Nenhuma despesa encontrada</strong>
-            <p class="muted">Ajuste o periodo ou a categoria para consultar outros lancamentos.</p>
+            <p class="muted">Ajuste o período ou a categoria para consultar outros lançamentos.</p>
         </div>
     <?php else: ?>
         <div class="responsive-table">
@@ -120,13 +119,16 @@ ob_start();
                                         <span class="last-installment-pill">Final</span>
                                     <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="cash-payment-pill">A vista</span>
+                                    <span class="cash-payment-pill">À vista</span>
                                 <?php endif; ?>
                             </td>
                             <td>
                                 <span class="status-pill status-<?= htmlspecialchars((string) $entry['status'], ENT_QUOTES, 'UTF-8') ?>">
                                     <?= (string) $entry['status'] === 'paid' ? 'Pago' : 'Aberto' ?>
                                 </span>
+                                <?php if ((int) ($entry['is_estimated'] ?? 0) === 1): ?>
+                                    <span class="status-pill status-planned">Estimativa</span>
+                                <?php endif; ?>
                             </td>
                             <td class="money-cell"><?= $formatMoney((float) $entry['amount']) ?></td>
                         </tr>
@@ -140,7 +142,7 @@ ob_start();
 <section class="card section-card">
     <h2 class="section-title"><span class="bi bi-bar-chart"></span>Despesas por categoria</h2>
     <?php if ($categorySummary === []): ?>
-        <p class="muted">Sem dados para montar o grafico neste periodo.</p>
+        <p class="muted">Sem dados para montar o gráfico neste período.</p>
     <?php else: ?>
         <div class="category-column-chart">
             <?php foreach ($categorySummary as $row): ?>
@@ -151,7 +153,7 @@ ob_start();
                         <span style="height: <?= number_format(max(6, $percent), 2, '.', '') ?>%"></span>
                     </div>
                     <span><?= htmlspecialchars((string) $row['category_name'], ENT_QUOTES, 'UTF-8') ?></span>
-                    <small><?= (int) $row['entries_count'] ?> lancamentos</small>
+                    <small><?= (int) $row['entries_count'] ?> lançamentos</small>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -165,8 +167,9 @@ ob_start();
             <thead>
                 <tr>
                     <th>Categoria</th>
-                    <th>Lancamentos</th>
+                    <th>Lançamentos</th>
                     <th>Total</th>
+                    <th>Estimado</th>
                 </tr>
             </thead>
             <tbody>
@@ -175,6 +178,7 @@ ob_start();
                         <td><?= htmlspecialchars((string) $row['category_name'], ENT_QUOTES, 'UTF-8') ?></td>
                         <td><?= (int) $row['entries_count'] ?></td>
                         <td><?= $formatMoney((float) $row['total_amount']) ?></td>
+                        <td><?= $formatMoney((float) ($row['estimated_amount'] ?? 0)) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>

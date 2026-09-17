@@ -86,7 +86,7 @@ final class AuthController extends Controller
             ]);
 
             return Response::view('auth/login', [
-                'error' => 'Credenciais invalidas.',
+                'error' => 'Credenciais inválidas.',
             ], 422);
         }
 

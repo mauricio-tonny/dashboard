@@ -46,6 +46,9 @@ final class FinanceEntryRepository
             'SELECT
                 COALESCE(SUM(entries.amount), 0) AS total_amount,
                 COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS estimated_amount,
+                COALESCE(SUM(CASE WHEN entries.status <> "paid" AND COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS open_estimated_amount,
+                COALESCE(SUM(CASE WHEN entries.status <> "paid" AND COALESCE(entries.is_estimated, 0) = 0 THEN entries.amount ELSE 0 END), 0) AS open_confirmed_amount,
                 COUNT(*) AS entries_count
              FROM entries
              ' . $filters['join'] . '
@@ -58,15 +61,29 @@ final class FinanceEntryRepository
         $previousOpen = $this->previousOpenSummary($startDate, $categoryIds);
         $periodTotal = (float) ($summary['total_amount'] ?? 0);
         $periodOpen = (float) ($summary['open_amount'] ?? 0);
+        $periodEstimated = (float) ($summary['estimated_amount'] ?? 0);
+        $periodOpenEstimated = (float) ($summary['open_estimated_amount'] ?? 0);
+        $periodOpenConfirmed = (float) ($summary['open_confirmed_amount'] ?? 0);
         $previousOpenAmount = (float) $previousOpen['total_amount'];
+        $previousOpenEstimatedAmount = (float) $previousOpen['estimated_amount'];
+        $previousOpenConfirmedAmount = (float) $previousOpen['confirmed_amount'];
 
         return [
             'total_amount' => $periodTotal,
             'open_amount' => $periodOpen + $previousOpenAmount,
+            'estimated_amount' => $periodEstimated,
+            'confirmed_amount' => $periodTotal - $periodEstimated,
+            'open_estimated_amount' => $periodOpenEstimated + $previousOpenEstimatedAmount,
+            'open_confirmed_amount' => $periodOpenConfirmed + $previousOpenConfirmedAmount,
             'paid_amount' => $periodTotal - $periodOpen,
             'period_total_amount' => $periodTotal,
             'period_open_amount' => $periodOpen,
+            'period_estimated_amount' => $periodEstimated,
+            'period_open_estimated_amount' => $periodOpenEstimated,
+            'period_open_confirmed_amount' => $periodOpenConfirmed,
             'previous_open_amount' => $previousOpenAmount,
+            'previous_open_estimated_amount' => $previousOpenEstimatedAmount,
+            'previous_open_confirmed_amount' => $previousOpenConfirmedAmount,
             'previous_open_count' => (int) $previousOpen['entries_count'],
             'last_installments_amount' => $this->lastInstallmentsAmount($startDate, $endDate, $categoryIds),
             'entries_count' => (int) ($summary['entries_count'] ?? 0),
@@ -81,6 +98,8 @@ final class FinanceEntryRepository
         $statement = $this->database->connection()->prepare(
             'SELECT
                 COALESCE(SUM(entries.amount), 0) AS total_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS estimated_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 0 THEN entries.amount ELSE 0 END), 0) AS confirmed_amount,
                 COUNT(*) AS entries_count
              FROM entries
              WHERE entries.type = "expense"
@@ -93,6 +112,8 @@ final class FinanceEntryRepository
 
         return [
             'total_amount' => (float) ($summary['total_amount'] ?? 0),
+            'estimated_amount' => (float) ($summary['estimated_amount'] ?? 0),
+            'confirmed_amount' => (float) ($summary['confirmed_amount'] ?? 0),
             'entries_count' => (int) ($summary['entries_count'] ?? 0),
         ];
     }
@@ -229,6 +250,7 @@ final class FinanceEntryRepository
                 entries.installment_current,
                 entries.installment_total,
                 entries.is_last_installment,
+                entries.is_estimated,
                 categories.name AS category_name,
                 vendors.name AS vendor_name
              FROM entries
@@ -345,6 +367,7 @@ final class FinanceEntryRepository
                 COALESCE(categories.name, "Sem categoria") AS category_name,
                 COALESCE(SUM(entries.amount), 0) AS total_amount,
                 COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS estimated_amount,
                 COUNT(*) AS entries_count
              FROM entries
              LEFT JOIN categories ON categories.id = entries.category_id
@@ -373,6 +396,7 @@ final class FinanceEntryRepository
                 entries.installment_current,
                 entries.installment_total,
                 entries.is_last_installment,
+                entries.is_estimated,
                 COALESCE(categories.name, "Sem categoria") AS category_name,
                 COALESCE(vendors.name, "Sem fornecedor") AS vendor_name
              FROM entries
@@ -396,6 +420,7 @@ final class FinanceEntryRepository
                 COALESCE(SUM(entries.amount), 0) AS total_amount,
                 COALESCE(SUM(CASE WHEN entries.status = "paid" THEN entries.amount ELSE 0 END), 0) AS paid_amount,
                 COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS estimated_amount,
                 COUNT(*) AS entries_count
              FROM entries
              WHERE entries.type = "expense"
@@ -409,6 +434,8 @@ final class FinanceEntryRepository
             'total_amount' => (float) ($row['total_amount'] ?? 0),
             'paid_amount' => (float) ($row['paid_amount'] ?? 0),
             'open_amount' => (float) ($row['open_amount'] ?? 0),
+            'estimated_amount' => (float) ($row['estimated_amount'] ?? 0),
+            'confirmed_amount' => (float) ($row['total_amount'] ?? 0) - (float) ($row['estimated_amount'] ?? 0),
             'entries_count' => (int) ($row['entries_count'] ?? 0),
         ];
     }
@@ -422,6 +449,7 @@ final class FinanceEntryRepository
                 COALESCE(SUM(entries.amount), 0) AS total_amount,
                 COALESCE(SUM(CASE WHEN entries.status = "paid" THEN entries.amount ELSE 0 END), 0) AS paid_amount,
                 COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS estimated_amount,
                 COUNT(*) AS entries_count
              FROM entries
              LEFT JOIN vendors ON vendors.id = entries.vendor_id
@@ -445,6 +473,7 @@ final class FinanceEntryRepository
                 COALESCE(SUM(entries.amount), 0) AS total_amount,
                 COALESCE(SUM(CASE WHEN entries.status = "paid" THEN entries.amount ELSE 0 END), 0) AS paid_amount,
                 COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS estimated_amount,
                 COUNT(*) AS entries_count
              FROM entries
              LEFT JOIN categories ON categories.id = entries.category_id
@@ -459,6 +488,34 @@ final class FinanceEntryRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function expensesByDescriptionReport(string $startDate, string $endDate, array $categoryIds, array $vendorIds): array
+    {
+        $filters = $this->reportFilters($startDate, $endDate, $categoryIds, $vendorIds);
+        $statement = $this->database->connection()->prepare(
+            'SELECT
+                entries.description,
+                entries.modality,
+                COALESCE(categories.name, "Sem categoria") AS category_name,
+                COALESCE(SUM(entries.amount), 0) AS total_amount,
+                COALESCE(SUM(CASE WHEN entries.status = "paid" THEN entries.amount ELSE 0 END), 0) AS paid_amount,
+                COALESCE(SUM(CASE WHEN entries.status <> "paid" THEN entries.amount ELSE 0 END), 0) AS open_amount,
+                COALESCE(SUM(CASE WHEN COALESCE(entries.is_estimated, 0) = 1 THEN entries.amount ELSE 0 END), 0) AS estimated_amount,
+                COUNT(*) AS entries_count,
+                MAX(entries.installment_total) AS installment_total,
+                MAX(entries.installment_current) AS installment_current
+             FROM entries
+             LEFT JOIN categories ON categories.id = entries.category_id
+             WHERE entries.type = "expense"
+               AND entries.entry_date BETWEEN :start_date AND :end_date
+               ' . $filters['sql'] . '
+             GROUP BY entries.description, entries.modality, COALESCE(categories.name, "Sem categoria")
+             ORDER BY total_amount DESC, entries.description ASC'
+        );
+        $statement->execute($filters['params']);
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 
     public function paidVsReceivedByMonth(string $startDate, string $endDate): array
     {
@@ -467,6 +524,8 @@ final class FinanceEntryRepository
                 DATE_FORMAT(entry_date, "%Y-%m") AS month_key,
                 COALESCE(SUM(CASE WHEN type = "income" THEN amount ELSE 0 END), 0) AS income_amount,
                 COALESCE(SUM(CASE WHEN type = "expense" THEN amount ELSE 0 END), 0) AS expense_amount,
+                COALESCE(SUM(CASE WHEN type = "expense" AND COALESCE(is_estimated, 0) = 1 THEN amount ELSE 0 END), 0) AS estimated_expense_amount,
+                COALESCE(SUM(CASE WHEN type = "expense" AND COALESCE(is_estimated, 0) = 0 THEN amount ELSE 0 END), 0) AS confirmed_expense_amount,
                 COALESCE(SUM(CASE WHEN type = "expense" AND status = "paid" THEN amount ELSE 0 END), 0) AS paid_expense_amount
              FROM entries
              WHERE entry_date BETWEEN :start_date AND :end_date
@@ -486,8 +545,11 @@ final class FinanceEntryRepository
                 'month_key' => $row['month_key'],
                 'income_amount' => $income,
                 'expense_amount' => $expense,
+                'estimated_expense_amount' => (float) $row['estimated_expense_amount'],
+                'confirmed_expense_amount' => (float) $row['confirmed_expense_amount'],
                 'paid_expense_amount' => (float) $row['paid_expense_amount'],
                 'balance_amount' => $income - $expense,
+                'confirmed_balance_amount' => $income - (float) $row['confirmed_expense_amount'],
             ];
         }
 
@@ -503,6 +565,7 @@ final class FinanceEntryRepository
                 entries.description,
                 entries.amount,
                 entries.status,
+                entries.is_estimated,
                 COALESCE(categories.name, "Sem categoria") AS category_name,
                 COALESCE(vendors.name, "Sem fornecedor") AS vendor_name
              FROM entries

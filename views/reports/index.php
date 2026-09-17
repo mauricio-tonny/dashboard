@@ -42,7 +42,7 @@ ob_start();
             <strong><?= htmlspecialchars($formatMoney($marketSummary['total']), ENT_QUOTES, 'UTF-8') ?></strong>
         </div>
         <div class="report-summary-card">
-            <small>Media mensal</small>
+            <small>Média mensal</small>
             <strong><?= htmlspecialchars($formatMoney($marketSummary['average']), ENT_QUOTES, 'UTF-8') ?></strong>
         </div>
         <div class="report-summary-card">
@@ -81,7 +81,7 @@ ob_start();
                         <th>Mês</th>
                         <th>Listas</th>
                         <th>Total</th>
-                        <th>Media por lista</th>
+                        <th>Média por lista</th>
                     </tr>
                 </thead>
                 <tbody>

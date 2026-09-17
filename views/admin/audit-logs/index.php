@@ -11,7 +11,7 @@ $labels = [
     'session_replaced' => 'Sessão substituída',
     'password_changed' => 'Senha alterada',
     'page_viewed' => 'Tela acessada',
-    'report_viewed' => 'Relatorio visualizado',
+    'report_viewed' => 'Relatório visualizado',
     'user_created' => 'Usuário criado',
     'user_updated' => 'Usuário atualizado',
     'user_blocked' => 'Usuário bloqueado',
@@ -50,7 +50,7 @@ $labels = [
     'contact_updated' => 'Contato atualizado',
     'contact_enabled' => 'Contato reativado',
     'contact_disabled' => 'Contato desativado',
-    'user_permissions_updated' => 'Permissoes do usuario atualizadas',
+    'user_permissions_updated' => 'Permissões do usuário atualizadas',
     'category_budget_targets_updated' => 'Metas por categoria atualizadas',
 ];
 ?>
@@ -74,12 +74,12 @@ $totalReportViews = array_sum(array_map(static fn (array $row): int => (int) ($r
     <article class="card report-summary-card">
         <small>Acessos em telas</small>
         <strong><?= $totalPageViews ?></strong>
-        <span class="muted"><?= count($topPages ?? []) ?> tela(s) nos ultimos 30 dias</span>
+        <span class="muted"><?= count($topPages ?? []) ?> tela(s) nos últimos 30 dias</span>
     </article>
     <article class="card report-summary-card">
-        <small>Relatorios gerados</small>
+        <small>Relatórios gerados</small>
         <strong><?= $totalReportViews ?></strong>
-        <span class="muted"><?= count($topReports ?? []) ?> relatorio(s) nos ultimos 30 dias</span>
+        <span class="muted"><?= count($topReports ?? []) ?> relatório(s) nos últimos 30 dias</span>
     </article>
 </section>
 
@@ -91,8 +91,8 @@ $totalReportViews = array_sum(array_map(static fn (array $row): int => (int) ($r
                 <tr>
                     <th>Tela</th>
                     <th>Acessos</th>
-                    <th>Usuarios</th>
-                    <th>Ultimo acesso</th>
+                    <th>Usuários</th>
+                    <th>Último acesso</th>
                 </tr>
             </thead>
             <tbody>
@@ -109,7 +109,7 @@ $totalReportViews = array_sum(array_map(static fn (array $row): int => (int) ($r
                 <?php endforeach; ?>
                 <?php if (($topPages ?? []) === []): ?>
                     <tr>
-                        <td colspan="4">Sem acessos registrados no periodo.</td>
+                        <td colspan="4">Sem acessos registrados no período.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -118,15 +118,15 @@ $totalReportViews = array_sum(array_map(static fn (array $row): int => (int) ($r
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-bar-chart-line"></span>Uso dos relatorios</h2>
+    <h2 class="section-title"><span class="bi bi-bar-chart-line"></span>Uso dos relatórios</h2>
     <div class="responsive-table">
         <table>
             <thead>
                 <tr>
-                    <th>Relatorio</th>
+                    <th>Relatório</th>
                     <th>Acessos</th>
-                    <th>Usuarios</th>
-                    <th>Ultimo acesso</th>
+                    <th>Usuários</th>
+                    <th>Último acesso</th>
                 </tr>
             </thead>
             <tbody>
@@ -143,7 +143,7 @@ $totalReportViews = array_sum(array_map(static fn (array $row): int => (int) ($r
                 <?php endforeach; ?>
                 <?php if (($topReports ?? []) === []): ?>
                     <tr>
-                        <td colspan="4">Sem relatorios registrados no periodo.</td>
+                        <td colspan="4">Sem relatórios registrados no período.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -158,7 +158,7 @@ $totalReportViews = array_sum(array_map(static fn (array $row): int => (int) ($r
             <thead>
                 <tr>
                     <th>Data</th>
-                    <th>Acao</th>
+                    <th>Ação</th>
                     <th>Usuário</th>
                     <th>Origem</th>
                     <th>Detalhes</th>

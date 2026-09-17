@@ -9,7 +9,7 @@ ob_start();
     <div class="page-hero-content">
         <span class="page-hero-icon bi bi-receipt-cutoff"></span>
         <div>
-            <span class="badge">Relatorios</span>
+            <span class="badge">Relatórios</span>
             <h1>Fluxo de caixa</h1>
             <p class="muted">Extrato financeiro com saldo acumulado de <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
         </div>
@@ -27,14 +27,14 @@ require base_path('views/reports/_finance_filters.php');
 ?>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-receipt-cutoff"></span>Extrato do periodo</h2>
+    <h2 class="section-title"><span class="bi bi-receipt-cutoff"></span>Extrato do período</h2>
     <div class="responsive-table">
         <table class="finance-entries-table">
             <thead>
                 <tr>
                     <th>Data</th>
                     <th>Tipo</th>
-                    <th>Descricao</th>
+                    <th>Descrição</th>
                     <th>Valor</th>
                     <th>Saldo</th>
                 </tr>
@@ -51,7 +51,7 @@ require base_path('views/reports/_finance_filters.php');
                         <td><?= htmlspecialchars($formatDate((string) $row['entry_date']), ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
                             <span class="cashflow-type-pill <?= $isIncome ? 'is-income' : 'is-expense' ?>">
-                                <?= $isIncome ? 'Entrada' : 'Saida' ?>
+                                <?= $isIncome ? 'Entrada' : 'Saída' ?>
                             </span>
                         </td>
                         <td><strong><?= htmlspecialchars((string) $row['description'], ENT_QUOTES, 'UTF-8') ?></strong></td>
@@ -61,7 +61,7 @@ require base_path('views/reports/_finance_filters.php');
                 <?php endforeach; ?>
                 <?php if ($cashflowRows === []): ?>
                     <tr>
-                        <td colspan="5">Sem movimentacoes no periodo.</td>
+                        <td colspan="5">Sem movimentações no período.</td>
                     </tr>
                 <?php endif; ?>
             </tbody>

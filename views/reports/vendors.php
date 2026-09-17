@@ -1,5 +1,5 @@
 <?php
-$title = 'Relatorio por fornecedor';
+$title = 'Relatório por fornecedor';
 $formatMoney = static fn ($value): string => format_money_for_user($value, $user ?? null);
 $maxVendorAmount = $vendorSummary === [] ? 0.0 : max(array_map(static fn (array $row): float => (float) $row['total_amount'], $vendorSummary));
 ob_start();
@@ -8,8 +8,8 @@ ob_start();
     <div class="page-hero-content">
         <span class="page-hero-icon bi bi-person-lines-fill"></span>
         <div>
-            <span class="badge">Relatorios</span>
-            <h1>Relatorio por fornecedor</h1>
+            <span class="badge">Relatórios</span>
+            <h1>Relatório por fornecedor</h1>
             <p class="muted">Agrupamento de despesas por fornecedor em <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
         </div>
     </div>
@@ -30,7 +30,7 @@ require base_path('views/reports/_finance_filters.php');
             <thead>
                 <tr>
                     <th>Fornecedor</th>
-                    <th>Lancamentos</th>
+                    <th>Lançamentos</th>
                     <th>Total</th>
                     <th>Pago</th>
                     <th>Aberto</th>

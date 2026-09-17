@@ -1,8 +1,8 @@
 <?php
 $title = 'Metas por categoria';
 $controlLabels = [
-    'maximum' => 'Limite maximo',
-    'minimum' => 'Meta minima',
+    'maximum' => 'Limite máximo',
+    'minimum' => 'Meta mínima',
     'track' => 'Acompanhar',
 ];
 $formatPercent = static fn (mixed $value): string => $value === null ? '' : number_format((float) $value, 2, ',', '');
@@ -13,7 +13,7 @@ $referenceRange = static function (array $target) use ($formatPercent): string {
     $max = $target['reference_max_percent'] ?? null;
 
     if ($min === null && $max === null) {
-        return 'Sem parametro';
+        return 'Sem parâmetro';
     }
 
     if ($min !== null && $max !== null) {
@@ -34,7 +34,7 @@ $renderRows = static function (array $items) use ($controlLabels, $formatPercent
                 <div class="budget-category-cell">
                     <strong><?= htmlspecialchars((string) $target['category_name'], ENT_QUOTES, 'UTF-8') ?></strong>
                     <?php if ($target['is_suggested']): ?>
-                        <span class="badge">Sugestao inicial</span>
+                        <span class="badge">Sugestão inicial</span>
                     <?php endif; ?>
                 </div>
                 <input type="hidden" name="targets[<?= $id ?>][category_id]" value="<?= $id ?>">
@@ -87,7 +87,7 @@ ob_start();
         <div>
             <span class="badge">Sistema</span>
             <h1>Metas por categoria</h1>
-            <p class="muted">Configure percentuais de gasto por categoria/DR cruzando sua realidade com referencias financeiras.</p>
+            <p class="muted">Configure percentuais de gasto por categoria/DR cruzando sua realidade com referências financeiras.</p>
         </div>
     </div>
 </section>
@@ -109,20 +109,20 @@ ob_start();
     <article class="card report-summary-card">
         <small>Metas inativas</small>
         <strong><?= count($inactiveTargets) ?></strong>
-        <span class="muted">Ficam fora da analise estrategica</span>
+        <span class="muted">Ficam fora da análise estratégica</span>
     </article>
     <article class="card report-summary-card">
         <small>Como usar</small>
         <strong>% da renda</strong>
-        <span class="muted">A meta sera comparada com o recebido do periodo.</span>
+        <span class="muted">A meta será comparada com o recebido do período.</span>
     </article>
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-info-circle"></span>Referencia usada como apoio</h2>
+    <h2 class="section-title"><span class="bi bi-info-circle"></span>Referência usada como apoio</h2>
     <p class="muted">
-        As sugestoes partem de modelos como 50/30/20, referencias de moradia e padroes de consumo familiar.
-        Elas servem como dica visual, nao como regra fixa. A coluna "Sua meta" deve refletir o seu controle real.
+        As sugestões partem de modelos como 50/30/20, referências de moradia e padrões de consumo familiar.
+        Elas servem como dica visual, não como regra fixa. A coluna "Sua meta" deve refletir o seu controle real.
     </p>
 </section>
 
@@ -135,7 +135,7 @@ ob_start();
                 <p class="muted">Informe uma renda base e clique em calcular para preencher valores desejados e percentuais. Depois, use Salvar para armazenar.</p>
             </div>
             <label>
-                Renda base para calculo
+                Renda base para cálculo
                 <input type="text" name="budget_base_income" value="<?= htmlspecialchars($formatMoneyInput($baseIncomeValue), ENT_QUOTES, 'UTF-8') ?>" placeholder="R$ 0,00" inputmode="decimal" data-money-input data-budget-base-income data-initial-base-income="<?= htmlspecialchars((string) ($baseIncomeValue ?? ''), ENT_QUOTES, 'UTF-8') ?>">
             </label>
             <button class="inline-button button-light" type="button" data-budget-calculate>
@@ -147,7 +147,7 @@ ob_start();
             <article class="card report-summary-card">
                 <small>Renda base</small>
                 <strong data-budget-base-summary>R$ 0,00</strong>
-                <span class="muted">Valor usado no calculo</span>
+                <span class="muted">Valor usado no cálculo</span>
             </article>
             <article class="card report-summary-card">
                 <small>Distribuido</small>
@@ -166,8 +166,8 @@ ob_start();
                 <thead>
                     <tr>
                         <th>Categoria (DR)</th>
-                        <th>Referencia sugerida</th>
-                        <th>Parametro</th>
+                        <th>Referência sugerida</th>
+                        <th>Parâmetro</th>
                         <th>Controle</th>
                         <th>Sua meta</th>
                         <th>Calculadora</th>
@@ -191,16 +191,16 @@ ob_start();
         <details class="card section-card inactive-targets-panel" <?= $inactiveTargets === [] ? '' : 'open' ?>>
             <summary>
                 <strong>Categorias inativas</strong>
-                <span class="muted"><?= count($inactiveTargets) ?> categoria(s) fora da analise</span>
+                <span class="muted"><?= count($inactiveTargets) ?> categoria(s) fora da análise</span>
             </summary>
-            <p class="muted">Metas inativas ficam armazenadas, mas nao entram na tela Financeiro > Metas de gastos. Reative quando quiser recalcular.</p>
+            <p class="muted">Metas inativas ficam armazenadas, mas não entram na tela Financeiro > Metas de gastos. Reative quando quiser recalcular.</p>
             <div class="responsive-table">
                 <table>
                     <thead>
                         <tr>
                             <th>Categoria (DR)</th>
-                            <th>Referencia sugerida</th>
-                            <th>Parametro</th>
+                            <th>Referência sugerida</th>
+                            <th>Parâmetro</th>
                             <th>Controle</th>
                             <th>Sua meta</th>
                             <th>Calculadora</th>

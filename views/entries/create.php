@@ -1,5 +1,5 @@
 <?php
-$title = 'Novo lancamento';
+$title = 'Novo lançamento';
 ob_start();
 ?>
 <section class="page-hero">
@@ -7,14 +7,14 @@ ob_start();
         <span class="page-hero-icon bi bi-plus-circle"></span>
         <div>
             <span class="badge">Financeiro</span>
-            <h1>Novo lancamento</h1>
-            <p class="muted">Formulario inicial para cadastro enquanto a integração real com o Excel ainda não foi implementada.</p>
+            <h1>Novo lançamento</h1>
+            <p class="muted">Formulário inicial para cadastro enquanto a integração real com o Excel ainda não foi implementada.</p>
         </div>
     </div>
 </section>
 
 <section class="card section-card" style="max-width: 820px;">
-    <h2 class="section-title"><span class="bi bi-pencil-square"></span>Dados do lancamento</h2>
+    <h2 class="section-title"><span class="bi bi-pencil-square"></span>Dados do lançamento</h2>
 
     <?php if (!empty($error)): ?>
         <p class="error"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?></p>
@@ -27,7 +27,7 @@ ob_start();
         </label>
 
         <label>
-            Descricao
+            Descrição
             <input type="text" name="description" required>
         </label>
 

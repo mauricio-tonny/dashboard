@@ -46,7 +46,7 @@ final class ImportSpreadsheetTask implements ScheduledTask
 
         if (!$this->forceRun && !$insideWindow) {
             return ScheduledTaskResult::skipped(
-                "Importacao ignorada fora da janela permitida: segunda a sexta, das {$startHour}:00 as {$endHour}:00.",
+                "Importação ignorada fora da janela permitida: segunda a sexta, das {$startHour}:00 às {$endHour}:00.",
                 [
                     'reason' => 'outside_allowed_window',
                     'checked_at' => $now->format('Y-m-d H:i:s'),
@@ -58,7 +58,7 @@ final class ImportSpreadsheetTask implements ScheduledTask
             );
         }
 
-        $command = escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($this->projectRoot . '/bin/import_spreadsheet.php') . ' --apply';
+        $command = escapeshellarg($this->phpCliBinary()) . ' ' . escapeshellarg($this->projectRoot . '/bin/import_spreadsheet.php') . ' --apply';
         $descriptors = [
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
@@ -66,7 +66,7 @@ final class ImportSpreadsheetTask implements ScheduledTask
         $process = proc_open($command, $descriptors, $pipes, $this->projectRoot);
 
         if (!is_resource($process)) {
-            return ScheduledTaskResult::failure('Nao foi possivel iniciar a importacao da planilha.');
+            return ScheduledTaskResult::failure('Não foi possível iniciar a importação da planilha.');
         }
 
         $stdout = stream_get_contents($pipes[1]);
@@ -108,7 +108,7 @@ final class ImportSpreadsheetTask implements ScheduledTask
 
         $message = $importedEntries === null
             ? 'Planilha importada pelo scheduler.'
-            : "Planilha importada pelo scheduler: {$importedEntries} lancamentos gravados/atualizados.";
+            : "Planilha importada pelo scheduler: {$importedEntries} lançamentos gravados/atualizados.";
 
         return ScheduledTaskResult::success($message, $metadata);
     }
@@ -136,6 +136,17 @@ final class ImportSpreadsheetTask implements ScheduledTask
         }
 
         return substr($value, -$limit);
+    }
+
+    private function phpCliBinary(): string
+    {
+        if (PHP_SAPI === 'cli') {
+            return PHP_BINARY;
+        }
+
+        $detected = trim((string) shell_exec('command -v php 2>/dev/null'));
+
+        return $detected !== '' ? $detected : 'php';
     }
 
     private function normalizeAscii(string $value): string

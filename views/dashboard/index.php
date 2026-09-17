@@ -61,14 +61,14 @@ ob_start();
         <strong><?= $formatMoney($payableSummary['total_amount'] ?? 0) ?></strong>
         <?php if (($payableSummary['current_or_previous_open_amount'] ?? 0) > 0): ?>
             <p class="muted">
-                Inclui <?= $formatMoney($payableSummary['current_or_previous_open_amount']) ?> em aberto ate o mes atual.
+                Inclui <?= $formatMoney($payableSummary['current_or_previous_open_amount']) ?> em aberto até o mês atual.
             </p>
         <?php endif; ?>
     </article>
 
     <article class="metric-card">
         <span class="metric-icon bi bi-basket2"></span>
-        <small>Mercado proximo mes</small>
+        <small>Mercado próximo mês</small>
         <strong><?= $marketChecked ?>/<?= $marketTotal ?> itens</strong>
         <p class="muted"><?= $marketProgress ?>% da lista marcada. Total: <?= htmlspecialchars($marketSummary['total_amount'] === null ? '-' : $formatMoney($marketSummary['total_amount']), ENT_QUOTES, 'UTF-8') ?></p>
     </article>

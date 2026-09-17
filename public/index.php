@@ -18,6 +18,8 @@ use App\Controllers\ReportController;
 use App\Controllers\ShoppingController;
 use App\Controllers\System\DiscordController;
 use App\Controllers\System\CategoryBudgetTargetController;
+use App\Controllers\System\FamilyProfileController;
+use App\Controllers\System\FinancialGoalController;
 use App\Controllers\System\PermissionController;
 use App\Controllers\System\SecurityController;
 use App\Controllers\System\SpreadsheetController;
@@ -36,6 +38,8 @@ use App\Domain\Auth\AdminUserRepository;
 use App\Domain\Contacts\ContactRepository;
 use App\Domain\Finance\FinanceService;
 use App\Domain\Finance\CategoryBudgetTargetRepository;
+use App\Domain\Finance\FamilyProfileRepository;
+use App\Domain\Finance\FinancialGoalRepository;
 use App\Domain\Finance\FinanceEntryRepository;
 use App\Domain\Finance\KarinaStatementRepository;
 use App\Domain\Shopping\ShoppingRepository;
@@ -96,6 +100,8 @@ $securitySettingsRepository = new SecuritySettingsRepository($database);
 $recaptchaVerifier = new RecaptchaVerifier();
 $contactRepository = new ContactRepository($database);
 $categoryBudgetTargetRepository = new CategoryBudgetTargetRepository($database);
+$familyProfileRepository = new FamilyProfileRepository($database);
+$financialGoalRepository = new FinancialGoalRepository($database);
 $financeEntryRepository = new FinanceEntryRepository($database);
 $karinaStatementRepository = new KarinaStatementRepository($database);
 $userPermissionRepository = new UserPermissionRepository($database);
@@ -126,6 +132,8 @@ $app = new App([
     RecaptchaVerifier::class => $recaptchaVerifier,
     ContactRepository::class => $contactRepository,
     CategoryBudgetTargetRepository::class => $categoryBudgetTargetRepository,
+    FamilyProfileRepository::class => $familyProfileRepository,
+    FinancialGoalRepository::class => $financialGoalRepository,
     FinanceEntryRepository::class => $financeEntryRepository,
     KarinaStatementRepository::class => $karinaStatementRepository,
     UserPermissionRepository::class => $userPermissionRepository,
@@ -182,11 +190,13 @@ $router->post('/contacts/toggle', [ContactController::class, 'toggle']);
 $router->get('/finance/payable', [FinancePayableController::class, 'index']);
 $router->get('/finance/receivable', [FinanceReceivableController::class, 'index']);
 $router->get('/finance/budget-targets', [FinanceBudgetTargetController::class, 'index']);
+$router->get('/finance/financial-plan', [ReportController::class, 'financialPlan']);
 $router->get('/reports', [ReportController::class, 'index']);
 $router->get('/reports/categories', [ReportController::class, 'categories']);
 $router->get('/reports/category-chart', [ReportController::class, 'categoryChart']);
 $router->get('/reports/vendors', [ReportController::class, 'vendors']);
 $router->get('/reports/paid-vs-received', [ReportController::class, 'paidVsReceived']);
+$router->get('/reports/financial-plan', [ReportController::class, 'financialPlan']);
 $router->get('/reports/cashflow', [ReportController::class, 'cashflow']);
 $router->get('/reports/karina-statement', [ReportController::class, 'karinaStatement']);
 $router->get('/reports/market', [ReportController::class, 'market']);
@@ -198,6 +208,15 @@ $router->post('/system/sync/windows-callback', [SyncController::class, 'windowsC
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
 $router->get('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'index']);
 $router->post('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'save']);
+$router->get('/system/family-profile', [FamilyProfileController::class, 'index']);
+$router->post('/system/family-profile/settings', [FamilyProfileController::class, 'saveSettings']);
+$router->post('/system/family-profile/members', [FamilyProfileController::class, 'saveMember']);
+$router->post('/system/family-profile/members/toggle', [FamilyProfileController::class, 'toggleMember']);
+$router->post('/system/family-profile/pets', [FamilyProfileController::class, 'savePet']);
+$router->post('/system/family-profile/pets/toggle', [FamilyProfileController::class, 'togglePet']);
+$router->get('/system/financial-goals', [FinancialGoalController::class, 'index']);
+$router->post('/system/financial-goals', [FinancialGoalController::class, 'save']);
+$router->post('/system/financial-goals/toggle', [FinancialGoalController::class, 'toggle']);
 $router->get('/system/discord', [DiscordController::class, 'index']);
 $router->post('/system/discord', [DiscordController::class, 'save']);
 $router->post('/system/discord/test', [DiscordController::class, 'test']);
@@ -251,17 +270,21 @@ function auditPageUsage(Request $request, \App\Core\Response $response, AuthServ
         '/finance/payable' => 'Financeiro - A pagar',
         '/finance/receivable' => 'Financeiro - A receber',
         '/finance/budget-targets' => 'Financeiro - metas de gastos',
+        '/finance/financial-plan' => 'Financeiro - plano financeiro',
         '/reports' => 'Relatorios - central',
         '/reports/categories' => 'Relatorio por categoria',
         '/reports/category-chart' => 'Relatorio grafico por categoria',
         '/reports/vendors' => 'Relatorio por fornecedor',
         '/reports/paid-vs-received' => 'Relatorio Pago x Recebido',
+        '/reports/financial-plan' => 'Financeiro - plano financeiro',
         '/reports/cashflow' => 'Relatorio Fluxo de Caixa',
         '/reports/market' => 'Relatorio de Mercado',
         '/system/backup' => 'Sistema - backup',
         '/system/sync' => 'Sistema - sincronizacao',
         '/system/categories' => 'Sistema - categorias',
         '/system/category-budget-targets' => 'Sistema - metas por categoria',
+        '/system/family-profile' => 'Sistema - perfil familiar',
+        '/system/financial-goals' => 'Sistema - objetivos financeiros',
         '/system/discord' => 'Sistema - Discord',
         '/system/permissions' => 'Sistema - permissoes',
         '/system/security' => 'Sistema - seguranca e analytics',
@@ -332,5 +355,6 @@ function reportAuditFilters(array $query): array
         'category_id',
         'vendor_ids',
         'vendor_id',
+        'monthly_need',
     ]));
 }

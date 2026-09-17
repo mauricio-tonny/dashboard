@@ -36,7 +36,7 @@ final class SpreadsheetSyncEventRepository
             'file_hash' => $fileHash === null || $fileHash === '' ? null : mb_substr($fileHash, 0, 64),
             'file_size' => $fileSize,
             'machine_name' => $machineName === null || $machineName === '' ? null : mb_substr($machineName, 0, 120),
-            'message' => $message === null || $message === '' ? null : mb_substr($message, 0, 500),
+            'message' => $message === null || $message === '' ? null : mb_substr($this->normalizeMessage($message), 0, 500),
             'metadata' => $encodedMetadata === false ? null : $encodedMetadata,
         ]);
 
@@ -54,6 +54,41 @@ final class SpreadsheetSyncEventRepository
         $statement->bindValue('limit', $limit, PDO::PARAM_INT);
         $statement->execute();
 
-        return $statement->fetchAll(PDO::FETCH_ASSOC);
+        $events = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($events as &$event) {
+            if (isset($event['message']) && is_string($event['message'])) {
+                $event['message'] = $this->normalizeMessage($event['message']);
+            }
+        }
+
+        unset($event);
+
+        return $events;
+    }
+
+    private function normalizeMessage(string $message): string
+    {
+        if (!str_contains($message, 'Ã') && !str_contains($message, 'Â')) {
+            return $message;
+        }
+
+        $normalized = $message;
+
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            if (!str_contains($normalized, 'Ã') && !str_contains($normalized, 'Â')) {
+                break;
+            }
+
+            $converted = mb_convert_encoding($normalized, 'ISO-8859-1', 'UTF-8');
+
+            if (!is_string($converted) || $converted === '' || $converted === $normalized) {
+                break;
+            }
+
+            $normalized = $converted;
+        }
+
+        return $normalized;
     }
 }

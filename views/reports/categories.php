@@ -1,5 +1,5 @@
 <?php
-$title = 'Relatorio por categoria';
+$title = 'Relatório por categoria';
 $formatMoney = static fn ($value): string => format_money_for_user($value, $user ?? null);
 $formatDate = static fn (string $value): string => (new DateTimeImmutable($value))->format('d/m/Y');
 ob_start();
@@ -8,8 +8,8 @@ ob_start();
     <div class="page-hero-content">
         <span class="page-hero-icon bi bi-tags"></span>
         <div>
-            <span class="badge">Relatorios</span>
-            <h1>Relatorio por categoria</h1>
+            <span class="badge">Relatórios</span>
+            <h1>Relatório por categoria</h1>
             <p class="muted">Despesas de <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?> filtradas por categoria e fornecedor.</p>
         </div>
     </div>
@@ -27,7 +27,7 @@ require base_path('views/reports/_finance_filters.php');
     <article class="card finance-summary-card">
         <span class="muted">Total</span>
         <strong><?= $formatMoney($expenseSummary['total_amount']) ?></strong>
-        <small><?= (int) $expenseSummary['entries_count'] ?> lancamentos</small>
+        <small><?= (int) $expenseSummary['entries_count'] ?> lançamentos</small>
     </article>
     <article class="card finance-summary-card">
         <span class="muted">Pago</span>
@@ -68,7 +68,7 @@ require base_path('views/reports/_finance_filters.php');
                                     <span class="last-installment-pill">Final</span>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="cash-payment-pill">A vista</span>
+                                <span class="cash-payment-pill">À vista</span>
                             <?php endif; ?>
                         </td>
                         <td><?= (string) $row['status'] === 'paid' ? 'Pago' : 'Aberto' ?></td>
@@ -92,7 +92,7 @@ require base_path('views/reports/_finance_filters.php');
             <thead>
                 <tr>
                     <th>Categoria</th>
-                    <th>Lancamentos</th>
+                    <th>Lançamentos</th>
                     <th>Total</th>
                     <th>Pago</th>
                     <th>Aberto</th>

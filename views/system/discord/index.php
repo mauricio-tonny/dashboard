@@ -12,7 +12,7 @@ ob_start();
         <div>
             <span class="badge">Sistema</span>
             <h1>Discord</h1>
-            <p class="muted">Configure notificacoes amigaveis para eventos importantes do dashboard.</p>
+            <p class="muted">Configure notificações amigáveis para eventos importantes do dashboard.</p>
         </div>
     </div>
 </section>
@@ -26,14 +26,14 @@ ob_start();
 <?php endif; ?>
 
 <section class="card section-card discord-card">
-    <h2 class="section-title"><span class="bi bi-bell"></span>Configuracao de notificacoes</h2>
+    <h2 class="section-title"><span class="bi bi-bell"></span>Configuração de notificações</h2>
     <form method="post" action="/system/discord" class="discord-settings-form">
         <input type="hidden" name="is_enabled" value="0">
         <label class="discord-toggle-card">
             <input type="checkbox" name="is_enabled" value="1" data-discord-enabled <?= $enabled ? 'checked' : '' ?>>
             <span class="discord-toggle-switch" aria-hidden="true"></span>
             <span>
-                <strong>Notificacoes do Discord</strong>
+                <strong>Notificações do Discord</strong>
                 <small>Ative ou desative todos os avisos enviados pelo dashboard.</small>
             </span>
         </label>
@@ -53,17 +53,17 @@ ob_start();
                 </label>
                 <label class="checkbox-card">
                     <input type="checkbox" name="notify_spreadsheet_import_changed" value="1" <?= $notifySpreadsheetImportChanged ? 'checked' : '' ?>>
-                    <span>Notificar quando a importacao automatica da planilha gravar ou atualizar lancamentos</span>
+                    <span>Notificar quando a importação automática da planilha gravar ou atualizar lançamentos</span>
                 </label>
                 <label class="checkbox-card">
                     <input type="checkbox" name="notify_spreadsheet_import_unchanged" value="1" <?= $notifySpreadsheetImportUnchanged ? 'checked' : '' ?>>
-                    <span>Notificar quando a importacao automatica da planilha rodar sem alteracoes</span>
+                    <span>Notificar quando a importação automática da planilha rodar sem alterações</span>
                 </label>
             </div>
         </div>
 
         <div class="form-actions">
-            <button type="submit"><span class="bi bi-save"></span>Salvar configuracao</button>
+            <button type="submit"><span class="bi bi-save"></span>Salvar configuração</button>
         </div>
     </form>
 
@@ -79,8 +79,8 @@ ob_start();
 </section>
 
 <section class="card section-card">
-    <h2 class="section-title"><span class="bi bi-robot"></span>Automacao sugerida</h2>
-    <p class="muted">O Discord e acionado pelas rotinas do scheduler interno. Para manter as automacoes ativas, o servidor deve executar:</p>
+    <h2 class="section-title"><span class="bi bi-robot"></span>Automação sugerida</h2>
+    <p class="muted">O Discord é acionado pelas rotinas do scheduler interno. Para manter as automações ativas, o servidor deve executar:</p>
     <pre><code>php /var/www/dashboard.oficinadodev.com.br/html/bin/schedule_run.php</code></pre>
 </section>
 

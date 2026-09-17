@@ -1,5 +1,5 @@
 <?php
-$title = 'Grafico por categoria';
+$title = 'Gráfico por categoria';
 $formatMoney = static fn ($value): string => format_money_for_user($value, $user ?? null);
 $maxCategoryAmount = $categorySummary === [] ? 0.0 : max(array_map(static fn (array $row): float => (float) $row['total_amount'], $categorySummary));
 ob_start();
@@ -8,8 +8,8 @@ ob_start();
     <div class="page-hero-content">
         <span class="page-hero-icon bi bi-bar-chart"></span>
         <div>
-            <span class="badge">Relatorios</span>
-            <h1>Grafico por categoria</h1>
+            <span class="badge">Relatórios</span>
+            <h1>Gráfico por categoria</h1>
             <p class="muted">Comparativo visual das categorias em <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
         </div>
     </div>
@@ -26,7 +26,7 @@ require base_path('views/reports/_finance_filters.php');
 <section class="card section-card">
     <h2 class="section-title"><span class="bi bi-bar-chart"></span>Despesas por categoria</h2>
     <?php if ($categorySummary === []): ?>
-        <p class="muted">Sem despesas para montar o grafico neste periodo.</p>
+        <p class="muted">Sem despesas para montar o gráfico neste período.</p>
     <?php else: ?>
         <div class="category-column-chart">
             <?php foreach ($categorySummary as $row): ?>
@@ -37,7 +37,7 @@ require base_path('views/reports/_finance_filters.php');
                         <span style="height: <?= number_format(max(6, $percent), 2, '.', '') ?>%"></span>
                     </div>
                     <span><?= htmlspecialchars((string) $row['category_name'], ENT_QUOTES, 'UTF-8') ?></span>
-                    <small><?= (int) $row['entries_count'] ?> lancamentos</small>
+                    <small><?= (int) $row['entries_count'] ?> lançamentos</small>
                 </div>
             <?php endforeach; ?>
         </div>

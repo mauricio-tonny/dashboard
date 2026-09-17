@@ -30,7 +30,7 @@ final class DiscordNotifier
         $origin = $automatic ? 'automaticamente' : 'pelo painel';
         $this->send($webhookUrl, [
             'username' => 'Dashboard Oficina do DEV',
-            'content' => "Lista de mercado de {$monthLabel} criada {$origin}. Já deixei tudo pronto para voces planejarem as compras com calma.",
+            'content' => "Lista de mercado de {$monthLabel} criada {$origin}. Já deixei tudo pronto para vocês planejarem as compras com calma.",
         ]);
     }
 
@@ -61,7 +61,7 @@ final class DiscordNotifier
 
         $this->send($webhookUrl, [
             'username' => 'Dashboard Oficina do DEV',
-            'content' => "Importacao automatica da planilha concluida com alteracoes: {$processedEntries} lancamentos conferidos, {$newEntries} novos e {$changedEntries} atualizados.",
+            'content' => "Importação automática da planilha concluída com alterações: {$processedEntries} lançamentos conferidos, {$newEntries} novos e {$changedEntries} atualizados.",
         ]);
     }
 
@@ -84,7 +84,7 @@ final class DiscordNotifier
 
         $this->send($webhookUrl, [
             'username' => 'Dashboard Oficina do DEV',
-            'content' => "Importacao automatica da planilha concluida sem alteracoes: {$processedEntries} lancamentos conferidos e nenhum item novo para gravar.",
+            'content' => "Importação automática da planilha concluída sem alterações: {$processedEntries} lançamentos conferidos e nenhum item novo para gravar.",
         ]);
     }
 

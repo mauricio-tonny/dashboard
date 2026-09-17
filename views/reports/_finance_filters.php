@@ -13,7 +13,7 @@ $showVendorFilter = $showVendorFilter ?? true;
             <input type="month" name="start_month" value="<?= htmlspecialchars($startMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <label>
-            Ate
+            Até
             <input type="month" name="end_month" value="<?= htmlspecialchars($endMonth, ENT_QUOTES, 'UTF-8') ?>">
         </label>
         <div class="form-actions">
@@ -25,7 +25,7 @@ $showVendorFilter = $showVendorFilter ?? true;
                     <span>Categorias</span>
                     <small><?= $selectedCategoryCount === 0 ? 'Todas' : $selectedCategoryCount . ' selecionada(s)' ?></small>
                 </summary>
-                <p class="muted">Use categorias para refinar os relatorios de despesas.</p>
+                <p class="muted">Use categorias para refinar os relatórios de despesas.</p>
                 <div class="category-chip-grid">
                     <?php foreach ($categories as $category): ?>
                         <?php $id = (int) $category['id']; ?>

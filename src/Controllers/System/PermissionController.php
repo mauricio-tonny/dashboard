@@ -70,12 +70,12 @@ final class PermissionController extends Controller
         $targetUser = $this->app->make(AdminUserRepository::class)->find($targetUserId);
 
         if ($targetUser === null) {
-            $session->flash('error', 'Usuario nao encontrado.');
+            $session->flash('error', 'Usuário não encontrado.');
             return Response::redirect('/system/permissions');
         }
 
         if (!$auth->verifyPassword($currentUser, (string) $request->input('admin_password'))) {
-            $session->flash('error', 'Senha de confirmacao invalida.');
+            $session->flash('error', 'Senha de confirmação inválida.');
             return Response::redirect('/system/permissions?user_id=' . $targetUserId);
         }
 
@@ -88,7 +88,7 @@ final class PermissionController extends Controller
         if ($currentUser->id === $targetUserId) {
             foreach ([Permission::MANAGE_USERS, Permission::CHANGE_USER_ROLES] as $criticalPermission) {
                 if (($effects[$criticalPermission->value] ?? null) === 'deny') {
-                    $session->flash('error', 'Voce nao pode bloquear as proprias permissoes administrativas criticas.');
+                    $session->flash('error', 'Você não pode bloquear as próprias permissões administrativas críticas.');
                     return Response::redirect('/system/permissions?user_id=' . $targetUserId);
                 }
             }
@@ -100,7 +100,7 @@ final class PermissionController extends Controller
             'overrides' => $effects,
         ]);
 
-        $session->flash('success', 'Permissoes atualizadas com sucesso.');
+        $session->flash('success', 'Permissões atualizadas com sucesso.');
 
         return Response::redirect('/system/permissions?user_id=' . $targetUserId);
     }

@@ -835,6 +835,80 @@
         .form-actions {
             align-self: end;
         }
+        .family-profile-form {
+            align-items: end;
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .family-profile-form label {
+            margin-bottom: 0;
+        }
+        .family-profile-form .form-actions {
+            align-self: end;
+        }
+        .family-profile-form .form-actions button {
+            min-height: 50px;
+            width: 100%;
+        }
+        .family-member-form {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .family-member-form label:nth-of-type(5) {
+            grid-column: 1 / 2;
+        }
+        .family-member-form .form-actions {
+            grid-column: 2 / 3;
+        }
+        .family-pet-form {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .financial-objective-form {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+        }
+        .financial-objective-form .form-actions {
+            grid-column: 5 / 6;
+        }
+        .financial-goals-form {
+            align-items: start;
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+        .financial-goals-form .goal-field,
+        .financial-goals-form .goal-actions {
+            display: grid;
+            gap: 6px;
+            grid-template-rows: 24px 50px minmax(20px, auto);
+            margin-bottom: 0;
+        }
+        .financial-goals-form .goal-label {
+            align-items: center;
+            display: inline-flex;
+            gap: 6px;
+            min-width: 0;
+        }
+        .financial-goals-form input {
+            margin-top: 0;
+            min-height: 50px;
+        }
+        .financial-goals-form .goal-actions {
+            align-self: start;
+        }
+        .financial-goals-form .goal-actions a,
+        .financial-goals-form .goal-actions button,
+        .financial-goals-form .goal-actions .inline-button {
+            align-items: center;
+            grid-row: 2;
+            justify-content: center;
+            margin-top: 0;
+            min-height: 50px;
+            width: 100%;
+        }
+        .financial-goals-form .goal-help {
+            font-size: 0.84rem;
+            line-height: 1.45;
+        }
         .account-password-card {
             margin-left: auto;
             margin-right: auto;
@@ -2469,6 +2543,27 @@
             .permission-save-bar {
                 grid-template-columns: 1fr;
             }
+            .family-profile-form,
+            .financial-objective-form,
+            .family-member-form,
+            .family-pet-form,
+            .financial-goals-form {
+                grid-template-columns: 1fr;
+            }
+            .family-member-form label:nth-of-type(5),
+            .family-member-form .form-actions,
+            .financial-objective-form .form-actions {
+                grid-column: auto;
+            }
+            .financial-goals-form .goal-field,
+            .financial-goals-form .goal-actions {
+                grid-template-rows: auto;
+            }
+            .financial-goals-form .goal-actions a,
+            .financial-goals-form .goal-actions button,
+            .financial-goals-form .goal-actions .inline-button {
+                grid-row: auto;
+            }
             .month-actions .inline-button,
             .month-actions .month-nav-button {
                 justify-content: center;
@@ -2516,14 +2611,17 @@
                         <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_EXPENSE_TOTALS)): ?>
                             <a class="nav-subitem <?= $isActive('/finance/budget-targets') ?>" href="/finance/budget-targets"><span class="bi bi-bullseye"></span>Metas de gastos</a>
                         <?php endif; ?>
+                        <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_FINANCIAL_PLAN_REPORT)): ?>
+                            <a class="nav-subitem <?= $isActive('/finance/financial-plan') ?>" href="/finance/financial-plan"><span class="bi bi-compass"></span>Plano financeiro</a>
+                        <?php endif; ?>
                         <?php if ($user->canEdit()): ?>
-                            <a class="nav-subitem <?= $isActive('/entries/create') ?>" href="/entries/create"><span class="bi bi-plus-circle"></span>Novo lancamento</a>
+                            <a class="nav-subitem <?= $isActive('/entries/create') ?>" href="/entries/create"><span class="bi bi-plus-circle"></span>Novo lançamento</a>
                         <?php endif; ?>
                     </div>
                     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_SHOPPING)): ?>
                         <div class="nav-group">
                             <div class="nav-group-title">Compras</div>
-                            <a class="nav-subitem <?= $isActive('/shopping') ?>" href="/shopping"><span class="bi bi-grid"></span>Visao geral</a>
+                            <a class="nav-subitem <?= $isActive('/shopping') ?>" href="/shopping"><span class="bi bi-grid"></span>Visão geral</a>
                             <a class="nav-subitem <?= $isActivePrefix('/shopping/market') ?>" href="/shopping/market"><span class="bi bi-basket2"></span>Mercado</a>
                             <a class="nav-subitem <?= $isActive('/shopping/home') ?>" href="/shopping/home"><span class="bi bi-house-heart"></span>Para casa</a>
                             <a class="nav-subitem <?= $isActive('/shopping/family') ?>" href="/shopping/family"><span class="bi bi-people"></span>Para a família</a>
@@ -2562,7 +2660,7 @@
                                 <a class="nav-subitem <?= $isActive('/admin/users') ?>" href="/admin/users"><span class="bi bi-people"></span>Usuários</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::CHANGE_USER_ROLES)): ?>
-                                <a class="nav-subitem <?= $isActive('/system/permissions') ?>" href="/system/permissions"><span class="bi bi-shield-lock"></span>Permissoes</a>
+                                <a class="nav-subitem <?= $isActive('/system/permissions') ?>" href="/system/permissions"><span class="bi bi-shield-lock"></span>Permissões</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_AUDIT_LOGS)): ?>
                                 <a class="nav-subitem <?= $isActive('/admin/audit-logs') ?>" href="/admin/audit-logs"><span class="bi bi-journal-text"></span>Logs</a>
@@ -2578,6 +2676,12 @@
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_CATEGORY_BUDGET_TARGETS)): ?>
                                 <a class="nav-subitem <?= $isActive('/system/category-budget-targets') ?>" href="/system/category-budget-targets"><span class="bi bi-bullseye"></span>Metas por categoria</a>
                             <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_FAMILY_PROFILE)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/family-profile') ?>" href="/system/family-profile"><span class="bi bi-people"></span>Perfil familiar</a>
+                            <?php endif; ?>
+                            <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_FINANCIAL_GOALS)): ?>
+                                <a class="nav-subitem <?= $isActive('/system/financial-goals') ?>" href="/system/financial-goals"><span class="bi bi-flag"></span>Objetivos financeiros</a>
+                            <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_DISCORD_NOTIFICATIONS)): ?>
                                 <a class="nav-subitem <?= $isActive('/system/discord') ?>" href="/system/discord"><span class="bi bi-discord"></span>Discord</a>
                             <?php endif; ?>
@@ -2585,7 +2689,7 @@
                                 <a class="nav-subitem <?= $isActive('/system/security') ?>" href="/system/security"><span class="bi bi-shield-check"></span>Segurança e Analytics</a>
                             <?php endif; ?>
                             <?php if ($user->can(\App\Domain\Auth\Permission::MANAGE_SHOPPING_SETTINGS)): ?>
-                                <a class="nav-subitem <?= $isActive('/admin/shopping-settings') ?>" href="/admin/shopping-settings"><span class="bi bi-sliders"></span>Configuração compras</a>
+                                <a class="nav-subitem <?= $isActive('/admin/shopping-settings') ?>" href="/admin/shopping-settings"><span class="bi bi-sliders"></span>Configuração de compras</a>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>

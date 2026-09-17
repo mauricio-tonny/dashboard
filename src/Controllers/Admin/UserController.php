@@ -112,7 +112,7 @@ final class UserController extends Controller
         }
 
         if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $session->flash('error', 'Informe nome e e-mail valido.');
+            $session->flash('error', 'Informe nome e e-mail válido.');
             return Response::redirect('/admin/users');
         }
 

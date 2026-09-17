@@ -115,6 +115,7 @@ try {
     ensureColumn($pdo, 'entries', 'installment_current', 'ALTER TABLE entries ADD COLUMN installment_current SMALLINT UNSIGNED NULL AFTER legacy_reference');
     ensureColumn($pdo, 'entries', 'installment_total', 'ALTER TABLE entries ADD COLUMN installment_total SMALLINT UNSIGNED NULL AFTER installment_current');
     ensureColumn($pdo, 'entries', 'is_last_installment', 'ALTER TABLE entries ADD COLUMN is_last_installment TINYINT(1) NOT NULL DEFAULT 0 AFTER installment_total');
+    ensureColumn($pdo, 'entries', 'is_estimated', 'ALTER TABLE entries ADD COLUMN is_estimated TINYINT(1) NOT NULL DEFAULT 0 AFTER is_last_installment');
     $pdo->exec('CREATE TABLE IF NOT EXISTS discord_notification_settings (
         id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
         is_enabled TINYINT(1) NOT NULL DEFAULT 0,
@@ -258,6 +259,62 @@ try {
         CONSTRAINT fk_category_budget_settings_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
     )");
     $pdo->exec('INSERT IGNORE INTO category_budget_settings (id) VALUES (1)');
+    $pdo->exec("CREATE TABLE IF NOT EXISTS family_profile_settings (
+        id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+        region ENUM('brasil', 'norte', 'nordeste', 'sudeste', 'sul', 'centro_oeste') NOT NULL DEFAULT 'brasil',
+        residence_area ENUM('urban', 'rural') NOT NULL DEFAULT 'urban',
+        notes VARCHAR(255) NULL,
+        updated_by_user_id BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_family_profile_settings_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+    )");
+    $pdo->exec('INSERT IGNORE INTO family_profile_settings (id) VALUES (1)');
+    $pdo->exec("CREATE TABLE IF NOT EXISTS family_members (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(120) NOT NULL,
+        sex ENUM('female', 'male', 'other') NOT NULL DEFAULT 'other',
+        birth_date DATE NULL,
+        role VARCHAR(80) NULL,
+        income_weight DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_by_user_id BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_family_members_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS family_pets (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(120) NOT NULL,
+        type VARCHAR(80) NOT NULL,
+        birth_date DATE NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_by_user_id BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_family_pets_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS financial_goals (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(160) NOT NULL,
+        goal_type ENUM('emergency_reserve', 'home_down_payment', 'investment', 'debt_payoff', 'other') NOT NULL DEFAULT 'other',
+        start_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+        current_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+        target_amount DECIMAL(14,2) NOT NULL,
+        start_date DATE NOT NULL,
+        target_date DATE NOT NULL,
+        priority_weight TINYINT UNSIGNED NOT NULL DEFAULT 5,
+        notes VARCHAR(255) NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_by_user_id BIGINT UNSIGNED NULL,
+        updated_by_user_id BIGINT UNSIGNED NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_financial_goals_active_target (is_active, target_date),
+        INDEX idx_financial_goals_type (goal_type),
+        CONSTRAINT fk_financial_goals_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id),
+        CONSTRAINT fk_financial_goals_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+    )");
 
     $permissionStatement = $pdo->prepare(
         'INSERT INTO permissions (name, label, description)

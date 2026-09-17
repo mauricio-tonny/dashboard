@@ -71,6 +71,7 @@ $stats = [
     'vendor_pending' => 0,
     'category_pending' => 0,
     'last_installments' => 0,
+    'estimated_entries' => 0,
     'entries_new' => 0,
     'entries_changed' => 0,
     'entries_unchanged' => 0,
@@ -125,6 +126,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         $modality = isset($columns['modality']) ? asText(cellValue($worksheet, $columns['modality'] . $row)) : '';
         $paymentMarker = isset($columns['payment_status']) ? asText(cellValue($worksheet, $columns['payment_status'] . $row)) : '';
         $status = paymentStatus($classification['reference'], $referenceMonth, $paymentMarker);
+        $isEstimated = isEstimatedEntry($description, $rawCategory, $observation, $modality, $paymentMarker);
         $vendor = normalizeVendor($rawVendor, $description, $classification['reference'], $worksheet, $row, $base);
         $category = normalizeCategory($rawCategory, $description, $base);
         $installment = parseInstallment($description, $modality);
@@ -146,6 +148,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
             'installment' => $installment,
             'amount' => (float) $amount,
             'status' => $status,
+            'is_estimated' => $isEstimated,
         ];
         $sourceHash = hash('sha256', json_encode($rawPayload, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
 
@@ -161,6 +164,10 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
 
         if (($installment['is_last'] ?? false) === true) {
             $stats['last_installments']++;
+        }
+
+        if ($isEstimated) {
+            $stats['estimated_entries']++;
         }
 
         if ($paymentMarker !== '' && normalizeText($paymentMarker) === 'OK') {
@@ -185,6 +192,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
             'installment_current' => $installment['current'] ?? null,
             'installment_total' => $installment['total'] ?? null,
             'is_last_installment' => ($installment['is_last'] ?? false) ? 1 : 0,
+            'is_estimated' => $isEstimated ? 1 : 0,
             'raw_payload' => $rawPayload,
         ];
         $stats['entries_importable']++;
@@ -237,6 +245,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
             'installment_current' => null,
             'installment_total' => null,
             'is_last_installment' => 0,
+            'is_estimated' => 0,
             'raw_payload' => $rawPayload,
         ];
         $stats['income_importable']++;
@@ -271,6 +280,7 @@ echo "Extrato Karina importavel: {$stats['karina_entries_importable']}\n";
 echo "Fornecedores pendentes: {$stats['vendor_pending']}\n";
 echo "Categorias pendentes: {$stats['category_pending']}\n";
 echo "Últimas parcelas: {$stats['last_installments']}\n\n";
+echo "Lançamentos estimados: {$stats['estimated_entries']}\n\n";
 printPending('Top fornecedores pendentes', $pendingVendors, $limit);
 printPending('Top categorias/REF pendentes', $pendingCategories, $limit);
 printIncomePreview($incomePreview);
@@ -311,11 +321,11 @@ try {
     $entryStatement = $pdo->prepare(
         'INSERT INTO entries
             (category_id, vendor_id, entry_date, due_date, competence_month, type, description, amount, status,
-             modality, legacy_reference, installment_current, installment_total, is_last_installment,
+             modality, legacy_reference, installment_current, installment_total, is_last_installment, is_estimated,
              source_system, source_key, source_hash, imported_at)
          VALUES
             (:category_id, :vendor_id, :entry_date, NULL, :competence_month, :type, :description, :amount, :status,
-             :modality, :legacy_reference, :installment_current, :installment_total, :is_last_installment,
+             :modality, :legacy_reference, :installment_current, :installment_total, :is_last_installment, :is_estimated,
              "spreadsheet", :source_key, :source_hash, NOW())
          ON DUPLICATE KEY UPDATE
             category_id = VALUES(category_id),
@@ -331,6 +341,7 @@ try {
             installment_current = VALUES(installment_current),
             installment_total = VALUES(installment_total),
             is_last_installment = VALUES(is_last_installment),
+            is_estimated = VALUES(is_estimated),
             source_hash = VALUES(source_hash),
             imported_at = NOW()'
     );
@@ -342,7 +353,7 @@ try {
         'SELECT id FROM entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
     );
     $entryHashStatement = $pdo->prepare(
-        'SELECT source_hash FROM entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
+        'SELECT source_hash, is_estimated FROM entries WHERE source_system = "spreadsheet" AND source_key = :source_key LIMIT 1'
     );
     $karinaStatement = $pdo->prepare(
         'INSERT INTO karina_statement_entries
@@ -400,11 +411,11 @@ try {
 
     foreach ($rows as $row) {
         $entryHashStatement->execute(['source_key' => $row['source_key']]);
-        $existingHash = $entryHashStatement->fetchColumn();
+        $existingEntry = $entryHashStatement->fetch(PDO::FETCH_ASSOC);
 
-        if ($existingHash === false) {
+        if ($existingEntry === false) {
             $stats['entries_new']++;
-        } elseif ((string) $existingHash !== $row['source_hash']) {
+        } elseif ((string) $existingEntry['source_hash'] !== $row['source_hash'] || (int) $existingEntry['is_estimated'] !== (int) $row['is_estimated']) {
             $stats['entries_changed']++;
         } else {
             $stats['entries_unchanged']++;
@@ -427,6 +438,7 @@ try {
             'installment_current' => $row['installment_current'],
             'installment_total' => $row['installment_total'],
             'is_last_installment' => $row['is_last_installment'],
+            'is_estimated' => $row['is_estimated'],
             'source_key' => $row['source_key'],
             'source_hash' => $row['source_hash'],
         ]);
@@ -1090,6 +1102,16 @@ function paymentStatus(DateTimeImmutable $reference, DateTimeImmutable $currentM
     }
 
     return $reference < $currentMonth ? 'paid' : 'open';
+}
+
+function isEstimatedEntry(string $description, string $category, string $observation, string $modality, string $paymentMarker): bool
+{
+    $haystack = normalizeText($description . ' ' . $category . ' ' . $observation . ' ' . $modality . ' ' . $paymentMarker);
+
+    return str_contains($haystack, 'ESTIMATIVA')
+        || str_contains($haystack, 'ESTIMADO')
+        || str_contains($haystack, 'PREVISAO')
+        || str_contains($haystack, 'PREVISTO');
 }
 
 function detectIncomeRows(Worksheet $worksheet, array $classification): array

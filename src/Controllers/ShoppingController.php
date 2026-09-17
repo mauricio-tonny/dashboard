@@ -382,7 +382,7 @@ final class ShoppingController extends Controller
         }
 
         if ($listId <= 0 || !is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            $this->flash('error', 'Selecione um arquivo valido de NFC-e/NF-e.');
+            $this->flash('error', 'Selecione um arquivo válido de NFC-e/NF-e.');
             return Response::redirect('/shopping/market?market_list_id=' . $listId);
         }
 

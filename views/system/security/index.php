@@ -11,7 +11,7 @@ ob_start();
         <div>
             <span class="badge">Sistema</span>
             <h1>Segurança e Analytics</h1>
-            <p class="muted">Controle protecoes de login, rastreamento GA4 e recursos para auditoria do dashboard.</p>
+            <p class="muted">Controle proteções de login, rastreamento GA4 e recursos para auditoria do dashboard.</p>
         </div>
     </div>
 </section>
@@ -86,10 +86,10 @@ ob_start();
         <h2 class="section-title"><span class="bi bi-door-closed"></span>Controles ativos</h2>
         <div class="soft-panel">
             <strong>Sessão e login</strong>
-            <p class="muted">O sistema ja bloqueia sessoes simultaneas, redireciona por inatividade e limita tentativas excessivas de login por IP/e-mail.</p>
+            <p class="muted">O sistema já bloqueia sessões simultâneas, redireciona por inatividade e limita tentativas excessivas de login por IP/e-mail.</p>
         </div>
         <div class="form-actions">
-            <button type="submit"><span class="bi bi-save"></span>Salvar configuracao</button>
+            <button type="submit"><span class="bi bi-save"></span>Salvar configuração</button>
         </div>
     </section>
 </form>

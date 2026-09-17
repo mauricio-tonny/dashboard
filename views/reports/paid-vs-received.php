@@ -13,9 +13,9 @@ ob_start();
     <div class="page-hero-content">
         <span class="page-hero-icon bi bi-columns-gap"></span>
         <div>
-            <span class="badge">Relatorios</span>
+            <span class="badge">Relatórios</span>
             <h1>Pago x recebido</h1>
-            <p class="muted">Comparativo mensal de entradas e saidas em <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
+            <p class="muted">Comparativo mensal de entradas e saídas em <?= htmlspecialchars($periodLabel, ENT_QUOTES, 'UTF-8') ?>.</p>
         </div>
     </div>
     <div class="hero-actions">
@@ -32,9 +32,9 @@ require base_path('views/reports/_finance_filters.php');
 
 <section class="card section-card">
     <h2 class="section-title"><span class="bi bi-columns-gap"></span>Comparativo mensal</h2>
-    <p class="muted">O modulo Recebido vai alimentar melhor este relatorio nas proximas etapas.</p>
+    <p class="muted">O módulo Recebido vai alimentar melhor este relatório nas próximas etapas.</p>
     <?php if ($paidVsReceivedRows === []): ?>
-        <p class="muted">Sem dados financeiros no periodo.</p>
+        <p class="muted">Sem dados financeiros no período.</p>
     <?php else: ?>
         <div class="paired-bar-chart">
             <?php foreach ($paidVsReceivedRows as $row): ?>
@@ -49,7 +49,7 @@ require base_path('views/reports/_finance_filters.php');
                     </div>
                     <strong><?= htmlspecialchars($formatMonth($row['month_key']), ENT_QUOTES, 'UTF-8') ?></strong>
                     <small>Recebido <?= $formatMoney($row['income_amount']) ?></small>
-                    <small>Saida <?= $formatMoney($row['expense_amount']) ?></small>
+                    <small>Saída <?= $formatMoney($row['expense_amount']) ?></small>
                 </div>
             <?php endforeach; ?>
         </div>
@@ -57,7 +57,7 @@ require base_path('views/reports/_finance_filters.php');
             <table>
                 <thead>
                     <tr>
-                        <th>Mes</th>
+                        <th>Mês</th>
                         <th>Recebido</th>
                         <th>Despesas</th>
                         <th>Pago</th>

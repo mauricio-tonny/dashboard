@@ -187,7 +187,7 @@ $renderItem = static function (array $item) use (
                             <input type="hidden" name="id" value="<?= (int) $item['id'] ?>">
                             <input type="hidden" name="type" value="<?= htmlspecialchars($type, ENT_QUOTES, 'UTF-8') ?>">
                             <input type="hidden" name="purchased" value="1">
-                            <p class="muted">Informe quando e por quanto o item foi comprado para manter o historico correto.</p>
+                            <p class="muted">Informe quando e por quanto o item foi comprado para manter o histórico correto.</p>
                             <label>
                                 Data da compra
                                 <input type="date" name="purchased_at" value="<?= htmlspecialchars($todayInput, ENT_QUOTES, 'UTF-8') ?>" required>

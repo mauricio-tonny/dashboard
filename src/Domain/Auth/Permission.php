@@ -13,6 +13,7 @@ enum Permission: string
     case VIEW_CATEGORY_CHART_REPORT = 'view_category_chart_report';
     case VIEW_VENDOR_REPORT = 'view_vendor_report';
     case VIEW_PAID_VS_RECEIVED_REPORT = 'view_paid_vs_received_report';
+    case VIEW_FINANCIAL_PLAN_REPORT = 'view_financial_plan_report';
     case VIEW_CASHFLOW_REPORT = 'view_cashflow_report';
     case VIEW_KARINA_STATEMENT_REPORT = 'view_karina_statement_report';
     case VIEW_MARKET_REPORT = 'view_market_report';
@@ -40,5 +41,7 @@ enum Permission: string
     case MANAGE_DISCORD_NOTIFICATIONS = 'manage_discord_notifications';
     case MANAGE_SPREADSHEET_URL = 'manage_spreadsheet_url';
     case MANAGE_CATEGORY_BUDGET_TARGETS = 'manage_category_budget_targets';
+    case MANAGE_FAMILY_PROFILE = 'manage_family_profile';
+    case MANAGE_FINANCIAL_GOALS = 'manage_financial_goals';
     case MANAGE_SECURITY_SETTINGS = 'manage_security_settings';
 }

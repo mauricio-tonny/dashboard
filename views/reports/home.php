@@ -1,14 +1,14 @@
 <?php
-$title = 'Relatorios';
+$title = 'Relatórios';
 ob_start();
 ?>
 <section class="page-hero">
     <div class="page-hero-content">
         <span class="page-hero-icon bi bi-bar-chart-line"></span>
         <div>
-            <span class="badge">Relatorios</span>
-            <h1>Central de relatorios</h1>
-            <p class="muted">Escolha o relatorio que deseja analisar. Cada area tem filtros proprios para manter a consulta mais leve.</p>
+            <span class="badge">Relatórios</span>
+            <h1>Central de relatórios</h1>
+            <p class="muted">Escolha o relatório que deseja analisar. Cada área tem filtros próprios para manter a consulta mais leve.</p>
         </div>
     </div>
 </section>
@@ -18,35 +18,35 @@ ob_start();
         <a class="module-card" href="/reports/categories">
             <span class="bi bi-tags"></span>
             <strong>Por categoria</strong>
-            <p class="muted">Lista despesas por categoria e periodo, com fornecedor, parcela, status e valor.</p>
+            <p class="muted">Lista despesas por categoria e período, com fornecedor, parcela, status e valor.</p>
         </a>
     <?php endif; ?>
     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CATEGORY_CHART_REPORT)): ?>
         <a class="module-card" href="/reports/category-chart">
             <span class="bi bi-bar-chart"></span>
-            <strong>Grafico por categoria</strong>
-            <p class="muted">Compara categorias em barras verticais para leitura rapida dos maiores grupos.</p>
+            <strong>Gráfico por categoria</strong>
+            <p class="muted">Compara categorias em barras verticais para leitura rápida dos maiores grupos.</p>
         </a>
     <?php endif; ?>
     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_VENDOR_REPORT)): ?>
         <a class="module-card" href="/reports/vendors">
             <span class="bi bi-person-lines-fill"></span>
             <strong>Por fornecedor</strong>
-            <p class="muted">Agrupa despesas por fornecedor para identificar concentracao de gastos.</p>
+            <p class="muted">Agrupa despesas por fornecedor para identificar concentração de gastos.</p>
         </a>
     <?php endif; ?>
     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_PAID_VS_RECEIVED_REPORT)): ?>
         <a class="module-card" href="/reports/paid-vs-received">
             <span class="bi bi-columns-gap"></span>
             <strong>Pago x recebido</strong>
-            <p class="muted">Cruza entradas e saidas por periodo, com grafico de barras e tabela mensal.</p>
+            <p class="muted">Cruza entradas e saídas por período, com gráfico de barras e tabela mensal.</p>
         </a>
     <?php endif; ?>
     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_CASHFLOW_REPORT)): ?>
         <a class="module-card" href="/reports/cashflow">
             <span class="bi bi-receipt-cutoff"></span>
             <strong>Fluxo de caixa</strong>
-            <p class="muted">Modelo extrato com entradas, saidas e saldo acumulado do periodo.</p>
+            <p class="muted">Modelo extrato com entradas, saídas e saldo acumulado do período.</p>
         </a>
     <?php endif; ?>
     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_KARINA_STATEMENT_REPORT)): ?>
@@ -60,7 +60,7 @@ ob_start();
         <a class="module-card" href="/reports/market">
             <span class="bi bi-basket2"></span>
             <strong>Mercado</strong>
-            <p class="muted">Compare os totais de compras de mercado por periodo, com grafico e tabela mensal.</p>
+            <p class="muted">Compare os totais de compras de mercado por período, com gráfico e tabela mensal.</p>
         </a>
     <?php endif; ?>
 </section>

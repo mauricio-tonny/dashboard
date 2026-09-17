@@ -98,6 +98,65 @@ CREATE TABLE IF NOT EXISTS category_budget_settings (
     CONSTRAINT fk_category_budget_settings_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS family_profile_settings (
+    id TINYINT UNSIGNED PRIMARY KEY DEFAULT 1,
+    region ENUM('brasil', 'norte', 'nordeste', 'sudeste', 'sul', 'centro_oeste') NOT NULL DEFAULT 'brasil',
+    residence_area ENUM('urban', 'rural') NOT NULL DEFAULT 'urban',
+    notes VARCHAR(255) NULL,
+    updated_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_family_profile_settings_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS family_members (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    sex ENUM('female', 'male', 'other') NOT NULL DEFAULT 'other',
+    birth_date DATE NULL,
+    role VARCHAR(80) NULL,
+    income_weight DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_family_members_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS family_pets (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    type VARCHAR(80) NOT NULL,
+    birth_date DATE NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_family_pets_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS financial_goals (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(160) NOT NULL,
+    goal_type ENUM('emergency_reserve', 'home_down_payment', 'investment', 'debt_payoff', 'other') NOT NULL DEFAULT 'other',
+    start_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    current_amount DECIMAL(14,2) NOT NULL DEFAULT 0.00,
+    target_amount DECIMAL(14,2) NOT NULL,
+    start_date DATE NOT NULL,
+    target_date DATE NOT NULL,
+    priority_weight TINYINT UNSIGNED NOT NULL DEFAULT 5,
+    notes VARCHAR(255) NULL,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    updated_by_user_id BIGINT UNSIGNED NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_financial_goals_active_target (is_active, target_date),
+    INDEX idx_financial_goals_type (goal_type),
+    CONSTRAINT fk_financial_goals_created_by FOREIGN KEY (created_by_user_id) REFERENCES users(id),
+    CONSTRAINT fk_financial_goals_updated_by FOREIGN KEY (updated_by_user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS vendors (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(160) NOT NULL,
@@ -139,6 +198,7 @@ CREATE TABLE IF NOT EXISTS entries (
     installment_current SMALLINT UNSIGNED NULL,
     installment_total SMALLINT UNSIGNED NULL,
     is_last_installment TINYINT(1) NOT NULL DEFAULT 0,
+    is_estimated TINYINT(1) NOT NULL DEFAULT 0,
     source_system VARCHAR(30) NOT NULL DEFAULT 'spreadsheet',
     source_key VARCHAR(190) NOT NULL,
     source_hash CHAR(64) NOT NULL,
