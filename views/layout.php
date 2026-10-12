@@ -2639,6 +2639,7 @@
                         || $user->can(\App\Domain\Auth\Permission::VIEW_VENDOR_REPORT)
                         || $user->can(\App\Domain\Auth\Permission::VIEW_PAID_VS_RECEIVED_REPORT)
                         || $user->can(\App\Domain\Auth\Permission::VIEW_CASHFLOW_REPORT)
+                        || $user->can(\App\Domain\Auth\Permission::VIEW_MODALITY_REPORT)
                         || $user->can(\App\Domain\Auth\Permission::VIEW_KARINA_STATEMENT_REPORT)
                         || $user->can(\App\Domain\Auth\Permission::VIEW_MARKET_REPORT)
                     ): ?>

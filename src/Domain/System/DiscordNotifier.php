@@ -42,7 +42,7 @@ final class DiscordNotifier
         ]);
     }
 
-    public function spreadsheetImportChanged(int $processedEntries, int $newEntries, int $changedEntries): void
+    public function spreadsheetImportChanged(int $processedEntries, int $newEntries, int $changedEntries, int $removedEntries = 0): void
     {
         $settings = $this->repository->settings();
 
@@ -59,9 +59,15 @@ final class DiscordNotifier
             return;
         }
 
+        $message = "Importação automática da planilha concluída com alterações: {$processedEntries} lançamentos conferidos, {$newEntries} novos e {$changedEntries} atualizados.";
+
+        if ($removedEntries > 0) {
+            $message .= " {$removedEntries} removidos.";
+        }
+
         $this->send($webhookUrl, [
             'username' => 'Dashboard Oficina do DEV',
-            'content' => "Importação automática da planilha concluída com alterações: {$processedEntries} lançamentos conferidos, {$newEntries} novos e {$changedEntries} atualizados.",
+            'content' => $message,
         ]);
     }
 

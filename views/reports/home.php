@@ -49,6 +49,13 @@ ob_start();
             <p class="muted">Modelo extrato com entradas, saídas e saldo acumulado do período.</p>
         </a>
     <?php endif; ?>
+    <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_MODALITY_REPORT)): ?>
+        <a class="module-card" href="/reports/modality">
+            <span class="bi bi-credit-card-2-front"></span>
+            <strong>Por modalidade</strong>
+            <p class="muted">Compara despesas à vista, parceladas, últimas parcelas e recorrentes por período.</p>
+        </a>
+    <?php endif; ?>
     <?php if ($user->can(\App\Domain\Auth\Permission::VIEW_KARINA_STATEMENT_REPORT)): ?>
         <a class="module-card" href="/reports/karina-statement">
             <span class="bi bi-arrow-left-right"></span>

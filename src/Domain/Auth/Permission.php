@@ -15,6 +15,7 @@ enum Permission: string
     case VIEW_PAID_VS_RECEIVED_REPORT = 'view_paid_vs_received_report';
     case VIEW_FINANCIAL_PLAN_REPORT = 'view_financial_plan_report';
     case VIEW_CASHFLOW_REPORT = 'view_cashflow_report';
+    case VIEW_MODALITY_REPORT = 'view_modality_report';
     case VIEW_KARINA_STATEMENT_REPORT = 'view_karina_statement_report';
     case VIEW_MARKET_REPORT = 'view_market_report';
 

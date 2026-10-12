@@ -90,17 +90,20 @@ final class ImportSpreadsheetTask implements ScheduledTask
         $processedEntries = $this->extractOutputInt($output, 'Lancamentos processados');
         $newEntries = $this->extractOutputInt($output, 'Lancamentos novos');
         $changedEntries = $this->extractOutputInt($output, 'Lancamentos alterados');
+        $removedEntries = $this->extractOutputInt($output, 'Lancamentos removidos') ?? 0;
         $importedEntries = $this->extractImportedEntries($output);
         $metadata['entries_processed'] = $processedEntries;
         $metadata['entries_new'] = $newEntries;
         $metadata['entries_changed'] = $changedEntries;
+        $metadata['entries_removed'] = $removedEntries;
         $metadata['entries_persisted'] = $importedEntries;
 
-        if (($importedEntries ?? 0) > 0) {
+        if (($importedEntries ?? 0) > 0 || $removedEntries > 0) {
             $this->discordNotifier->spreadsheetImportChanged(
                 $processedEntries ?? $importedEntries,
                 $newEntries ?? 0,
-                $changedEntries ?? 0
+                $changedEntries ?? 0,
+                $removedEntries
             );
         } else {
             $this->discordNotifier->spreadsheetImportUnchanged($processedEntries ?? 0);
@@ -108,7 +111,7 @@ final class ImportSpreadsheetTask implements ScheduledTask
 
         $message = $importedEntries === null
             ? 'Planilha importada pelo scheduler.'
-            : "Planilha importada pelo scheduler: {$importedEntries} lançamentos gravados/atualizados.";
+            : "Planilha importada pelo scheduler: {$importedEntries} lançamentos gravados/atualizados." . ($removedEntries > 0 ? " {$removedEntries} removidos." : '');
 
         return ScheduledTaskResult::success($message, $metadata);
     }

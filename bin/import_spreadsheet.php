@@ -75,6 +75,7 @@ $stats = [
     'entries_new' => 0,
     'entries_changed' => 0,
     'entries_unchanged' => 0,
+    'entries_stale_removed' => 0,
     'payment_marked_ok' => 0,
     'monthly_sheets' => 0,
     'income_missing' => 0,
@@ -92,6 +93,7 @@ $pendingCategories = [];
 $incomePreview = [];
 $missingIncomeSheets = [];
 $incomePartCleanup = [];
+$spreadsheetSourceScopes = [];
 $karinaRows = [];
 
 foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
@@ -107,6 +109,8 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
     }
 
     $stats['monthly_sheets']++;
+    $sourceScope = 'spreadsheet:' . $worksheet->getTitle() . ':';
+    $spreadsheetSourceScopes[$sourceScope] ??= [];
     $columns = detectMonthlyColumns($worksheet, $classification['columns']);
     $highestRow = $worksheet->getHighestDataRow();
 
@@ -131,6 +135,7 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         $category = normalizeCategory($rawCategory, $description, $base);
         $installment = parseInstallment($description, $modality);
         $sourceKey = 'spreadsheet:' . $worksheet->getTitle() . ':row:' . $row;
+        $spreadsheetSourceScopes[$sourceScope][$sourceKey] = true;
         $rawPayload = [
             'sheet' => $worksheet->getTitle(),
             'row' => $row,
@@ -209,6 +214,9 @@ foreach ($spreadsheet->getWorksheetIterator() as $worksheet) {
         $stats['income_seen']++;
         $sourceKeyBase = 'spreadsheet:' . $worksheet->getTitle() . ':income:' . $income['label_cell'];
         $sourceKey = $sourceKeyBase . ($income['source_suffix'] ?? '');
+        $sourceScope = 'spreadsheet:' . $worksheet->getTitle() . ':';
+        $spreadsheetSourceScopes[$sourceScope] ??= [];
+        $spreadsheetSourceScopes[$sourceScope][$sourceKey] = true;
         $incomePartCleanup[$sourceKeyBase][] = $sourceKey;
         $stats['income_formula_parts'] += (($income['formula_part_count'] ?? 1) > 1 && ($income['source_suffix'] ?? '') === '') ? 1 : 0;
         $stats['income_formula_extra_parts'] += ($income['source_suffix'] ?? '') !== '' ? 1 : 0;
@@ -390,6 +398,12 @@ try {
     $deleteEntryStatement = $pdo->prepare(
         'DELETE FROM entries WHERE id = :entry_id'
     );
+    $staleEntryStatement = $pdo->prepare(
+        'SELECT id, source_key
+         FROM entries
+         WHERE source_system = "spreadsheet"
+           AND source_key LIKE :source_key_pattern'
+    );
     $persistedEntries = 0;
     $karinaPersistedEntries = 0;
 
@@ -454,6 +468,22 @@ try {
         $persistedEntries++;
     }
 
+    foreach ($spreadsheetSourceScopes as $sourceScope => $activeSourceKeys) {
+        $staleEntryStatement->execute([
+            'source_key_pattern' => escapeLike($sourceScope) . '%',
+        ]);
+
+        foreach ($staleEntryStatement->fetchAll(PDO::FETCH_ASSOC) as $staleEntry) {
+            if (isset($activeSourceKeys[(string) $staleEntry['source_key']])) {
+                continue;
+            }
+
+            $deleteEntrySourcesStatement->execute(['entry_id' => (int) $staleEntry['id']]);
+            $deleteEntryStatement->execute(['entry_id' => (int) $staleEntry['id']]);
+            $stats['entries_stale_removed']++;
+        }
+    }
+
     foreach ($karinaRows as $row) {
         $karinaHashStatement->execute(['source_key' => $row['source_key']]);
         $existingHash = $karinaHashStatement->fetchColumn();
@@ -492,6 +522,7 @@ try {
     echo "Lancamentos novos: {$stats['entries_new']}\n";
     echo "Lancamentos alterados: {$stats['entries_changed']}\n";
     echo "Lancamentos inalterados: {$stats['entries_unchanged']}\n";
+    echo "Lancamentos removidos: {$stats['entries_stale_removed']}\n";
     echo "Recebidos extras removidos: {$stats['income_stale_parts_removed']}\n";
     echo "Lancamentos financeiros gravados/atualizados: {$persistedEntries}\n";
     echo "Extrato Karina novos: {$stats['karina_entries_new']}\n";

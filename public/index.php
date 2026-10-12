@@ -198,6 +198,7 @@ $router->get('/reports/vendors', [ReportController::class, 'vendors']);
 $router->get('/reports/paid-vs-received', [ReportController::class, 'paidVsReceived']);
 $router->get('/reports/financial-plan', [ReportController::class, 'financialPlan']);
 $router->get('/reports/cashflow', [ReportController::class, 'cashflow']);
+$router->get('/reports/modality', [ReportController::class, 'modality']);
 $router->get('/reports/karina-statement', [ReportController::class, 'karinaStatement']);
 $router->get('/reports/market', [ReportController::class, 'market']);
 $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']);
@@ -278,6 +279,7 @@ function auditPageUsage(Request $request, \App\Core\Response $response, AuthServ
         '/reports/paid-vs-received' => 'Relatorio Pago x Recebido',
         '/reports/financial-plan' => 'Financeiro - plano financeiro',
         '/reports/cashflow' => 'Relatorio Fluxo de Caixa',
+        '/reports/modality' => 'Relatório por modalidade',
         '/reports/market' => 'Relatorio de Mercado',
         '/system/backup' => 'Sistema - backup',
         '/system/sync' => 'Sistema - sincronizacao',

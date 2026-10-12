@@ -135,6 +135,23 @@ final class ReportController extends Controller
         ]);
     }
 
+    public function modality(Request $request): Response
+    {
+        $auth = $this->authorize(Permission::VIEW_MODALITY_REPORT);
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $context = $this->financeReportContext($request);
+        $context['modalitySummary'] = $this->app->make(FinanceEntryRepository::class)->expensesByModality($context['startDate'], $context['endDate']);
+
+        return Response::view('reports/modality', [
+            'user' => $auth->user(),
+            ...$context,
+        ]);
+    }
+
     public function karinaStatement(Request $request): Response
     {
         $auth = $this->authorize(Permission::VIEW_KARINA_STATEMENT_REPORT);
@@ -279,6 +296,7 @@ final class ReportController extends Controller
             Permission::VIEW_PAID_VS_RECEIVED_REPORT,
             Permission::VIEW_FINANCIAL_PLAN_REPORT,
             Permission::VIEW_CASHFLOW_REPORT,
+            Permission::VIEW_MODALITY_REPORT,
             Permission::VIEW_KARINA_STATEMENT_REPORT,
             Permission::VIEW_MARKET_REPORT,
         ];

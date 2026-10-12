@@ -516,6 +516,73 @@ final class FinanceEntryRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * Compares expense modalities without relying on the exact spreadsheet label.
+     * Installment metadata has precedence over free-text modality labels.
+     */
+    public function expensesByModality(string $startDate, string $endDate): array
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT amount, status, modality, installment_current, installment_total, is_last_installment
+             FROM entries
+             WHERE type = "expense"
+               AND entry_date BETWEEN :start_date AND :end_date'
+        );
+        $statement->execute([
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+        ]);
+
+        $buckets = [
+            'avista' => ['label' => 'À vista', 'total_amount' => 0.0, 'paid_amount' => 0.0, 'open_amount' => 0.0, 'entries_count' => 0],
+            'parcelado' => ['label' => 'Parcelado', 'total_amount' => 0.0, 'paid_amount' => 0.0, 'open_amount' => 0.0, 'entries_count' => 0],
+            'ultima_parcela' => ['label' => 'Última parcela', 'total_amount' => 0.0, 'paid_amount' => 0.0, 'open_amount' => 0.0, 'entries_count' => 0],
+            'recorrente' => ['label' => 'Recorrente', 'total_amount' => 0.0, 'paid_amount' => 0.0, 'open_amount' => 0.0, 'entries_count' => 0],
+            'sem_modalidade' => ['label' => 'Não identificada', 'total_amount' => 0.0, 'paid_amount' => 0.0, 'open_amount' => 0.0, 'entries_count' => 0],
+        ];
+
+        foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $key = $this->modalityBucket($row);
+            $amount = (float) ($row['amount'] ?? 0);
+            $buckets[$key]['total_amount'] += $amount;
+            $buckets[$key]['entries_count']++;
+
+            if ((string) ($row['status'] ?? '') === 'paid') {
+                $buckets[$key]['paid_amount'] += $amount;
+            } else {
+                $buckets[$key]['open_amount'] += $amount;
+            }
+        }
+
+        return array_values(array_filter($buckets, static fn (array $row): bool => $row['entries_count'] > 0));
+    }
+
+    private function modalityBucket(array $row): string
+    {
+        $modality = mb_strtoupper(trim((string) ($row['modality'] ?? '')), 'UTF-8');
+        $modality = strtr($modality, ['Á' => 'A', 'À' => 'A', 'Ã' => 'A', 'Â' => 'A', 'É' => 'E', 'Ê' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ú' => 'U', 'Ç' => 'C']);
+        $current = (int) ($row['installment_current'] ?? 0);
+        $total = (int) ($row['installment_total'] ?? 0);
+
+        if ((int) ($row['is_last_installment'] ?? 0) === 1 || str_contains($modality, 'ULTIMA PARC')) {
+            return 'ultima_parcela';
+        }
+
+        if (str_contains($modality, 'RECORRENTE')) {
+            return 'recorrente';
+        }
+
+        if ($total > 1 || $current > 0 || str_contains($modality, 'PARCEL')) {
+            return 'parcelado';
+        }
+
+        if (str_contains($modality, 'VISTA')) {
+            return 'avista';
+        }
+
+        return 'sem_modalidade';
+    }
+
 
     public function paidVsReceivedByMonth(string $startDate, string $endDate): array
     {
