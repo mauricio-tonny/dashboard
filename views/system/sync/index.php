@@ -47,6 +47,9 @@ $formatStatus = static fn (?string $status): string => match ($status) {
 };
 $formatWindowsStatus = static fn (?string $status): string => match ($status) {
     'uploaded' => 'Arquivo enviado',
+    'downloaded' => 'Arquivo baixado',
+    'conflict' => 'Conflito',
+    'locked' => 'Arquivo em uso',
     'unchanged' => 'Sem alterações',
     'failed' => 'Falha',
     'skipped' => 'Ignorada',
@@ -59,7 +62,9 @@ $statusClass = static fn (?string $status): string => match ($status) {
     default => '',
 };
 $windowsStatusClass = static fn (?string $status): string => match ($status) {
-    'uploaded', 'unchanged' => 'notice-success',
+    'uploaded', 'downloaded', 'unchanged' => 'notice-success',
+    'conflict' => 'notice-warning',
+    'locked' => 'notice-warning',
     'failed' => 'notice-error',
     'skipped' => 'notice-warning',
     default => '',
@@ -96,7 +101,7 @@ if ($fileReceivedAt !== null && $lastImportAt !== null) {
     $diffMinutes = (int) floor(abs($lastImportAt->getTimestamp() - $fileReceivedAt->getTimestamp()) / 60);
     $flowDelayText = $diffMinutes < 1 ? 'menos de 1 minuto' : $diffMinutes . ' minuto(s)';
 }
-$windowsStepComplete = in_array($windowsStatus, ['uploaded', 'unchanged'], true) || ($lastWindowsEvent === null && $fileExists);
+$windowsStepComplete = in_array($windowsStatus, ['uploaded', 'downloaded', 'unchanged'], true) || ($lastWindowsEvent === null && $fileExists);
 $windowsStepTitle = $lastWindowsEvent === null
     ? ($fileExists ? 'Arquivo disponível' : 'Sem evento registrado')
     : $formatWindowsStatus($windowsStatus);
@@ -272,10 +277,19 @@ ob_start();
 <?php if ($canRunManualSync): ?>
     <section class="card section-card">
         <h2 class="section-title"><span class="bi bi-play-circle"></span>Sincronização manual</h2>
-        <p class="muted">Use esta ação quando quiser importar a planilha imediatamente. A execução manual ignora a janela configurada, mas respeita o bloqueio contra execuções simultâneas.</p>
+        <p class="muted">Use esta ação para buscar a planilha do servidor e atualizar o sistema imediatamente. Ela não envia alterações do sistema para a planilha.</p>
         <form method="post" action="/system/sync/run" onsubmit="return confirm('Confirmar sincronização manual da planilha agora?');">
             <input type="hidden" name="confirm_manual_sync" value="1">
-            <button type="submit"><span class="bi bi-arrow-repeat"></span>Executar sincronização agora</button>
+            <button type="submit"><span class="bi bi-download"></span>Buscar planilha agora</button>
+        </form>
+    </section>
+    <section class="card section-card">
+        <h2 class="section-title"><span class="bi bi-upload"></span>Enviar alterações para a planilha</h2>
+        <p class="muted">Esta ação publica na planilha as alterações feitas no sistema. Use somente quando quiser enviar a fila pendente.</p>
+        <p><strong><?= count($pendingWritebacks ?? []) ?></strong> alteração(ões) aguardando envio.</p>
+        <form method="post" action="/system/sync/writeback" onsubmit="return confirm('Confirmar o envio das alterações pendentes para a planilha?');">
+            <input type="hidden" name="confirm_writeback" value="1">
+            <button type="submit" <?= empty($pendingWritebacks ?? []) ? 'disabled' : '' ?>><span class="bi bi-upload"></span>Enviar alterações agora</button>
         </form>
     </section>
 <?php endif; ?>

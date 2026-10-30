@@ -416,7 +416,10 @@ ob_start();
                         <strong><?= htmlspecialchars($invoice['original_name'], ENT_QUOTES, 'UTF-8') ?></strong>
                         <div class="market-item-meta invoice-meta">
                             <span class="market-meta-chip"><?= ((int) $invoice['file_size']) > 0 ? number_format(((int) $invoice['file_size']) / 1024, 1, ',', '.') . ' KB' : 'Arquivo sem tamanho informado' ?></span>
-                            <span class="market-meta-chip">Compra <?= htmlspecialchars($formatDateTime($invoice['purchase_date'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
+                            <span class="market-meta-chip">Emissão <?= htmlspecialchars($formatDateTime($invoice['purchase_date'] ?? null), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php if (!empty($invoice['document_number'])): ?>
+                                <span class="market-meta-chip">Nota nº <?= htmlspecialchars((string) $invoice['document_number'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php endif; ?>
                             <?php if (!empty($invoice['access_key'])): ?>
                                 <span class="market-meta-chip">Chave <?= htmlspecialchars($formatAccessKey($invoice['access_key'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                             <?php endif; ?>
@@ -430,6 +433,12 @@ ob_start();
                                 <a href="/shopping/market/invoices/download?id=<?= (int) $invoice['id'] ?>">
                                     <button class="inline-button button-light" type="button"><span class="bi bi-download"></span>Baixar arquivo</button>
                                 </a>
+                                <?php if ($canManageShopping && !$isFinished && ($invoice['status'] ?? '') === 'stored' && in_array(strtolower(pathinfo((string) $invoice['stored_name'], PATHINFO_EXTENSION)), ['pdf', 'xml'], true)): ?>
+                                    <form method="post" action="/shopping/market/invoices/retry">
+                                        <input type="hidden" name="id" value="<?= (int) $invoice['id'] ?>">
+                                        <button class="inline-button" type="submit"><span class="bi bi-arrow-repeat"></span>Tentar importar novamente</button>
+                                    </form>
+                                <?php endif; ?>
                             </div>
                         <?php endif; ?>
                     <?php endif; ?>

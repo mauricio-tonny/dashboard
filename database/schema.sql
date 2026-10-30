@@ -226,6 +226,21 @@ CREATE TABLE IF NOT EXISTS entry_sources (
     CONSTRAINT fk_entry_sources_import_run FOREIGN KEY (import_run_id) REFERENCES import_runs(id)
 );
 
+CREATE TABLE IF NOT EXISTS spreadsheet_writebacks (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    operation VARCHAR(20) NOT NULL DEFAULT 'create',
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    payload JSON NOT NULL,
+    base_file_hash CHAR(64) NULL,
+    created_by_user_id BIGINT UNSIGNED NULL,
+    applied_at DATETIME NULL,
+    error_message VARCHAR(500) NULL,
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_spreadsheet_writebacks_status (status, created_at),
+    CONSTRAINT fk_spreadsheet_writebacks_user FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS karina_statement_entries (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id BIGINT UNSIGNED NULL,
@@ -328,6 +343,7 @@ CREATE TABLE IF NOT EXISTS shopping_market_invoices (
     stored_name VARCHAR(255) NOT NULL,
     mime_type VARCHAR(120) NOT NULL,
     file_size BIGINT UNSIGNED NOT NULL,
+    file_hash CHAR(64) NULL,
     total_amount DECIMAL(14,2) NULL,
     access_key CHAR(44) NULL,
     uf_code CHAR(2) NULL,
@@ -346,6 +362,8 @@ CREATE TABLE IF NOT EXISTS shopping_market_invoices (
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_market_invoices_list (list_id),
     INDEX idx_market_invoices_access_key (access_key),
+    UNIQUE KEY uq_market_invoices_access_key (access_key),
+    UNIQUE KEY uq_market_invoices_file_hash (file_hash),
     CONSTRAINT fk_market_invoices_list FOREIGN KEY (list_id) REFERENCES shopping_market_lists(id),
     CONSTRAINT fk_market_invoices_uploaded_by FOREIGN KEY (uploaded_by_user_id) REFERENCES users(id)
 );

@@ -101,6 +101,9 @@ try {
     ensureColumn($pdo, 'shopping_market_invoices', 'public_url', 'ALTER TABLE shopping_market_invoices ADD COLUMN public_url VARCHAR(500) NULL AFTER check_digit');
     ensureColumn($pdo, 'shopping_market_invoices', 'status', "ALTER TABLE shopping_market_invoices ADD COLUMN status VARCHAR(40) NOT NULL DEFAULT 'stored' AFTER public_url");
     ensureIndex($pdo, 'shopping_market_invoices', 'idx_market_invoices_access_key', 'CREATE INDEX idx_market_invoices_access_key ON shopping_market_invoices (access_key)');
+    ensureColumn($pdo, 'shopping_market_invoices', 'file_hash', 'ALTER TABLE shopping_market_invoices ADD COLUMN file_hash CHAR(64) NULL AFTER file_size');
+    ensureIndex($pdo, 'shopping_market_invoices', 'uq_market_invoices_access_key', 'CREATE UNIQUE INDEX uq_market_invoices_access_key ON shopping_market_invoices (access_key)');
+    ensureIndex($pdo, 'shopping_market_invoices', 'uq_market_invoices_file_hash', 'CREATE UNIQUE INDEX uq_market_invoices_file_hash ON shopping_market_invoices (file_hash)');
     ensureColumn($pdo, 'shopping_market_lists', 'discount_amount', 'ALTER TABLE shopping_market_lists ADD COLUMN discount_amount DECIMAL(14,2) NULL AFTER total_amount');
     ensureColumn($pdo, 'shopping_market_lists', 'purchase_date', 'ALTER TABLE shopping_market_lists ADD COLUMN purchase_date DATETIME NULL AFTER discount_amount');
     ensureColumn($pdo, 'shopping_market_items', 'section_id', 'ALTER TABLE shopping_market_items ADD COLUMN section_id BIGINT UNSIGNED NULL AFTER list_id');
@@ -229,6 +232,21 @@ try {
         INDEX idx_spreadsheet_sync_events_source_time (source, occurred_at),
         INDEX idx_spreadsheet_sync_events_status (status)
     )');
+    $pdo->exec('CREATE TABLE IF NOT EXISTS spreadsheet_writebacks (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        operation VARCHAR(20) NOT NULL DEFAULT \'create\',
+        status VARCHAR(20) NOT NULL DEFAULT \'pending\',
+        payload JSON NOT NULL,
+        base_file_hash CHAR(64) NULL,
+        created_by_user_id BIGINT UNSIGNED NULL,
+        applied_at DATETIME NULL,
+        error_message VARCHAR(500) NULL,
+        created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_spreadsheet_writebacks_status (status, created_at),
+        CONSTRAINT fk_spreadsheet_writebacks_user FOREIGN KEY (created_by_user_id) REFERENCES users(id)
+    )');
+    ensureColumn($pdo, 'spreadsheet_writebacks', 'base_file_hash', 'ALTER TABLE spreadsheet_writebacks ADD COLUMN base_file_hash CHAR(64) NULL AFTER payload');
     $pdo->exec("UPDATE contacts SET is_vendor = 1 WHERE type = 'vendor' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("UPDATE contacts SET is_client = 1 WHERE type = 'client' AND is_vendor = 0 AND is_client = 0");
     $pdo->exec("CREATE TABLE IF NOT EXISTS category_budget_targets (

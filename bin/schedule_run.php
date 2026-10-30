@@ -9,8 +9,11 @@ use App\Domain\System\DiscordNotifier;
 use App\Domain\System\Scheduler;
 use App\Domain\System\SchedulerRepository;
 use App\Domain\System\SpreadsheetSettingsRepository;
+use App\Domain\System\SpreadsheetWritebackProcessor;
+use App\Domain\System\SpreadsheetWritebackRepository;
 use App\Domain\System\Tasks\EnsureNextMarketListTask;
 use App\Domain\System\Tasks\ImportSpreadsheetTask;
+use App\Domain\System\Tasks\SpreadsheetWritebackTask;
 use App\Support\Env;
 
 require_once dirname(__DIR__) . '/src/Support/helpers.php';
@@ -43,13 +46,19 @@ $shoppingRepository = new ShoppingRepository($database);
 $discordNotifier = new DiscordNotifier(new DiscordNotificationRepository($database));
 $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $syncSettings = $spreadsheetSettingsRepository->syncSettings();
+$spreadsheetFile = $_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx';
 $tasks = [
     'market.ensure_next_list' => new EnsureNextMarketListTask($shoppingRepository, $discordNotifier),
 ];
 
 if ((int) ($syncSettings['sync_is_enabled'] ?? 0) === 1) {
     $intervalMinutes = max(5, (int) ($syncSettings['sync_interval_minutes'] ?? 30));
-    $tasks['spreadsheet.import'] = new ImportSpreadsheetTask(dirname(__DIR__), $intervalMinutes, $discordNotifier, $syncSettings);
+    $tasks['spreadsheet.import'] = new ImportSpreadsheetTask(dirname(__DIR__), $intervalMinutes, $discordNotifier, $syncSettings, false);
+    $tasks['spreadsheet.writeback'] = new SpreadsheetWritebackTask(
+        new SpreadsheetWritebackProcessor(new SpreadsheetWritebackRepository($database, $spreadsheetFile), $spreadsheetFile),
+        $intervalMinutes,
+        $syncSettings
+    );
 }
 
 $scheduler = new Scheduler(new SchedulerRepository($database), $tasks);

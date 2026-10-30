@@ -17,9 +17,16 @@ final class MarketInvoicePdfParser
             throw new RuntimeException('nenhum produto encontrado no PDF.');
         }
 
+        $expectedItems = $this->match('/Qtd\.\s*total de itens:\s*(\d+)/iu', $text);
+
+        if ($expectedItems !== null && count($items) !== (int) $expectedItems) {
+            throw new RuntimeException(sprintf('Foram reconhecidos %d dos %d produtos do PDF. A importação foi interrompida para evitar valores incompletos.', count($items), (int) $expectedItems));
+        }
+
         return [
             'access_key' => $this->accessKey($text),
-            'issued_at' => $this->match('/Emiss\S*:\s*([0-9\/:\s-]+)/u', $text),
+            'issued_at' => $this->match('/Emiss\S*:\s*(\d{2}\/\d{2}\/\d{4}(?:\h+\d{2}:\d{2}(?::\d{2})?)?)/iu', $text),
+            'document_number' => $this->match('/N[uú]mero:\s*(\d+)/iu', $text),
             'issuer' => $this->issuer($text),
             'total_amount' => $this->money($this->match('/Valor a pagar R\$:\s*([0-9.,]+)/u', $text))
                 ?? $this->money($this->match('/Valor total R\$:\s*([0-9.,]+)/u', $text)),
@@ -59,15 +66,20 @@ final class MarketInvoicePdfParser
 
     private function items(string $text): array
     {
+        // Browser print headers and footers can interrupt a product across pages.
+        $text = str_replace("\f", "\n", $text);
+        $text = preg_replace('/^\h*https?:\/\/[^\r\n]*$/mu', '', $text) ?? $text;
+        $text = preg_replace('/^\h*\d{2}\/\d{2}\/\d{4},?\h+\d{2}:\d{2}(?::\d{2})?\h+[^\r\n]*DOCUMENTO AUXILIAR[^\r\n]*$/miu', '', $text) ?? $text;
         $items = [];
-        $pattern = '/(?P<name>.+?)\s+\(C[oó]digo:\s*(?P<code>\d+)\s*\)\s*Vl\. Total\s*\n\s*Qtde\.:\s*(?P<quantity>[0-9.,]+)\s*UN:\s*(?P<unit>[A-Z]+)\s*Vl\. Unit\.:\s*(?P<unit_amount>[0-9.,]+)\s+(?P<amount>[0-9.,]+)/u';
+        // PDF layout extraction may place the total before or after quantity/unit price.
+        $pattern = '/(?P<name>.+?)\s+\(C[oó]digo:\s*(?P<code>\d+)\s*\)\s*Vl\. Total\s+(?:(?P<amount_before>[0-9.,]+)\s+)?Qtde\.:\s*(?P<quantity>[0-9.,]+)\s*UN:\s*(?P<unit>[A-Z]+)\s*Vl\. Unit\.:\s*(?P<unit_amount>[0-9.,]+)(?(amount_before)|\s+(?P<amount_after>[0-9.,]+))/u';
 
         preg_match_all($pattern, $text, $matches, PREG_SET_ORDER);
 
         foreach ($matches as $match) {
             $quantity = $this->decimal($match['quantity']);
             $unitAmount = $this->money($match['unit_amount']);
-            $amount = $this->money($match['amount']);
+            $amount = $this->money($match['amount_before'] !== '' ? $match['amount_before'] : $match['amount_after']);
 
             $items[] = [
                 'code' => $match['code'],

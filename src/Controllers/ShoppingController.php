@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Request;
+use App\Core\Database;
 use App\Core\Response;
 use App\Core\Session;
 use App\Domain\Audit\AuditLogger;
@@ -419,14 +420,51 @@ final class ShoppingController extends Controller
         chmod($target, 0664);
 
         $repository = $this->app->make(ShoppingRepository::class);
-        $id = $repository->addMarketInvoice(
-            $listId,
-            $originalName,
-            $storedName,
-            (string) ($file['type'] ?? 'application/octet-stream'),
-            (int) $file['size'],
-            $auth->user()?->id
-        );
+        $parsedInvoice = null;
+        $parseError = null;
+
+        if (in_array($extension, ['xml', 'pdf'], true)) {
+            try {
+                $parsedInvoice = $extension === 'xml'
+                    ? (new MarketInvoiceXmlParser())->parse($target)
+                    : (new MarketInvoicePdfParser())->parse($target);
+            } catch (\Throwable $exception) {
+                $parseError = $exception;
+            }
+        }
+
+        try {
+            $fileHash = hash_file('sha256', $target);
+
+            if ($fileHash === false) {
+                throw new \RuntimeException('Não foi possível validar o arquivo enviado.');
+            }
+
+            $id = $repository->addMarketInvoice(
+                $listId,
+                $originalName,
+                $storedName,
+                (string) ($file['type'] ?? 'application/octet-stream'),
+                (int) $file['size'],
+                $auth->user()?->id,
+                $parsedInvoice['access_key'] ?? null,
+                $fileHash
+            );
+        } catch (\App\Domain\Shopping\DuplicateMarketInvoice $exception) {
+            @unlink($target);
+            $this->audit('shopping_market_invoice_duplicate_blocked', 'shopping_market_invoice', null, [
+                'list_id' => $listId,
+                'original_name' => $originalName,
+            ]);
+            $this->flash('error', $exception->getMessage());
+
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        } catch (\Throwable $exception) {
+            @unlink($target);
+            $this->flash('error', 'Não foi possível registrar a nota. Tente novamente.');
+
+            return Response::redirect('/shopping/market?market_list_id=' . $listId);
+        }
         $this->audit('shopping_market_invoice_uploaded', 'shopping_market_invoice', $id, [
             'list_id' => $listId,
             'original_name' => $originalName,
@@ -434,12 +472,15 @@ final class ShoppingController extends Controller
 
         if (in_array($extension, ['xml', 'pdf'], true)) {
             try {
-                $summary = $extension === 'xml'
-                    ? $this->importMarketInvoiceXml($target, $listId, $auth->user()?->id)
-                    : $this->importMarketInvoicePdf($target, $listId, $auth->user()?->id);
+                if ($parseError !== null) {
+                    throw $parseError;
+                }
+
+                $summary = $this->importParsedMarketInvoice($parsedInvoice, $listId, $auth->user()?->id);
                 $repository->updateMarketInvoiceMetadata($id, [
                     'access_key' => $summary['access_key'] ?? null,
                     'issued_at' => $summary['issued_at'] ?? null,
+                    'document_number' => $summary['document_number'] ?? null,
                     'total_amount' => $summary['total_amount'] ?? null,
                 ]);
                 $repository->syncMarketListTotalsFromInvoices($listId);
@@ -464,6 +505,76 @@ final class ShoppingController extends Controller
         }
 
         $this->flash('success', 'Nota anexada a lista de mercado.');
+
+        return Response::redirect('/shopping/market?market_list_id=' . $listId);
+    }
+
+    public function retryMarketInvoice(Request $request): Response
+    {
+        $auth = $this->authorizeManage();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        $id = (int) $request->input('id');
+        $repository = $this->app->make(ShoppingRepository::class);
+        $invoice = $repository->marketInvoice($id);
+
+        if ($invoice === null) {
+            $this->flash('error', 'Nota não encontrada.');
+            return Response::redirect('/shopping/market');
+        }
+
+        $listId = (int) $invoice['list_id'];
+        $connection = $this->app->make(Database::class)->connection();
+
+        try {
+            if ($this->marketListIsFinished($listId)) {
+                throw new \RuntimeException('Reabra a lista antes de tentar importar a nota novamente.');
+            }
+
+            $extension = mb_strtolower(pathinfo((string) $invoice['stored_name'], PATHINFO_EXTENSION));
+
+            if (($invoice['source_type'] ?? '') !== 'file' || !in_array($extension, ['pdf', 'xml'], true)) {
+                throw new \RuntimeException('Esta nota não possui um PDF ou XML disponível para importação.');
+            }
+
+            $file = base_path('storage/shopping-invoices/' . basename((string) $invoice['stored_name']));
+            $parsed = $extension === 'xml'
+                ? (new MarketInvoiceXmlParser())->parse($file)
+                : (new MarketInvoicePdfParser())->parse($file);
+
+            $connection->beginTransaction();
+            $lockedInvoice = $repository->marketInvoice($id, true);
+
+            if ($lockedInvoice === null || $lockedInvoice['status'] !== 'stored') {
+                throw new \RuntimeException('Esta nota já foi importada ou está indisponível para uma nova tentativa.');
+            }
+
+            // Reserve the fiscal key before changing products; the unique index rejects duplicates.
+            $repository->updateMarketInvoiceMetadata($id, $parsed);
+            $summary = $this->importParsedMarketInvoice($parsed, $listId, $auth->user()?->id);
+            $repository->syncMarketListTotalsFromInvoices($listId);
+            $repository->updateMarketListPurchaseDate($listId, $parsed['issued_at'] ?? null);
+            $this->audit('shopping_market_invoice_imported', 'shopping_market_invoice', $id, [
+                'source' => $extension,
+                'retry' => true,
+                ...$summary,
+            ]);
+            $connection->commit();
+            $this->flash('success', sprintf('Nota importada: %d produtos lidos, %d itens incluídos e %d atualizados.', $summary['read'], $summary['created'], $summary['updated']));
+        } catch (\Throwable $exception) {
+            if ($connection->inTransaction()) {
+                $connection->rollBack();
+            }
+
+            $message = $exception instanceof \PDOException
+                ? ((int) ($exception->errorInfo[1] ?? 0) === 1062 ? 'Esta nota já está cadastrada. A importação foi bloqueada para evitar duplicidade.' : 'Não foi possível concluir a importação. Tente novamente.')
+                : $exception->getMessage();
+            $this->audit('shopping_market_invoice_import_failed', 'shopping_market_invoice', $id, ['retry' => true, 'error' => $message]);
+            $this->flash('error', $message);
+        }
 
         return Response::redirect('/shopping/market?market_list_id=' . $listId);
     }
@@ -536,6 +647,12 @@ final class ShoppingController extends Controller
             $id = $this->app->make(ShoppingRepository::class)->addMarketInvoiceAccessKey($listId, $data, $auth->user()?->id);
             $this->audit('shopping_market_invoice_access_key_saved', 'shopping_market_invoice', $id, $data);
             $this->flash('success', 'Chave de acesso salva. Use o link de consulta pública para conferir a NFC-e; o XML completo depende de disponibilização do emissor ou certificado digital.');
+        } catch (\App\Domain\Shopping\DuplicateMarketInvoice $exception) {
+            $this->audit('shopping_market_invoice_duplicate_blocked', 'shopping_market_invoice', null, [
+                'list_id' => $listId,
+                'source' => 'access_key',
+            ]);
+            $this->flash('error', $exception->getMessage());
         } catch (\Throwable $exception) {
             $this->flash('error', $exception->getMessage());
         }
@@ -806,6 +923,7 @@ final class ShoppingController extends Controller
             'total_amount' => $invoice['total_amount'],
             'issuer' => $invoice['issuer'],
             'issued_at' => $invoice['issued_at'],
+            'document_number' => $invoice['document_number'] ?? null,
             'access_key' => $invoice['access_key'],
         ];
     }

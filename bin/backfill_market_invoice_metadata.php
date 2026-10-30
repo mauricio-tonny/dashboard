@@ -32,6 +32,8 @@ spl_autoload_register(static function (string $class): void {
 });
 
 Env::load(dirname(__DIR__) . '/.env');
+$metadataOnly = in_array('--metadata-only', $argv, true);
+$hashesOnly = in_array('--hashes-only', $argv, true);
 
 $database = new Database();
 $repository = new ShoppingRepository($database);
@@ -42,7 +44,7 @@ $statement = $pdo->query(
      FROM shopping_market_invoices
      WHERE source_type = "file"
        AND stored_name <> ""
-       AND (purchase_date IS NULL OR access_key IS NULL OR access_key = "" OR total_amount IS NULL)'
+       AND (file_hash IS NULL OR purchase_date IS NULL OR document_number IS NULL OR document_number = "" OR access_key IS NULL OR access_key = "" OR total_amount IS NULL)'
 );
 $invoices = $statement->fetchAll(PDO::FETCH_ASSOC);
 $updated = 0;
@@ -54,22 +56,38 @@ foreach ($invoices as $invoice) {
     $file = $directory . '/' . $storedName;
     $extension = mb_strtolower(pathinfo($storedName, PATHINFO_EXTENSION));
 
-    if (!is_file($file) || !in_array($extension, ['xml', 'pdf'], true)) {
+    if (!is_file($file)) {
         $skipped++;
         continue;
     }
 
     try {
+        $fileHash = hash_file('sha256', $file);
+
+        if ($fileHash === false) {
+            throw new RuntimeException('Não foi possível calcular o hash do arquivo.');
+        }
+
+        $repository->updateMarketInvoiceFileHash((int) $invoice['id'], $fileHash);
+
+        if ($hashesOnly || !in_array($extension, ['xml', 'pdf'], true)) {
+            $updated++;
+            continue;
+        }
+
         $parsed = $extension === 'xml'
             ? (new MarketInvoiceXmlParser())->parse($file)
             : (new MarketInvoicePdfParser())->parse($file);
         $repository->updateMarketInvoiceMetadata((int) $invoice['id'], [
             'access_key' => $parsed['access_key'] ?? null,
             'issued_at' => $parsed['issued_at'] ?? null,
-            'total_amount' => $parsed['total_amount'] ?? null,
+            'document_number' => $parsed['document_number'] ?? null,
+            'total_amount' => $metadataOnly ? null : ($parsed['total_amount'] ?? null),
         ]);
-        $repository->syncMarketListTotalsFromInvoices((int) $invoice['list_id']);
-        $repository->updateMarketListPurchaseDate((int) $invoice['list_id'], $parsed['issued_at'] ?? null);
+        if (!$metadataOnly) {
+            $repository->syncMarketListTotalsFromInvoices((int) $invoice['list_id']);
+            $repository->updateMarketListPurchaseDate((int) $invoice['list_id'], $parsed['issued_at'] ?? null);
+        }
         $updated++;
     } catch (Throwable $exception) {
         $failed++;

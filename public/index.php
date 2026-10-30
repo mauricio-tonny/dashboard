@@ -51,6 +51,8 @@ use App\Domain\System\SecuritySettingsRepository;
 use App\Domain\System\SpreadsheetLinkTester;
 use App\Domain\System\SpreadsheetSettingsRepository;
 use App\Domain\System\SpreadsheetSyncEventRepository;
+use App\Domain\System\SpreadsheetWritebackProcessor;
+use App\Domain\System\SpreadsheetWritebackRepository;
 use App\Infrastructure\Auth\DatabaseUserRepository;
 use App\Infrastructure\Finance\ExcelFinanceRepository;
 use App\Support\Env;
@@ -94,6 +96,9 @@ $discordNotificationRepository = new DiscordNotificationRepository($database);
 $discordNotifier = new DiscordNotifier($discordNotificationRepository);
 $schedulerRepository = new SchedulerRepository($database);
 $spreadsheetSyncEventRepository = new SpreadsheetSyncEventRepository($database);
+$spreadsheetFile = $_ENV['EXCEL_FILE'] ?? dirname(__DIR__) . '/storage/financeiro.xlsx';
+$spreadsheetWritebackRepository = new SpreadsheetWritebackRepository($database, $spreadsheetFile);
+$spreadsheetWritebackProcessor = new SpreadsheetWritebackProcessor($spreadsheetWritebackRepository, $spreadsheetFile);
 $spreadsheetSettingsRepository = new SpreadsheetSettingsRepository($database);
 $spreadsheetLinkTester = new SpreadsheetLinkTester();
 $securitySettingsRepository = new SecuritySettingsRepository($database);
@@ -127,6 +132,8 @@ $app = new App([
     SchedulerRepository::class => $schedulerRepository,
     SpreadsheetSettingsRepository::class => $spreadsheetSettingsRepository,
     SpreadsheetSyncEventRepository::class => $spreadsheetSyncEventRepository,
+    SpreadsheetWritebackRepository::class => $spreadsheetWritebackRepository,
+    SpreadsheetWritebackProcessor::class => $spreadsheetWritebackProcessor,
     SpreadsheetLinkTester::class => $spreadsheetLinkTester,
     SecuritySettingsRepository::class => $securitySettingsRepository,
     RecaptchaVerifier::class => $recaptchaVerifier,
@@ -175,6 +182,7 @@ $router->post('/shopping/market/lists/finish', [ShoppingController::class, 'fini
 $router->post('/shopping/market/lists/reopen', [ShoppingController::class, 'reopenMarketList']);
 $router->post('/shopping/market/lists/delete', [ShoppingController::class, 'deleteMarketList']);
 $router->post('/shopping/market/invoices', [ShoppingController::class, 'uploadMarketInvoice']);
+$router->post('/shopping/market/invoices/retry', [ShoppingController::class, 'retryMarketInvoice']);
 $router->get('/shopping/market/invoices/download', [ShoppingController::class, 'downloadMarketInvoice']);
 $router->post('/shopping/market/access-key', [ShoppingController::class, 'storeMarketAccessKey']);
 $router->post('/shopping/wish-items', [ShoppingController::class, 'addWishItem']);
@@ -205,6 +213,7 @@ $router->get('/system/backup', [NavigationPageController::class, 'systemBackup']
 $router->get('/system/sync', [SyncController::class, 'index']);
 $router->post('/system/sync', [SyncController::class, 'save']);
 $router->post('/system/sync/run', [SyncController::class, 'runNow']);
+$router->post('/system/sync/writeback', [SyncController::class, 'writebackNow']);
 $router->post('/system/sync/windows-callback', [SyncController::class, 'windowsCallback']);
 $router->get('/system/categories', [NavigationPageController::class, 'systemCategories']);
 $router->get('/system/category-budget-targets', [CategoryBudgetTargetController::class, 'index']);

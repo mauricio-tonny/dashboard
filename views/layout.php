@@ -832,6 +832,76 @@
             gap: 16px;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         }
+        .entry-type-field {
+            grid-column: 1 / -1;
+        }
+        .entry-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .entry-type-options {
+            margin-bottom: 0;
+        }
+        .entry-type-option {
+            align-items: flex-start;
+            border-radius: 16px;
+            flex: 1 1 220px;
+            flex-direction: column;
+            gap: 4px;
+            min-height: 76px;
+            padding: 14px 16px;
+        }
+        .entry-type-option strong {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+        .entry-type-option small {
+            color: var(--muted);
+            font-weight: 500;
+            margin-left: 25px;
+        }
+        .entry-type-option.is-expense:has(input:checked) {
+            background: #fff1f1;
+            border-color: #dc6b6b;
+            box-shadow: 0 8px 18px rgba(185, 28, 28, 0.12);
+            color: #991b1b;
+        }
+        .entry-type-option.is-expense input {
+            accent-color: #b91c1c;
+        }
+        .entry-type-option.is-income:has(input:checked) {
+            background: #ecfdf5;
+            border-color: #39b77d;
+            box-shadow: 0 8px 18px rgba(5, 150, 105, 0.12);
+            color: #047857;
+        }
+        .entry-type-option.is-income input {
+            accent-color: #059669;
+        }
+        .entry-form .actions {
+            align-items: center;
+            grid-column: 1 / -1;
+            justify-content: flex-end;
+            margin-top: 4px;
+        }
+        .entry-form .actions a {
+            display: inline-flex;
+        }
+        .entry-form .actions button,
+        .entry-form .actions .inline-button {
+            border-radius: 12px;
+            min-height: 48px;
+            min-width: 150px;
+            padding: 12px 20px;
+        }
+        .entry-form .actions .inline-button {
+            background: #fce8e8;
+            color: #991b1b;
+        }
+        .entry-form .actions .inline-button:hover {
+            background: #f8cccc;
+            color: #7f1d1d;
+        }
         .form-actions {
             align-self: end;
         }
@@ -2528,6 +2598,18 @@
             .finance-summary-grid,
             .finance-filter-form {
                 grid-template-columns: 1fr;
+            }
+            .entry-form {
+                grid-template-columns: 1fr;
+            }
+            .entry-form .actions {
+                align-items: stretch;
+                flex-direction: column;
+            }
+            .entry-form .actions a,
+            .entry-form .actions button,
+            .entry-form .actions .inline-button {
+                width: 100%;
             }
             .account-password-fields {
                 grid-template-columns: 1fr;

@@ -26,6 +26,7 @@ $labels = [
     'shopping_market_item_unchecked' => 'Item de mercado desmarcado',
     'shopping_market_item_deleted' => 'Item de mercado removido',
     'shopping_market_invoice_uploaded' => 'Nota de mercado anexada',
+    'shopping_market_invoice_duplicate_blocked' => 'Nota de mercado duplicada bloqueada',
     'shopping_market_invoice_imported' => 'XML de mercado importado',
     'shopping_market_invoice_import_failed' => 'Falha ao importar XML de mercado',
     'shopping_market_invoice_access_key_saved' => 'Chave de acesso de mercado salva',

@@ -54,6 +54,7 @@ final class MarketInvoiceXmlParser
 
         return [
             'access_key' => $this->accessKey($xpath),
+            'document_number' => $this->text($xpath, $document->documentElement, '//*[local-name()="ide"]/*[local-name()="nNF"]') ?: null,
             'issued_at' => $this->text($xpath, $document->documentElement, '//*[local-name()="ide"]/*[local-name()="dhEmi"]')
                 ?: $this->text($xpath, $document->documentElement, '//*[local-name()="ide"]/*[local-name()="dEmi"]')
                 ?: null,

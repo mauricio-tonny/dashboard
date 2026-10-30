@@ -165,13 +165,13 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function marketInvoice(int $id): ?array
+    public function marketInvoice(int $id, bool $forUpdate = false): ?array
     {
         $statement = $this->database->connection()->prepare(
             'SELECT *
              FROM shopping_market_invoices
              WHERE id = :id
-             LIMIT 1'
+             LIMIT 1' . ($forUpdate ? ' FOR UPDATE' : '')
         );
         $statement->execute(['id' => $id]);
         $invoice = $statement->fetch(PDO::FETCH_ASSOC);
@@ -202,20 +202,24 @@ final class ShoppingRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function addMarketInvoice(int $listId, string $originalName, string $storedName, string $mimeType, int $fileSize, ?int $userId): int
+    public function addMarketInvoice(int $listId, string $originalName, string $storedName, string $mimeType, int $fileSize, ?int $userId, ?string $accessKey = null, ?string $fileHash = null): int
     {
+        $accessKey = $accessKey === '' ? null : $accessKey;
+        $this->assertMarketInvoiceIsNew($accessKey, $fileHash);
         $statement = $this->database->connection()->prepare(
             'INSERT INTO shopping_market_invoices
-                (list_id, source_type, original_name, stored_name, mime_type, file_size, uploaded_by_user_id)
+                (list_id, source_type, original_name, stored_name, mime_type, file_size, access_key, file_hash, uploaded_by_user_id)
              VALUES
-                (:list_id, "file", :original_name, :stored_name, :mime_type, :file_size, :uploaded_by_user_id)'
+                (:list_id, "file", :original_name, :stored_name, :mime_type, :file_size, :access_key, :file_hash, :uploaded_by_user_id)'
         );
-        $statement->execute([
+        $this->executeInvoiceInsert($statement, [
             'list_id' => $listId,
             'original_name' => $originalName,
             'stored_name' => $storedName,
             'mime_type' => $mimeType,
             'file_size' => $fileSize,
+            'access_key' => $accessKey,
+            'file_hash' => $fileHash,
             'uploaded_by_user_id' => $userId,
         ]);
 
@@ -224,6 +228,7 @@ final class ShoppingRepository
 
     public function addMarketInvoiceAccessKey(int $listId, array $data, ?int $userId): int
     {
+        $this->assertMarketInvoiceIsNew($data['access_key'], null);
         $statement = $this->database->connection()->prepare(
             'INSERT INTO shopping_market_invoices
                 (list_id, source_type, original_name, stored_name, mime_type, file_size, access_key, uf_code, issued_year_month,
@@ -234,7 +239,7 @@ final class ShoppingRepository
                  :issuer_document, :document_model, :document_series, :document_number, :issue_type, :numeric_code, :check_digit,
                  :public_url, "pending_public_consultation", :uploaded_by_user_id)'
         );
-        $statement->execute([
+        $this->executeInvoiceInsert($statement, [
             'list_id' => $listId,
             'original_name' => 'Chave ' . $data['access_key'],
             'access_key' => $data['access_key'],
@@ -254,12 +259,57 @@ final class ShoppingRepository
         return (int) $this->database->connection()->lastInsertId();
     }
 
+    private function assertMarketInvoiceIsNew(?string $accessKey, ?string $fileHash): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'SELECT invoices.id, lists.reference_month
+             FROM shopping_market_invoices invoices
+             INNER JOIN shopping_market_lists lists ON lists.id = invoices.list_id
+             WHERE invoices.access_key = :access_key OR invoices.file_hash = :file_hash
+             LIMIT 1'
+        );
+        $statement->execute(['access_key' => $accessKey, 'file_hash' => $fileHash]);
+        $existing = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing !== false) {
+            $month = (new \DateTimeImmutable($existing['reference_month']))->format('m/Y');
+            throw new DuplicateMarketInvoice("Esta nota já foi anexada à lista de {$month}. A importação foi bloqueada para evitar duplicidade.");
+        }
+    }
+
+    private function executeInvoiceInsert(\PDOStatement $statement, array $parameters): void
+    {
+        try {
+            $statement->execute($parameters);
+        } catch (\PDOException $exception) {
+            if ((int) ($exception->errorInfo[1] ?? 0) === 1062) {
+                $this->assertMarketInvoiceIsNew($parameters['access_key'] ?? null, $parameters['file_hash'] ?? null);
+                throw new DuplicateMarketInvoice('Esta nota já foi anexada. A importação foi bloqueada para evitar duplicidade.');
+            }
+
+            throw $exception;
+        }
+    }
+
+    public function updateMarketInvoiceFileHash(int $id, string $fileHash): void
+    {
+        $statement = $this->database->connection()->prepare(
+            'UPDATE shopping_market_invoices SET file_hash = :file_hash WHERE id = :id'
+        );
+        $statement->execute(['id' => $id, 'file_hash' => $fileHash]);
+    }
+
     public function updateMarketInvoiceMetadata(int $id, array $data): void
     {
         $accessKey = isset($data['access_key'])
             ? preg_replace('/\D+/', '', (string) $data['access_key'])
             : null;
         $purchaseDate = $this->normalizeDateTime($data['issued_at'] ?? null);
+        $documentNumber = trim((string) ($data['document_number'] ?? ''));
+
+        if ($documentNumber === '' && strlen((string) $accessKey) === 44) {
+            $documentNumber = ltrim(substr($accessKey, 25, 9), '0') ?: '0';
+        }
         $totalAmount = isset($data['total_amount']) && $data['total_amount'] !== null
             ? round((float) $data['total_amount'], 2)
             : null;
@@ -267,6 +317,7 @@ final class ShoppingRepository
         $statement = $this->database->connection()->prepare(
             'UPDATE shopping_market_invoices
              SET access_key = COALESCE(NULLIF(:access_key, ""), access_key),
+                 document_number = COALESCE(NULLIF(:document_number, ""), document_number),
                  total_amount = COALESCE(:total_amount, total_amount),
                  purchase_date = COALESCE(:purchase_date, purchase_date),
                  status = :status
@@ -275,6 +326,7 @@ final class ShoppingRepository
         $statement->execute([
             'id' => $id,
             'access_key' => $accessKey,
+            'document_number' => $documentNumber,
             'total_amount' => $totalAmount,
             'purchase_date' => $purchaseDate,
             'status' => ($accessKey !== null && $accessKey !== '') || $purchaseDate !== null || $totalAmount !== null ? 'imported_with_metadata' : 'imported',

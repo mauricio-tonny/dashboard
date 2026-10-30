@@ -39,6 +39,30 @@ final class FinanceEntryRepository
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function availableCategories(): array
+    {
+        $statement = $this->database->connection()->query(
+            'SELECT id, name
+             FROM categories
+             WHERE is_active = 1
+             ORDER BY name'
+        );
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function availableVendors(): array
+    {
+        $statement = $this->database->connection()->query(
+            'SELECT id, name
+             FROM vendors
+             WHERE is_active = 1
+             ORDER BY name'
+        );
+
+        return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function expenseSummary(string $startDate, string $endDate, array $categoryIds): array
     {
         $filters = $this->filters($startDate, $endDate, $categoryIds);

@@ -17,6 +17,7 @@ use App\Domain\System\SchedulerRepository;
 use App\Domain\System\ScheduledTaskResult;
 use App\Domain\System\SpreadsheetSettingsRepository;
 use App\Domain\System\SpreadsheetSyncEventRepository;
+use App\Domain\System\SpreadsheetWritebackProcessor;
 use App\Domain\System\Tasks\ImportSpreadsheetTask;
 
 final class SyncController extends Controller
@@ -42,6 +43,7 @@ final class SyncController extends Controller
             'windowsEvents' => $this->app->make(SpreadsheetSyncEventRepository::class)->latest(10),
             'task' => $scheduler->task(self::TASK_CODE),
             'runs' => $scheduler->latestRuns(self::TASK_CODE, 40),
+            'pendingWritebacks' => $this->app->make(\App\Domain\System\SpreadsheetWritebackRepository::class)->pending(),
         ]);
     }
 
@@ -76,6 +78,13 @@ final class SyncController extends Controller
             $enabled,
             new \DateTimeImmutable('now', new \DateTimeZone('UTC'))
         );
+        $this->app->make(SchedulerRepository::class)->configureTask(
+            'spreadsheet.writeback',
+            'Enviar alterações para a planilha',
+            $intervalMinutes,
+            $enabled,
+            new \DateTimeImmutable('now', new \DateTimeZone('UTC'))
+        );
         $this->app->make(AuditLogger::class)->log('spreadsheet_sync_settings_updated', 'spreadsheet_settings', 1, $auth->user(), [
             'sync_is_enabled' => $enabled,
             'sync_interval_minutes' => $intervalMinutes,
@@ -83,6 +92,33 @@ final class SyncController extends Controller
             'sync_end_hour' => $endHour,
         ]);
         $this->flash('success', 'Configurações de sincronização salvas.');
+
+        return Response::redirect('/system/sync');
+    }
+
+    public function writebackNow(Request $request): Response
+    {
+        $auth = $this->authorizeAdmin();
+
+        if ($auth instanceof Response) {
+            return $auth;
+        }
+
+        if ((string) $request->input('confirm_writeback') !== '1') {
+            $this->flash('error', 'Confirme o envio das alterações para a planilha antes de executar.');
+            return Response::redirect('/system/sync');
+        }
+
+        try {
+            $result = $this->app->make(SpreadsheetWritebackProcessor::class)->process();
+            $this->app->make(AuditLogger::class)->log('spreadsheet_writeback_manual_run', 'spreadsheet_writeback', null, $auth->user(), $result);
+            $this->flash('success', (string) ($result['message'] ?? 'Alterações enviadas para a planilha.'));
+        } catch (\Throwable $exception) {
+            $this->app->make(AuditLogger::class)->log('spreadsheet_writeback_manual_failed', 'spreadsheet_writeback', null, $auth->user(), [
+                'message' => $exception->getMessage(),
+            ]);
+            $this->flash('error', 'Não foi possível enviar as alterações para a planilha.');
+        }
 
         return Response::redirect('/system/sync');
     }
@@ -289,7 +325,7 @@ final class SyncController extends Controller
     {
         $status = strtolower(trim($status));
 
-        return in_array($status, ['uploaded', 'unchanged', 'failed', 'skipped'], true) ? $status : null;
+        return in_array($status, ['uploaded', 'downloaded', 'conflict', 'locked', 'unchanged', 'failed', 'skipped'], true) ? $status : null;
     }
 
     private function parseCallbackDate(string $value): \DateTimeImmutable
